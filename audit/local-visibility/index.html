@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+<title>Local Visibility Audit | Jay Marketing Lab</title>
+<style>
+:root{--purple:#4c0099;--lime:#b1eb1e;--ink:#24113e;--line:#e8ddf1;--paper:#f9f6fc}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:1rem/1.6 system-ui,sans-serif}header,main,footer{width:min(1100px,92vw);margin:auto}header{display:flex;align-items:center;gap:1rem;padding:1rem 0;flex-wrap:wrap}header img{height:35px;width:auto}a{color:var(--purple)}.hero{background:var(--purple);color:white;border-radius:1.5rem;padding:clamp(1.4rem,6vw,4rem)}h1,h2,h3{line-height:1.15}h1{font-size:clamp(2.2rem,6vw,4.5rem);margin:.5rem 0}h2{font-size:clamp(1.6rem,4vw,2.3rem)}.eyebrow{font-size:.78rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.hero .eyebrow{color:var(--lime)}.hero p{max-width:50ch}.layout{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,245px),1fr))}.panel{background:white;border:1px solid var(--line);border-radius:1rem;padding:1.2rem}.callout{background:#eee4f6;border-left:4px solid var(--purple);padding:.8rem 1rem}section{margin:2.1rem 0}.toolbar{display:flex;flex-wrap:wrap;gap:.7rem;align-items:center}.toolbar button{background:var(--lime);border:1px solid var(--purple);padding:.55rem .8rem;border-radius:.5rem;color:var(--ink);font:inherit;font-weight:700;cursor:pointer}.score{font-size:2.5rem;line-height:1;font-weight:800;color:var(--purple);margin:.4rem 0}.pill{background:#eee4f6;border-radius:2rem;padding:.25rem .6rem;font-size:.85em;font-weight:700}footer{padding:0 0 2rem}.muted{color:#594968}ul{padding-left:1.3rem}:focus-visible{outline:3px solid var(--purple);outline-offset:3px}.skip{position:absolute;left:-999em}.skip:focus{left:1em;top:1em;background:white;padding:.5rem}
+</style></head><body>
+<a class="skip" href="#main">Skip to content</a><header><img src="../../logo.svg" alt="Jay Marketing Lab"><nav aria-label="Breadcrumb"><a href="../../">JML Hub</a> / <a href="../../#seo-audits">SEO &amp; AEO</a> / Audits</nav></header>
+<main id="main">
+<div class="hero"><div class="eyebrow">SEO &amp; AEO / Audit tools</div><h1>Local Visibility Audit</h1><p>Review how a business shows up in Maps, Google Search and AI answers, then turn the evidence into a short list of fixes.</p></div>
+<section aria-labelledby="viewer"><h2 id="viewer">Audit report viewer</h2>
+<p class="callout"><strong>Public demo.</strong> The sample is fictional. No live audit, client data, API keys or server calls are included. An audit JSON file you open is read for this session only and never sent to a server. Avoid using confidential files on a shared device.</p>
+<div class="toolbar"><button id="restore" type="button">Show fictional sample</button><label for="file">Open a local audit JSON</label><input id="file" type="file" accept=".json,application/json"></div>
+<p id="status" role="status" class="muted"></p>
+<h3 id="business"></h3><p id="summary"></p><div class="layout" id="cards"></div>
+<div class="panel" style="margin-top:1rem"><h3>Priorities</h3><ul id="priorities"></ul></div></section>
+<section aria-labelledby="workflow"><h2 id="workflow">How a live audit is produced</h2><div class="layout">
+<article class="panel"><span class="pill">01 / Intake</span><h3>Define the market</h3><p>Confirm the business, website, location and primary search query.</p></article>
+<article class="panel"><span class="pill">02 / Collect</span><h3>Gather evidence</h3><p>The private collector measures map-grid ranks, organic results, AI visibility, reviews and technical checks. Provider credentials stay in the private environment.</p></article>
+<article class="panel"><span class="pill">03 / Review</span><h3>Check the findings</h3><p>Review anomalies, separate measured results from expert UX judgment and agree on the most useful fixes.</p></article>
+<article class="panel"><span class="pill">04 / Publish</span><h3>Share the approved report</h3><p>Export a client-ready snapshot after editorial review. The public viewer does not run the collector.</p></article></div>
+<p><a href="../../playbooks/seo-aeo.html">Open the SEO &amp; AEO Playbook</a> · <a href="../">Open the JML Differentiation Audit</a></p></section>
+</main><footer>Jay Marketing Lab • Public audit example</footer>
+<script>
+"use strict";
+const sample={business:"Harborline Dental (fictional)",date:"Illustrative sample",healthScore:72,categories:[{id:"overview",label:"Overview",title:"Good local baseline",desc:"Illustrative JML score. The map, organic visibility, AI visibility and reputation measures contribute to the score.",score:72},{id:"map",label:"Map & local pack",title:"Competitive close to the office",desc:"Fictional map-grid sample: top 3 in 11 of 25 nearby points.",score:70},{id:"serp",label:"Organic search",title:"Room to improve",desc:"Fictional snapshot: position 9 for the main local keyword.",score:56},{id:"ai",label:"AI visibility",title:"Not mentioned consistently",desc:"Fictional sample: recommended by 1 of 3 assistants tested.",score:65},{id:"ux",label:"UX & speed",title:"Simplify mobile booking",desc:"Illustrative expert review. UX is reported separately from the headline score.",score:71},{id:"security",label:"Security & trust",title:"HTTPS in place",desc:"Illustrative check. Review trust signals and technical items separately.",score:93}],priorities:[{title:"Shorten the mobile booking path",found:"The fictional booking flow has an extra handoff."},{title:"Align service pages with the primary local query",why:"Make each page address a clear patient intent."},{title:"Compare map visibility by area",fix:"Start with nearby weak cells before changing the service area."}]};
+const $=(id)=>document.getElementById(id);
+const clean=(value,max=450)=>typeof value==="string" ? value.replace(/<[^>]*>/g,"").slice(0,max) : "";
+function add(parent,tag,value,cls){const n=document.createElement(tag);n.textContent=value;if(cls)n.className=cls;parent.append(n);return n}
+function render(data,isSample){
+ if(!data||typeof data!=="object"||!clean(data.business)||!Array.isArray(data.categories)||!data.categories.length||!data.categories.every(x=>x&&typeof x==="object"&&(clean(x.label)||clean(x.title))))throw Error("This is not a supported JML audit JSON. It needs a business and a categories array.");
+ $("business").textContent=clean(data.business,120);
+ $("summary").textContent=[isSample?"Fictional sample":"Local file • contents not independently verified",clean(data.date,100),Number.isFinite(data.healthScore)?"JML score: "+data.healthScore+"/100":""].filter(Boolean).join(" · ");
+ $("cards").replaceChildren();$("priorities").replaceChildren();
+ data.categories.slice(0,12).forEach(row=>{const c=document.createElement("article");c.className="panel";$("cards").append(c);add(c,"span",clean(row.label||row.id,95),"pill");if(Number.isFinite(row.score)&&row.score>=0&&row.score<=100)add(c,"p",String(row.score)+"/100","score");add(c,"h3",clean(row.title||row.label,125));add(c,"p",clean(row.desc));});
+ const priorities=Array.isArray(data.priorities)?data.priorities.filter(x=>x&&clean(x.title)).slice(0,20):[];
+ if(!priorities.length)add($("priorities"),"li","No priorities provided.");
+ priorities.forEach(row=>{const li=add($("priorities"),"li",clean(row.title,140));const detail=clean(row.found||row.why||row.fix);if(detail)add(li,"p",detail,"muted");});
+}
+let selected=0;
+$("restore").addEventListener("click",()=>{selected++;$("file").value="";render(sample,true);$("status").textContent="Fictional sample loaded."});
+$("file").addEventListener("change",async()=>{const run=++selected;const f=$("file").files[0];if(!f)return;try{if(f.size>10*1024*1024)throw Error("Please choose a JSON file smaller than 10 MB.");const data=JSON.parse(await f.text());if(run!==selected)return;render(data,false);$("status").textContent="Local report opened. The file was not uploaded.";}catch(e){if(run===selected)$("status").textContent=e instanceof SyntaxError?"Unable to open the file: invalid JSON.":e.message;}});
+render(sample,true);
+</script></body></html>
