@@ -1,0 +1,125 @@
+.planner-host {position:relative; min-width:0; border:1px solid var(--line,#d6d0d8); border-radius:7px; overflow:hidden; background:var(--paper,white); }
+.agency-planner-frame {display:block; width:100%; height:clamp(600px,82vh,1050px); border:0; background:white;}
+.agency-planner-frame[hidden]{display:none}
+.planner-loading {padding:20px}
+.open-studio {display:block; width:100%; margin:0 0 14px; padding:11px 16px; border:0; border-radius:8px; font:inherit; font-weight:650; color:var(--jml-ink); background:var(--jml-soft-lime); cursor:pointer}
+.planner-booting body>:not(#planner-sync-error){visibility:hidden}
+html.planner-embedded #logoutButton,html.planner-embedded #planner-hub-banner{display:none}
+#planner-sync-error {padding:12px 18px;background:#fff0bd;color:#412500;position:sticky;z-index:100;top:0}
+#planner-sync-error button{margin-left:12px;padding:7px 12px}
+.planner-gallery{box-sizing:border-box;border:1px solid #c2bcc7;border-radius:10px;width:min(1000px,98vw);height:95vh;padding:8px;background:white}
+.planner-gallery[open]{display:flex;flex-direction:column;gap:6px}
+.planner-gallery::backdrop{background:#19131c99}
+.planner-gallery>button{align-self:flex-start;padding:10px 14px;background:white;border:1px solid #c2bcc7;border-radius:6px;font:inherit;cursor:pointer}
+.planner-gallery>iframe{width:100%;min-height:0;flex:1;border:0}
+.gallery-workspace-link{margin-inline-start:1em}
+.gallery-in-planner header{padding:14px 5vw;background:var(--brand-sidebar,#38234e);color:white}
+.gallery-in-planner header h1{font-size:1.6rem}
+.gallery-in-planner header .label,.gallery-in-planner header p,.gallery-in-planner header a,.gallery-in-planner main>.warning,.gallery-in-planner footer{display:none}
+.gallery-in-planner .tag{color:var(--jml-purple,#412852)}
+html.planner-embedded .topbar{display:block;position:static;padding:12px 18px;min-height:0}
+.planner-embedded .planner-heading-row,.planner-embedded .planner-actions-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.planner-embedded .planner-actions-row{margin-top:10px}
+.planner-embedded .topbar .title-block{flex:1 1 255px;order:0;min-width:0;width:auto;padding:0}
+.planner-embedded .title-block .kicker,.planner-embedded .topbar h1{margin:0}
+.planner-embedded .topbar h1{font-size:clamp(19px,2.2vw,26px);white-space:normal;line-height:1.15;overflow-wrap:anywhere}
+.planner-embedded .calendar-range-note{display:block;line-height:1.4}
+.planner-embedded .role-switch{order:0;margin-left:auto;max-width:100%;min-width:0}
+.planner-embedded .role-switch select{min-width:0;max-width:100%}
+.planner-embedded .planner-actions-row>*{order:0;max-width:100%;margin:0}
+.planner-embedded .planner-actions-row button{white-space:nowrap;min-height:34px}
+.planner-embedded .planner-actions-row .date-nav button{padding:6px 10px}
+.planner-embedded .planner-artwork-button{border:1px solid var(--jml-line);border-radius:4px;background:var(--jml-soft-purple);color:var(--jml-ink);padding:8px 10px;font:inherit;font-weight:700;cursor:pointer}
+.planner-embedded .app-session-actions{display:none}
+.planner-embedded .review-tools{background:var(--jml-soft-purple);border-color:var(--jml-line)}
+.planner-embedded .review-tools button,.planner-embedded .review-dialog button:not(.secondary){background:var(--brand-sidebar);color:white}
+.planner-embedded .review-tools select,.planner-embedded .review-dialog{border-color:var(--brand-sidebar)}
+.planner-embedded .review-count{background:white;color:var(--brand-sidebar)}
+.planner-embedded .review-dialog h2{color:var(--brand-sidebar)}
+.planner-embedded .calendar-shell,.planner-embedded .list-view{max-width:100%;overflow-x:auto}
+.planner-embedded .workspace{min-width:0}
+/* The containing workspace owns navigation, identity and account scope. */
+html.planner-embedded,html.planner-embedded body{min-height:0}
+html.planner-embedded .app{display:block;grid-template-columns:minmax(0,1fr);min-height:0}
+html.planner-embedded .rail,html.planner-embedded #sidebar,html.planner-embedded #mobileMenu,
+html.planner-embedded .role-switch,html.planner-embedded .role-context,html.planner-embedded #ownerPreviewLabel,
+html.planner-embedded .settings-tabs,html.planner-embedded .report-tabs,
+html.planner-embedded .settings-scope,html.planner-embedded .report-scope>label,html.planner-embedded #reportBrandSelect,
+html.planner-embedded #backToCalendar,html.planner-embedded #backFromReporting,
+html.planner-embedded .dashboard-role-map{display:none!important}
+html.planner-embedded .workspace{width:100%;margin:0;padding:0;min-width:0;min-height:0}
+html.planner-embedded .settings-view,html.planner-embedded .reporting-view{min-height:0}
+html.planner-embedded dialog:modal{position:fixed;top:var(--planner-overlay-top,16px);bottom:auto;margin:0 auto;max-height:var(--planner-overlay-height,600px);overflow:auto}
+html.planner-embedded .drawer{top:var(--planner-overlay-top,16px);height:var(--planner-overlay-height,600px)}
+html.planner-embedded .planner-heading-row{width:100%}
+html.planner-embedded .report-controls{justify-content:flex-end}
+html.planner-embedded body.planner-module-open .workspace>*:not(#moduleDialog),
+html.planner-embedded body.planner-artwork-open .workspace>*:not(.planner-inline-gallery){display:none!important}
+html.planner-embedded body.planner-module-open #moduleDialog[open]{display:block;position:static;inset:auto;width:100%;max-width:none;max-height:none;margin:0;border:0;border-radius:0;box-shadow:none;overflow:visible}
+html.planner-embedded body.planner-module-open #moduleDialog .modal-head{position:static;background:white;color:var(--jml-purple);border-bottom:1px solid var(--jml-line);padding:20px 22px}
+html.planner-embedded body.planner-module-open #moduleKicker{color:var(--jml-muted)!important}
+html.planner-embedded body.planner-module-open #closeModule{display:none}
+html.planner-embedded body.planner-module-open .module-body{max-height:none;overflow:visible}
+html.planner-embedded .planner-inline-gallery{display:block;width:100%;height:820px;border:0}
+@media(min-width:1000px){html.planner-embedded .week-grid{min-width:0;grid-template-columns:repeat(7,minmax(0,1fr))}html.planner-embedded .post-meta{flex-wrap:wrap}html.planner-embedded .post-title{overflow-wrap:anywhere}}
+@media(max-width:860px){
+  html.planner-embedded .topbar{padding:10px 12px}
+  .planner-embedded .topbar .title-block{flex:1 1 190px}
+  .planner-embedded .planner-heading-row .role-switch{margin-left:0}
+  .planner-embedded .planner-actions-row{gap:6px}
+  .planner-embedded .toolbar .search{flex-basis:100%;min-width:0}
+  .planner-embedded .toolbar select{max-width:100%}
+  .planner-embedded .review-tools{padding:10px 12px}
+  .planner-embedded .review-disclosure{min-width:min(170px,100%)}
+}
+@media(max-width:520px){
+  html.planner-embedded .topbar{display:flex;flex-wrap:wrap;justify-content:flex-start;align-items:center;gap:6px}
+  .planner-embedded .planner-heading-row,.planner-embedded .planner-actions-row{display:contents}
+  .planner-embedded .topbar .title-block{flex:1 1 calc(100% - 58px);max-width:100%}
+  .planner-embedded body:not(.settings-open):not(.reporting-open):not(.dashboard-open) .date-nav{display:flex}
+  .planner-embedded .planner-actions-row .date-nav{order:1}
+  .planner-embedded .planner-heading-row .role-switch{order:2;max-width:158px;padding:2px 4px}
+  .planner-embedded .planner-heading-row .role-switch select{font-size:13px;padding:6px 2px}
+  .planner-embedded .planner-actions-row .view-switch{order:3}
+  .planner-embedded .planner-actions-row #exportBtn{order:4}
+  .planner-embedded .planner-actions-row #quickAdd{order:5}
+  .planner-embedded .planner-actions-row .planner-artwork-button{order:6}
+  .planner-embedded .planner-actions-row .view-switch button{padding:5px 6px;font-size:14px}
+  .planner-embedded .view-switch button[data-view="quarter"]{display:inline-block}
+  .planner-embedded .bars{gap:3px}
+  .planner-embedded .bars .bar{width:9px}
+}
+@media(max-width:650px){.agency-planner-frame {height:82dvh;min-height:520px}}
+/* Embedded planner uses the same role colors, type and control rhythm as its host. */
+html.planner-embedded body{font-family:"DM Sans",Arial,sans-serif;font-weight:400;font-synthesis:none;background:var(--mist);color:var(--ink)}
+html.planner-embedded .topbar{padding:17px 20px;background:var(--paper);box-shadow:none}
+html.planner-embedded .topbar h1{font:400 28px/1.15 "DM Serif Display",Georgia,serif;letter-spacing:-.3px;color:var(--ink)}
+html.planner-embedded .kicker,html.planner-embedded .calendar-range-note{font-family:"JetBrains Mono",monospace;font-weight:400;color:var(--muted)}
+html.planner-embedded :is(strong,b,button,h2,h3,h4,.post-title,.platform,.day-name,.summary-card .num){font-weight:600}
+html.planner-embedded .planner-actions-row button,html.planner-embedded .toolbar select,html.planner-embedded .toolbar input,html.planner-embedded .review-tools button{min-height:36px;font-size:12px;font-weight:500;border-radius:5px}
+html.planner-embedded .toolbar input,html.planner-embedded .toolbar select,html.planner-embedded .form input,html.planner-embedded .form select,html.planner-embedded .form textarea{background:var(--paper);color:var(--ink);border-color:var(--control-border)}
+html.planner-embedded input::placeholder,html.planner-embedded textarea::placeholder{color:var(--subtle);opacity:1}
+html.planner-embedded .icon-button,html.planner-embedded .date-nav button,html.planner-embedded .planner-artwork-button{background:var(--paper);border-color:var(--control-border);color:var(--ink)}
+html.planner-embedded .date-nav,html.planner-embedded .view-switch{border-color:var(--control-border);border-radius:5px}
+html.planner-embedded .view-switch button{color:var(--muted)}html.planner-embedded .view-switch button.active,html.planner-embedded .primary{background:var(--brand-primary);color:var(--on-primary);border-color:var(--brand-primary)}
+html.planner-embedded .review-tools{background:var(--soft);border-color:var(--line)}html.planner-embedded .review-tools button{background:var(--paper);color:var(--ink);border:1px solid var(--control-border)}
+html.planner-embedded .review-disclosure{color:var(--muted);font-size:11px}html.planner-embedded .review-count{background:var(--soft);color:var(--ink);font-weight:500}
+html.planner-embedded #artworkContext{background:var(--mist);color:var(--muted);border-bottom:1px solid var(--line);font-size:12px}html.planner-embedded #artworkContext strong{font-weight:500;color:var(--ink)}
+html.planner-embedded .calendar-shell,html.planner-embedded .post,html.planner-embedded .summary-card,html.planner-embedded .module-card{box-shadow:none;border-radius:5px;border-color:var(--line)}
+html.planner-embedded .post:hover{box-shadow:none;transform:none;border-color:var(--control-border)}html.planner-embedded .post-title{font-size:13px;line-height:1.45;font-weight:500}html.planner-embedded .post-copy{color:var(--muted);font-size:12px}
+html.planner-embedded .post-meta,html.planner-embedded .day-name span:last-child,html.planner-embedded .empty,html.planner-embedded .summary-card small{color:var(--muted)}html.planner-embedded .day-name{font-size:12px;flex-wrap:wrap;gap:4px}
+html.planner-embedded .tag,html.planner-embedded .status-pill{font-weight:500}
+html.planner-embedded .summary-card .num{font:400 29px/1.1 "DM Serif Display",Georgia,serif;color:var(--ink)}html.planner-embedded .summary-card{border-top-width:2px}
+html.planner-embedded .day-note{font-size:11px;font-weight:500;border-color:var(--control-border);color:var(--purple);min-height:36px}
+html.planner-embedded .status-pill.approved{background:var(--green-bg);color:var(--green)}html.planner-embedded .status-pill.needs-approval,html.planner-embedded .tag.approval{background:var(--warn-bg);color:var(--warn)}
+html.planner-embedded .status-pill.ready{background:var(--info-bg);color:var(--info)}html.planner-embedded .post-foot .owner{font-weight:500;flex-shrink:0}
+html.planner-embedded .module-table th,html.planner-embedded .report-table th,html.planner-embedded .data-table th{background:var(--soft);color:var(--muted);font:500 10px/1.5 "JetBrains Mono",monospace;letter-spacing:.03em;border-bottom:1px solid var(--line)}
+html.planner-embedded .module-table td,html.planner-embedded .report-table td{font-size:12px;line-height:1.5}
+html.planner-embedded dialog{border-radius:7px;box-shadow:0 12px 34px #10101820}
+html.planner-embedded dialog .modal-head{background:var(--paper);color:var(--ink);border-bottom:1px solid var(--line)}
+html.planner-embedded .modal-head h2{font:400 25px/1.2 "DM Serif Display",Georgia,serif}
+html.planner-embedded .form label{color:var(--ink);font-weight:500}html.planner-embedded .form input,html.planner-embedded .form select{min-height:36px;padding:7px 10px;border-radius:5px}
+html.planner-embedded .dashboard-hero{background:var(--rail);color:var(--rail-text)}html.planner-embedded .dashboard-hero .eyebrow{color:var(--rail-accent)}html.planner-embedded .dashboard-hero h2{color:var(--rail-text)}
+html.planner-embedded .dashboard-hero p{color:var(--rail-muted)}html.planner-embedded .dashboard-action.primary-action{background:var(--brand-primary);color:var(--on-primary);border-color:var(--brand-primary)}
+html.planner-embedded :is(button,a,input,textarea,select):focus-visible{outline:2px solid var(--focus);outline-offset:3px}
+@media(max-width:760px){html.planner-embedded .topbar{padding:14px 12px}html.planner-embedded .topbar h1{font-size:25px}html.planner-embedded .planner-actions-row button,html.planner-embedded .toolbar select,html.planner-embedded .toolbar input,html.planner-embedded .review-tools button,html.planner-embedded .day-note,html.planner-embedded .modal-actions button{min-height:44px}html.planner-embedded .form input,html.planner-embedded .form select,html.planner-embedded .form textarea{font-size:16px;min-height:44px}}

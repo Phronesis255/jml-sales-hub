@@ -1,0 +1,1365 @@
+{
+  "method": "Exact primary/accent retained; supporting neutrals and chrome derived in OKLCH with chroma reduction for sRGB gamut; rendered hex contrast measured in linear sRGB.",
+  "brands": [
+    {
+      "id": "demo",
+      "inputs": {
+        "primary": "#4c0099",
+        "accent": "#b1eb1e"
+      },
+      "tokens": {
+        "primary": "#4c0099",
+        "accent": "#b1eb1e",
+        "canvas": "#f8f7fc",
+        "surface": "#fefeff",
+        "elevated": "#ffffff",
+        "tint": "#efedf8",
+        "line": "#d7d5df",
+        "control": "#93909d",
+        "ink": "#22202a",
+        "muted": "#5e5c67",
+        "subtle": "#6d6b74",
+        "link": "#4c0099",
+        "icon": "#5e5c67",
+        "focus": "#4c0099",
+        "chrome": "#13111c",
+        "chromeRaised": "#262331",
+        "chromeLine": "#403d4c",
+        "chromeText": "#f5f3f9",
+        "chromeMuted": "#bbb9c2",
+        "chromeAccent": "#b1eb1e",
+        "onPrimary": "#ffffff",
+        "onAccent": "#111318",
+        "primaryHover": "#400981",
+        "success": "#286044",
+        "successBg": "#edf5ef",
+        "warning": "#784511",
+        "warningBg": "#fbf2e4",
+        "error": "#a13040",
+        "errorBg": "#fbf0f1",
+        "info": "#315b7b",
+        "infoBg": "#edf3f8"
+      },
+      "checks": [
+        {
+          "label": "Body / surface",
+          "foreground": "#22202a",
+          "background": "#fefeff",
+          "contrast": 15.93,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Secondary / tint",
+          "foreground": "#5e5c67",
+          "background": "#efedf8",
+          "contrast": 5.66,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Metadata / tint",
+          "foreground": "#6d6b74",
+          "background": "#efedf8",
+          "contrast": 4.53,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Link / tint",
+          "foreground": "#4c0099",
+          "background": "#efedf8",
+          "contrast": 10.26,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Primary label",
+          "foreground": "#ffffff",
+          "background": "#4c0099",
+          "contrast": 11.88,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Accent label",
+          "foreground": "#111318",
+          "background": "#b1eb1e",
+          "contrast": 13.07,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Navigation label",
+          "foreground": "#f5f3f9",
+          "background": "#262331",
+          "contrast": 13.95,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Navigation secondary",
+          "foreground": "#bbb9c2",
+          "background": "#262331",
+          "contrast": 7.92,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Active marker",
+          "foreground": "#b1eb1e",
+          "background": "#262331",
+          "contrast": 10.8,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Essential control border",
+          "foreground": "#93909d",
+          "background": "#fefeff",
+          "contrast": 3.1,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Icon / surface",
+          "foreground": "#5e5c67",
+          "background": "#fefeff",
+          "contrast": 6.51,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Focus / surface",
+          "foreground": "#4c0099",
+          "background": "#fefeff",
+          "contrast": 11.79,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Success",
+          "foreground": "#286044",
+          "background": "#edf5ef",
+          "contrast": 6.64,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Warning",
+          "foreground": "#784511",
+          "background": "#fbf2e4",
+          "contrast": 7.12,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Error",
+          "foreground": "#a13040",
+          "background": "#fbf0f1",
+          "contrast": 6.25,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Information",
+          "foreground": "#315b7b",
+          "background": "#edf3f8",
+          "contrast": 6.45,
+          "minimum": 4.5,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "brand_jml",
+      "inputs": {
+        "primary": "#4c0099",
+        "accent": "#b1eb1e"
+      },
+      "tokens": {
+        "primary": "#4c0099",
+        "accent": "#b1eb1e",
+        "canvas": "#f8f7fc",
+        "surface": "#fefeff",
+        "elevated": "#ffffff",
+        "tint": "#efedf8",
+        "line": "#d7d5df",
+        "control": "#93909d",
+        "ink": "#22202a",
+        "muted": "#5e5c67",
+        "subtle": "#6d6b74",
+        "link": "#4c0099",
+        "icon": "#5e5c67",
+        "focus": "#4c0099",
+        "chrome": "#13111c",
+        "chromeRaised": "#262331",
+        "chromeLine": "#403d4c",
+        "chromeText": "#f5f3f9",
+        "chromeMuted": "#bbb9c2",
+        "chromeAccent": "#b1eb1e",
+        "onPrimary": "#ffffff",
+        "onAccent": "#111318",
+        "primaryHover": "#400981",
+        "success": "#286044",
+        "successBg": "#edf5ef",
+        "warning": "#784511",
+        "warningBg": "#fbf2e4",
+        "error": "#a13040",
+        "errorBg": "#fbf0f1",
+        "info": "#315b7b",
+        "infoBg": "#edf3f8"
+      },
+      "checks": [
+        {
+          "label": "Body / surface",
+          "foreground": "#22202a",
+          "background": "#fefeff",
+          "contrast": 15.93,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Secondary / tint",
+          "foreground": "#5e5c67",
+          "background": "#efedf8",
+          "contrast": 5.66,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Metadata / tint",
+          "foreground": "#6d6b74",
+          "background": "#efedf8",
+          "contrast": 4.53,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Link / tint",
+          "foreground": "#4c0099",
+          "background": "#efedf8",
+          "contrast": 10.26,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Primary label",
+          "foreground": "#ffffff",
+          "background": "#4c0099",
+          "contrast": 11.88,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Accent label",
+          "foreground": "#111318",
+          "background": "#b1eb1e",
+          "contrast": 13.07,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Navigation label",
+          "foreground": "#f5f3f9",
+          "background": "#262331",
+          "contrast": 13.95,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Navigation secondary",
+          "foreground": "#bbb9c2",
+          "background": "#262331",
+          "contrast": 7.92,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Active marker",
+          "foreground": "#b1eb1e",
+          "background": "#262331",
+          "contrast": 10.8,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Essential control border",
+          "foreground": "#93909d",
+          "background": "#fefeff",
+          "contrast": 3.1,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Icon / surface",
+          "foreground": "#5e5c67",
+          "background": "#fefeff",
+          "contrast": 6.51,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Focus / surface",
+          "foreground": "#4c0099",
+          "background": "#fefeff",
+          "contrast": 11.79,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Success",
+          "foreground": "#286044",
+          "background": "#edf5ef",
+          "contrast": 6.64,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Warning",
+          "foreground": "#784511",
+          "background": "#fbf2e4",
+          "contrast": 7.12,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Error",
+          "foreground": "#a13040",
+          "background": "#fbf0f1",
+          "contrast": 6.25,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Information",
+          "foreground": "#315b7b",
+          "background": "#edf3f8",
+          "contrast": 6.45,
+          "minimum": 4.5,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "brand_b4k",
+      "inputs": {
+        "primary": "#007cc6",
+        "accent": "#f7c332"
+      },
+      "tokens": {
+        "primary": "#007cc6",
+        "accent": "#f7c332",
+        "canvas": "#f4f8fc",
+        "surface": "#fdfeff",
+        "elevated": "#ffffff",
+        "tint": "#e7f0f8",
+        "line": "#cfd8df",
+        "control": "#87929b",
+        "ink": "#1b232a",
+        "muted": "#565f67",
+        "subtle": "#666e74",
+        "link": "#166eac",
+        "icon": "#565f67",
+        "focus": "#007cc6",
+        "chrome": "#0a141c",
+        "chromeRaised": "#1a2732",
+        "chromeLine": "#35414c",
+        "chromeText": "#f0f5fa",
+        "chromeMuted": "#b4bbc2",
+        "chromeAccent": "#f7c332",
+        "onPrimary": "#000000",
+        "onAccent": "#111318",
+        "primaryHover": "#1b87d2",
+        "success": "#286044",
+        "successBg": "#edf5ef",
+        "warning": "#784511",
+        "warningBg": "#fbf2e4",
+        "error": "#a13040",
+        "errorBg": "#fbf0f1",
+        "info": "#315b7b",
+        "infoBg": "#edf3f8"
+      },
+      "checks": [
+        {
+          "label": "Body / surface",
+          "foreground": "#1b232a",
+          "background": "#fdfeff",
+          "contrast": 15.75,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Secondary / tint",
+          "foreground": "#565f67",
+          "background": "#e7f0f8",
+          "contrast": 5.64,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Metadata / tint",
+          "foreground": "#666e74",
+          "background": "#e7f0f8",
+          "contrast": 4.5,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Link / tint",
+          "foreground": "#166eac",
+          "background": "#e7f0f8",
+          "contrast": 4.72,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Primary label",
+          "foreground": "#000000",
+          "background": "#007cc6",
+          "contrast": 4.7,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Accent label",
+          "foreground": "#111318",
+          "background": "#f7c332",
+          "contrast": 11.33,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Navigation label",
+          "foreground": "#f0f5fa",
+          "background": "#1a2732",
+          "contrast": 13.87,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Navigation secondary",
+          "foreground": "#b4bbc2",
+          "background": "#1a2732",
+          "contrast": 7.85,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Active marker",
+          "foreground": "#f7c332",
+          "background": "#1a2732",
+          "contrast": 9.28,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Essential control border",
+          "foreground": "#87929b",
+          "background": "#fdfeff",
+          "contrast": 3.14,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Icon / surface",
+          "foreground": "#565f67",
+          "background": "#fdfeff",
+          "contrast": 6.44,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Focus / surface",
+          "foreground": "#007cc6",
+          "background": "#fdfeff",
+          "contrast": 4.43,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Success",
+          "foreground": "#286044",
+          "background": "#edf5ef",
+          "contrast": 6.64,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Warning",
+          "foreground": "#784511",
+          "background": "#fbf2e4",
+          "contrast": 7.12,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Error",
+          "foreground": "#a13040",
+          "background": "#fbf0f1",
+          "contrast": 6.25,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Information",
+          "foreground": "#315b7b",
+          "background": "#edf3f8",
+          "contrast": 6.45,
+          "minimum": 4.5,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "brand_nn",
+      "inputs": {
+        "primary": "#303133",
+        "accent": "#fcc23b"
+      },
+      "tokens": {
+        "primary": "#303133",
+        "accent": "#fcc23b",
+        "canvas": "#f9f8f5",
+        "surface": "#fffefd",
+        "elevated": "#ffffff",
+        "tint": "#f0efec",
+        "line": "#d8d6d3",
+        "control": "#91908d",
+        "ink": "#22211f",
+        "muted": "#5f5d5b",
+        "subtle": "#6e6c6a",
+        "link": "#303133",
+        "icon": "#5f5d5b",
+        "focus": "#303133",
+        "chrome": "#131311",
+        "chromeRaised": "#262523",
+        "chromeLine": "#41403d",
+        "chromeText": "#f6f4f1",
+        "chromeMuted": "#bcbab8",
+        "chromeAccent": "#fcc23b",
+        "onPrimary": "#ffffff",
+        "onAccent": "#111318",
+        "primaryHover": "#27282a",
+        "success": "#286044",
+        "successBg": "#edf5ef",
+        "warning": "#784511",
+        "warningBg": "#fbf2e4",
+        "error": "#a13040",
+        "errorBg": "#fbf0f1",
+        "info": "#315b7b",
+        "infoBg": "#edf3f8"
+      },
+      "checks": [
+        {
+          "label": "Body / surface",
+          "foreground": "#22211f",
+          "background": "#fffefd",
+          "contrast": 15.97,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Secondary / tint",
+          "foreground": "#5f5d5b",
+          "background": "#f0efec",
+          "contrast": 5.7,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Metadata / tint",
+          "foreground": "#6e6c6a",
+          "background": "#f0efec",
+          "contrast": 4.55,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Link / tint",
+          "foreground": "#303133",
+          "background": "#f0efec",
+          "contrast": 11.32,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Primary label",
+          "foreground": "#ffffff",
+          "background": "#303133",
+          "contrast": 13.02,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Accent label",
+          "foreground": "#111318",
+          "background": "#fcc23b",
+          "contrast": 11.43,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Navigation label",
+          "foreground": "#f6f4f1",
+          "background": "#262523",
+          "contrast": 13.95,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Navigation secondary",
+          "foreground": "#bcbab8",
+          "background": "#262523",
+          "contrast": 7.92,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Active marker",
+          "foreground": "#fcc23b",
+          "background": "#262523",
+          "contrast": 9.42,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Essential control border",
+          "foreground": "#91908d",
+          "background": "#fffefd",
+          "contrast": 3.17,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Icon / surface",
+          "foreground": "#5f5d5b",
+          "background": "#fffefd",
+          "contrast": 6.51,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Focus / surface",
+          "foreground": "#303133",
+          "background": "#fffefd",
+          "contrast": 12.93,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Success",
+          "foreground": "#286044",
+          "background": "#edf5ef",
+          "contrast": 6.64,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Warning",
+          "foreground": "#784511",
+          "background": "#fbf2e4",
+          "contrast": 7.12,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Error",
+          "foreground": "#a13040",
+          "background": "#fbf0f1",
+          "contrast": 6.25,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Information",
+          "foreground": "#315b7b",
+          "background": "#edf3f8",
+          "contrast": 6.45,
+          "minimum": 4.5,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "brand_mlb",
+      "inputs": {
+        "primary": "#002451",
+        "accent": "#db121a"
+      },
+      "tokens": {
+        "primary": "#002451",
+        "accent": "#db121a",
+        "canvas": "#f5f8fd",
+        "surface": "#fdfeff",
+        "elevated": "#ffffff",
+        "tint": "#e9eff8",
+        "line": "#d1d7e0",
+        "control": "#89919c",
+        "ink": "#1c222a",
+        "muted": "#575e68",
+        "subtle": "#676d75",
+        "link": "#002451",
+        "icon": "#575e68",
+        "focus": "#002451",
+        "chrome": "#0c131c",
+        "chromeRaised": "#1d2632",
+        "chromeLine": "#37404d",
+        "chromeText": "#f1f5fa",
+        "chromeMuted": "#b6bbc2",
+        "chromeAccent": "#e52424",
+        "onPrimary": "#ffffff",
+        "onAccent": "#ffffff",
+        "primaryHover": "#001c41",
+        "success": "#286044",
+        "successBg": "#edf5ef",
+        "warning": "#784511",
+        "warningBg": "#fbf2e4",
+        "error": "#a13040",
+        "errorBg": "#fbf0f1",
+        "info": "#315b7b",
+        "infoBg": "#edf3f8"
+      },
+      "checks": [
+        {
+          "label": "Body / surface",
+          "foreground": "#1c222a",
+          "background": "#fdfeff",
+          "contrast": 15.86,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Secondary / tint",
+          "foreground": "#575e68",
+          "background": "#e9eff8",
+          "contrast": 5.67,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Metadata / tint",
+          "foreground": "#676d75",
+          "background": "#e9eff8",
+          "contrast": 4.52,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Link / tint",
+          "foreground": "#002451",
+          "background": "#e9eff8",
+          "contrast": 13.25,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Primary label",
+          "foreground": "#ffffff",
+          "background": "#002451",
+          "contrast": 15.32,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Accent label",
+          "foreground": "#ffffff",
+          "background": "#db121a",
+          "contrast": 5.11,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Navigation label",
+          "foreground": "#f1f5fa",
+          "background": "#1d2632",
+          "contrast": 13.94,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Navigation secondary",
+          "foreground": "#b6bbc2",
+          "background": "#1d2632",
+          "contrast": 7.91,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Active marker",
+          "foreground": "#e52424",
+          "background": "#1d2632",
+          "contrast": 3.35,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Essential control border",
+          "foreground": "#89919c",
+          "background": "#fdfeff",
+          "contrast": 3.15,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Icon / surface",
+          "foreground": "#575e68",
+          "background": "#fdfeff",
+          "contrast": 6.49,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Focus / surface",
+          "foreground": "#002451",
+          "background": "#fdfeff",
+          "contrast": 15.17,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Success",
+          "foreground": "#286044",
+          "background": "#edf5ef",
+          "contrast": 6.64,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Warning",
+          "foreground": "#784511",
+          "background": "#fbf2e4",
+          "contrast": 7.12,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Error",
+          "foreground": "#a13040",
+          "background": "#fbf0f1",
+          "contrast": 6.25,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Information",
+          "foreground": "#315b7b",
+          "background": "#edf3f8",
+          "contrast": 6.45,
+          "minimum": 4.5,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "brand_jay",
+      "inputs": {
+        "primary": "#3b0764",
+        "accent": "#a81070"
+      },
+      "tokens": {
+        "primary": "#3b0764",
+        "accent": "#a81070",
+        "canvas": "#f9f7fc",
+        "surface": "#fefeff",
+        "elevated": "#ffffff",
+        "tint": "#f0edf7",
+        "line": "#d8d4de",
+        "control": "#928e9a",
+        "ink": "#232029",
+        "muted": "#5f5b66",
+        "subtle": "#6e6b74",
+        "link": "#3b0764",
+        "icon": "#5f5b66",
+        "focus": "#3b0764",
+        "chrome": "#15101b",
+        "chromeRaised": "#282230",
+        "chromeLine": "#423d4b",
+        "chromeText": "#f5f3f9",
+        "chromeMuted": "#bcb9c1",
+        "chromeAccent": "#ca3a8d",
+        "onPrimary": "#ffffff",
+        "onAccent": "#ffffff",
+        "primaryHover": "#300652",
+        "success": "#286044",
+        "successBg": "#edf5ef",
+        "warning": "#784511",
+        "warningBg": "#fbf2e4",
+        "error": "#a13040",
+        "errorBg": "#fbf0f1",
+        "info": "#315b7b",
+        "infoBg": "#edf3f8"
+      },
+      "checks": [
+        {
+          "label": "Body / surface",
+          "foreground": "#232029",
+          "background": "#fefeff",
+          "contrast": 15.9,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Secondary / tint",
+          "foreground": "#5f5b66",
+          "background": "#f0edf7",
+          "contrast": 5.72,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Metadata / tint",
+          "foreground": "#6e6b74",
+          "background": "#f0edf7",
+          "contrast": 4.52,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Link / tint",
+          "foreground": "#3b0764",
+          "background": "#f0edf7",
+          "contrast": 12.97,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Primary label",
+          "foreground": "#ffffff",
+          "background": "#3b0764",
+          "contrast": 15,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Accent label",
+          "foreground": "#ffffff",
+          "background": "#a81070",
+          "contrast": 7.06,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Navigation label",
+          "foreground": "#f5f3f9",
+          "background": "#282230",
+          "contrast": 14,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Navigation secondary",
+          "foreground": "#bcb9c1",
+          "background": "#282230",
+          "contrast": 7.97,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Active marker",
+          "foreground": "#ca3a8d",
+          "background": "#282230",
+          "contrast": 3.31,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Essential control border",
+          "foreground": "#928e9a",
+          "background": "#fefeff",
+          "contrast": 3.18,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Icon / surface",
+          "foreground": "#5f5b66",
+          "background": "#fefeff",
+          "contrast": 6.56,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Focus / surface",
+          "foreground": "#3b0764",
+          "background": "#fefeff",
+          "contrast": 14.88,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Success",
+          "foreground": "#286044",
+          "background": "#edf5ef",
+          "contrast": 6.64,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Warning",
+          "foreground": "#784511",
+          "background": "#fbf2e4",
+          "contrast": 7.12,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Error",
+          "foreground": "#a13040",
+          "background": "#fbf0f1",
+          "contrast": 6.25,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Information",
+          "foreground": "#315b7b",
+          "background": "#edf3f8",
+          "contrast": 6.45,
+          "minimum": 4.5,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "brand_zees",
+      "inputs": {
+        "primary": "#030303",
+        "accent": "#f8c521"
+      },
+      "tokens": {
+        "primary": "#030303",
+        "accent": "#f8c521",
+        "canvas": "#f9f8f5",
+        "surface": "#fffefd",
+        "elevated": "#ffffff",
+        "tint": "#f0efec",
+        "line": "#d7d6d3",
+        "control": "#91908d",
+        "ink": "#22221f",
+        "muted": "#5e5d5b",
+        "subtle": "#6d6c6a",
+        "link": "#030303",
+        "icon": "#5e5d5b",
+        "focus": "#030303",
+        "chrome": "#131311",
+        "chromeRaised": "#262523",
+        "chromeLine": "#40403d",
+        "chromeText": "#f5f4f1",
+        "chromeMuted": "#bbbab8",
+        "chromeAccent": "#f8c521",
+        "onPrimary": "#ffffff",
+        "onAccent": "#111318",
+        "primaryHover": "#010101",
+        "success": "#286044",
+        "successBg": "#edf5ef",
+        "warning": "#784511",
+        "warningBg": "#fbf2e4",
+        "error": "#a13040",
+        "errorBg": "#fbf0f1",
+        "info": "#315b7b",
+        "infoBg": "#edf3f8"
+      },
+      "checks": [
+        {
+          "label": "Body / surface",
+          "foreground": "#22221f",
+          "background": "#fffefd",
+          "contrast": 15.83,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Secondary / tint",
+          "foreground": "#5e5d5b",
+          "background": "#f0efec",
+          "contrast": 5.72,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Metadata / tint",
+          "foreground": "#6d6c6a",
+          "background": "#f0efec",
+          "contrast": 4.56,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Link / tint",
+          "foreground": "#030303",
+          "background": "#f0efec",
+          "contrast": 17.94,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Primary label",
+          "foreground": "#ffffff",
+          "background": "#030303",
+          "contrast": 20.62,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Accent label",
+          "foreground": "#111318",
+          "background": "#f8c521",
+          "contrast": 11.5,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Navigation label",
+          "foreground": "#f5f4f1",
+          "background": "#262523",
+          "contrast": 13.92,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Navigation secondary",
+          "foreground": "#bbbab8",
+          "background": "#262523",
+          "contrast": 7.9,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Active marker",
+          "foreground": "#f8c521",
+          "background": "#262523",
+          "contrast": 9.48,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Essential control border",
+          "foreground": "#91908d",
+          "background": "#fffefd",
+          "contrast": 3.17,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Icon / surface",
+          "foreground": "#5e5d5b",
+          "background": "#fffefd",
+          "contrast": 6.53,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Focus / surface",
+          "foreground": "#030303",
+          "background": "#fffefd",
+          "contrast": 20.47,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Success",
+          "foreground": "#286044",
+          "background": "#edf5ef",
+          "contrast": 6.64,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Warning",
+          "foreground": "#784511",
+          "background": "#fbf2e4",
+          "contrast": 7.12,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Error",
+          "foreground": "#a13040",
+          "background": "#fbf0f1",
+          "contrast": 6.25,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Information",
+          "foreground": "#315b7b",
+          "background": "#edf3f8",
+          "contrast": 6.45,
+          "minimum": 4.5,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "id": "brand_northstar",
+      "inputs": {
+        "primary": "#623c2c",
+        "accent": "#d8b17c"
+      },
+      "tokens": {
+        "primary": "#623c2c",
+        "accent": "#d8b17c",
+        "canvas": "#fcf6f4",
+        "surface": "#fffefd",
+        "elevated": "#ffffff",
+        "tint": "#f8ece7",
+        "line": "#dfd4cf",
+        "control": "#9d8f89",
+        "ink": "#291f1b",
+        "muted": "#675b56",
+        "subtle": "#746a66",
+        "link": "#623c2c",
+        "icon": "#675b56",
+        "focus": "#623c2c",
+        "chrome": "#1b0f0b",
+        "chromeRaised": "#31211b",
+        "chromeLine": "#4c3c35",
+        "chromeText": "#f9f3f0",
+        "chromeMuted": "#c2b8b4",
+        "chromeAccent": "#d8b17c",
+        "onPrimary": "#ffffff",
+        "onAccent": "#111318",
+        "primaryHover": "#583323",
+        "success": "#286044",
+        "successBg": "#edf5ef",
+        "warning": "#784511",
+        "warningBg": "#fbf2e4",
+        "error": "#a13040",
+        "errorBg": "#fbf0f1",
+        "info": "#315b7b",
+        "infoBg": "#edf3f8"
+      },
+      "checks": [
+        {
+          "label": "Body / surface",
+          "foreground": "#291f1b",
+          "background": "#fffefd",
+          "contrast": 15.96,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Secondary / tint",
+          "foreground": "#675b56",
+          "background": "#f8ece7",
+          "contrast": 5.66,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Metadata / tint",
+          "foreground": "#746a66",
+          "background": "#f8ece7",
+          "contrast": 4.54,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Link / tint",
+          "foreground": "#623c2c",
+          "background": "#f8ece7",
+          "contrast": 8.24,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Primary label",
+          "foreground": "#ffffff",
+          "background": "#623c2c",
+          "contrast": 9.54,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Accent label",
+          "foreground": "#111318",
+          "background": "#d8b17c",
+          "contrast": 9.29,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Navigation label",
+          "foreground": "#f9f3f0",
+          "background": "#31211b",
+          "contrast": 14.01,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Navigation secondary",
+          "foreground": "#c2b8b4",
+          "background": "#31211b",
+          "contrast": 7.92,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Active marker",
+          "foreground": "#d8b17c",
+          "background": "#31211b",
+          "contrast": 7.7,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Essential control border",
+          "foreground": "#9d8f89",
+          "background": "#fffefd",
+          "contrast": 3.1,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Icon / surface",
+          "foreground": "#675b56",
+          "background": "#fffefd",
+          "contrast": 6.5,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Focus / surface",
+          "foreground": "#623c2c",
+          "background": "#fffefd",
+          "contrast": 9.47,
+          "minimum": 3,
+          "pass": true
+        },
+        {
+          "label": "Success",
+          "foreground": "#286044",
+          "background": "#edf5ef",
+          "contrast": 6.64,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Warning",
+          "foreground": "#784511",
+          "background": "#fbf2e4",
+          "contrast": 7.12,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Error",
+          "foreground": "#a13040",
+          "background": "#fbf0f1",
+          "contrast": 6.25,
+          "minimum": 4.5,
+          "pass": true
+        },
+        {
+          "label": "Information",
+          "foreground": "#315b7b",
+          "background": "#edf3f8",
+          "contrast": 6.45,
+          "minimum": 4.5,
+          "pass": true
+        }
+      ]
+    }
+  ]
+}

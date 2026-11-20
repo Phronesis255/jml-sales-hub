@@ -1,0 +1,38 @@
+JML SOCIAL CONTENT OS — LOCAL PROTOTYPE
+
+1. Extract the whole ZIP. Keep the folder structure.
+2. Windows: double-click START WINDOWS.cmd. No Python or Node needed.
+   Keep its server window open while using the app.
+3. The browser opens http://127.0.0.1:18766/social-workspace.html
+   Close another package launcher first if that port is already occupied.
+
+Mac/Linux (Python 3 required): open Terminal in this folder and run:
+  python3 social-workspace/serve.py --port 18766
+
+For static web hosting, upload the contents of this folder. index.html opens
+the prototype. No build step, database or API keys are required.
+Use HTTP/HTTPS, rather than opening the HTML through file://.
+
+GET STARTED
+Choose Load full demo workspace, review and confirm the fictional examples.
+Switch person between Asha, Luca and Sam to explore their assignments,
+production, approval and publishing handoffs. Contextual demo loaders are
+available throughout. Sample CSV/XLSX files are included for bulk imports.
+
+WHAT IS INCLUDED
+All six workspace views, original Content Planner and Review, full Creative
+Brief Studio, related local resources, required media, licensed local fonts,
+sample imports, versions/history code, and the latest design/field refinements.
+The original working JavaScript/CSS are included directly; no compilation needed.
+
+LOCAL MEMORY
+Each recipient starts with independent browser memory. Existing edits and
+uploads from your browser are not files in this ZIP. To share that saved work,
+export a portable .jmlpack from Memory & backups and send it alongside this ZIP.
+The recipient restores it in Memory & backups. Keep using the same browser
+and address to retain changes. Publishing and live analytics remain simulated.
+
+The source README describes the development checkout on port 8766; use port
+18766 and the launcher above for this packaged copy.
+
+PACKAGE-MANIFEST.json lists every supplied file with its SHA-256 digest.

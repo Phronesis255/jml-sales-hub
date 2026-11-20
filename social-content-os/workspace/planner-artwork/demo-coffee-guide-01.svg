@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350" role="img" aria-labelledby="title desc">
+<title id="title">Fictional coffee guide — make the next batch simpler</title><desc id="desc">A warm cream and coffee-brown demo cover with a line drawing of a glass and three labelled brewing variables.</desc>
+<rect width="1080" height="1350" fill="#f6f0e7"/><rect x="72" y="72" width="936" height="1206" rx="24" fill="none" stroke="#623c2c" stroke-width="2"/>
+<text x="112" y="145" font-family="Arial,sans-serif" font-size="24" letter-spacing="4" fill="#623c2c">NORTHSTAR · FICTIONAL DEMO</text>
+<text x="112" y="300" font-family="Georgia,serif" font-size="79" fill="#35291f"><tspan x="112">Make your next</tspan><tspan x="112" dy="98">batch simpler.</tspan></text>
+<text x="112" y="485" font-family="Arial,sans-serif" font-size="29" fill="#6b594b">Three variables. One useful routine.</text>
+<path d="M402 625h276l-34 353H436z" fill="#d8b17c" stroke="#623c2c" stroke-width="8"/><path d="M414 704h252l-26 268H440z" fill="#623c2c"/><path d="M466 566c-42-47 41-60 0-110M546 566c-42-47 41-60 0-110M626 566c-42-47 41-60 0-110" fill="none" stroke="#b48b63" stroke-width="7" stroke-linecap="round"/>
+<text x="112" y="1088" font-family="Arial,sans-serif" font-size="28" font-weight="bold" fill="#623c2c">RATIO  /  GRIND  /  STEEP</text><text x="112" y="1150" font-family="Arial,sans-serif" font-size="27" fill="#6b594b">Save the guide. Change one variable.</text>
+<text x="112" y="1234" font-family="Arial,sans-serif" font-size="19" fill="#7b6c60">LOCAL PROTOTYPE ARTWORK · NOT A REAL CLIENT RELEASE</text>
+</svg>
