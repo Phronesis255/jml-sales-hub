@@ -142,16 +142,16 @@
   }
   function completeRoutineTasks(p,ids,actor){
     if(!Array.isArray(ids)||!ids.length)throw Error('Check at least one completed step.');
-    const selected=new Set(ids);
+    const selected=new Set(ids),ordered=[];
     for(const task of p.production?.tasks||[]){
       if(task.done)continue;
       if(!selected.has(task.id))break;
       if(task.gate)throw Error('Record the required sign-off separately before continuing.');
       if(task.owner!==actor)throw Error('Only the assigned producer can complete this step.');
-      selected.delete(task.id);
+      selected.delete(task.id);ordered.push(task.id);
     }
     if(selected.size)throw Error('Complete the earlier steps before saving later ones.');
-    for(const id of ids)finishTask(p,id,actor);
+    for(const id of ordered)finishTask(p,id,actor);
   }
   function saveFoundation(state,brandId,data,actor){
     const ops=account(state,brandId,true);
@@ -201,7 +201,7 @@
     let body;
     if(activePlanSection==='foundation'){
       const f=ops.foundation,core=[['Offer',f.business],['Audience',f.audience],['Scope',f.scope],['Client approver',f.finalApprover]];
-      const facts=rows=>'<dl class="ops-facts">'+rows.filter(([,v])=>v).map(([label,v])=>'<div><dt>'+esc(label)+'</dt><dd>'+esc(v)+'</dd></div>').join('')+'</dl>';
+      const facts=rows=>'<dl class="ops-facts full">'+rows.filter(([,v])=>v).map(([label,v])=>'<div><dt>'+esc(label)+'</dt><dd>'+esc(v)+'</dd></div>').join('')+'</dl>';
       body=U.lead(f.business?'The account brief':'Start with the essentials',f.priorities||'Agree on the offer, audience, goal, scope and client approver.',button(f.business?'Edit foundation':'Set up foundation','foundation','','primary'))+
         facts(core)+U.optional('Brand materials and delivery details',facts([['Brand references',f.brandBook],['Available media',f.media],['Access and missing inputs',f.access],['Team',f.team],['Community owner',f.communityOwner],['Weekly capacity',f.weeklyCapacity]]))+
         card('Client confirmation','Approve the saved brief before strategy work.',versionList(ops,'foundation'))+
@@ -261,9 +261,11 @@
     if(configured)body+=card('Production handoff','The exact brief revision stays with its tasks.', '<div class="ops-facts">'+[['Placement',spec.placement],['Hook',spec.hook],['Output specifications',spec.output],['Delivery package',spec.deliveryPackage],['Acceptance & review',spec.acceptance],['Delivery deadline',spec.deliveryDue],['Production timezone',spec.productionTimezone],['Source references',spec.references]].map(([k,v])=>'<div><small>'+esc(k)+'</small><p>'+human(v)+'</p></div>').join('')+'</div>');
     if(configured){
       const coverage=calendarCoverage(ctx.state,p),needsBrief=p.planApproval?.revision!==p.briefRevision;
+      const setup=body;body='';
       body+=p.strategyVersionId?briefGuidance(ctx,p):'';
       body+=card('Ready for production',started?'Working from brief revision '+p.briefRevision:'',gaps.length?'<ul class="ops-issues">'+gaps.map(g=>'<li>'+esc(g==='Current brief needs plan approval'?status.acceptor+' must accept the production brief':g)+'</li>').join('')+'</ul><div class="actions">'+link(p,'brief','Edit brief & approval')+link(p,'requests','Manage inputs')+'</div>':'<p>The brief, permissions, timing and inputs are ready.</p>',!gaps.length&&!started&&(!root.JMLGovernance||root.JMLGovernance.can(ctx.state,ctx.ui,'produce',p))?small('Start production','start',p.id):!p.strategyVersionId&&needsBrief&&coverage&&status.canAccept?small('Accept production brief','brief-ready',p.id):'');
-      body+=productionChecklist(ctx,p);
+      const readinessInfo=body;
+      body=(!started||gaps.length?readinessInfo:'')+U.summary('Creative direction',spec.instructions+(spec.output?' · Deliver: '+spec.output:''))+productionChecklist(ctx,p)+U.optional('Production brief and approved plan','<div class="full">'+setup+(started&&!gaps.length?readinessInfo:'')+'</div>');
     }
     if(p.requests.length)body+=card('Supplied media','Attach accepted files to the request that needs them.',p.requests.map(r=>row(r.title,r.state+' · '+(r.acceptedMedia?.name||r.owner),'<div class="actions">'+small('Attach input','supply',r.id)+(r.acceptedMedia?small('Download file','download-input',r.id)+small('Request correction','correct-input',r.id):'')+'</div>')).join(''));
     const draft=C.latest(p);

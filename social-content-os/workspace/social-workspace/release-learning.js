@@ -192,7 +192,7 @@
         (rows.length?'<div class="rl-pad">'+meta(rows.length+' source observations · '+rows.filter(o=>o.value===null).length+' unknown values')+action('compare','Compare observations')+' '+action('rate','Calculate rate')+' '+action('export-evidence','Export evidence')+'</div>':''),
         '<div class="rl-controls">'+action('observe','Single measure')+action('import','Import file')+'</div>')+
       (D.legacyCandidates(ctx.state,brand()).metrics.length?panel('Earlier post observations',meta('Bring '+D.legacyCandidates(ctx.state,brand()).metrics.length+' saved post records into the shared evidence register.'),action('legacy-metrics','Bring in observations')):'')+
-      panel('Evidence imports',batches.length?batches.map(b=>summaryRow(b.name,utcDisplay(b.at)+' · '+b.actor+' · '+b.count+' saved / '+b.duplicates+' duplicates / '+b.overlaps+' overlapping windows')).join(''):meta('Import history appears here after the first file or manual entry.'),action('fixture','Load sample evidence'));
+      U.optional('Evidence imports and sample data',panel('Evidence imports',batches.length?batches.map(b=>summaryRow(b.name,utcDisplay(b.at)+' · '+b.actor+' · '+b.count+' saved / '+b.duplicates+' duplicates / '+b.overlaps+' overlapping windows')).join(''):meta('Import history appears here after the first file or manual entry.'),action('fixture','Load sample evidence')));
   }
   function workList(){
     const list=items('work').filter(w=>can('coordinate',w)||can('analyze',w)||can('strategy',w)||(w.ownerPersonId?w.ownerPersonId===ctx.ui.personId:w.owner===actor())).slice().reverse();
@@ -201,7 +201,7 @@
   function resultText(c){return c.result===null?'Unavailable':c.result.toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:1})+' '+c.definition.unit;}
   function savedResults(){
     const rows=items('calculations').slice().reverse();
-    return panel('Measured outcomes',rows.length?rows.map(c=>summaryRow(c.definition.title+' · '+resultText(c),c.account+' · '+c.start+' – '+c.end+' · definition v'+c.definition.version,action('calculation','Inspect result',c.id)+' '+action('report-from-result','Draft report',c.id),badge(kindText(c.origin)))).join(''):empty('Turn evidence into the next test','Save a result against a versioned KPI, compare its baseline, then propose the next brief, strategy or calendar change.'),can('analyze')?action('calculate-kpi','Calculate from existing evidence'):'');
+    return panel('Measured outcomes',rows.length?'<div class="outcome-list">'+rows.map(c=>'<article class="outcome-row"><div>'+badge(kindText(c.origin))+'<h3>'+esc(c.definition.title)+'</h3><p class="task-outcome">'+esc(resultText(c))+'</p><p>'+esc(c.account+' · '+c.start+' – '+c.end)+'</p>'+meta(c.unavailable||(c.delta===null?'Baseline comparison unavailable':(c.delta>=0?'+':'')+c.delta.toFixed(1)+' versus baseline'))+'</div><div class="actions">'+action('calculation','Inspect result',c.id)+' '+(can('analyze')||can('coordinate')?action('report-from-result','Draft report',c.id):'')+'</div></article>').join('')+'</div>':empty('Turn evidence into the next test','Record a placement’s counts to calculate its agreed KPI, then draft a report.'),can('analyze')?action('calculate-kpi','Calculate from existing evidence'):'');
   }
   function kpiForm(){
     allow('analyze');
@@ -225,7 +225,7 @@
   }
   function calculationDetail(id){
     const c=record('calculations',id),base=c.baseline||{};
-    show(c.definition.title,'<div class="rl-controls">'+badge(kindText(c.origin))+badge('Definition v'+c.definition.version)+'</div><h3>'+esc(resultText(c))+'</h3>'+meta(c.unavailable||'Formula: '+number(c.numerator.value)+(c.denominator?' ÷ '+number(c.denominator.value)+' × '+c.scale:''))+
+    show(c.definition.title,'<div class="rl-controls">'+badge(kindText(c.origin))+badge('Definition v'+c.definition.version)+'</div><h3 class="task-outcome">'+esc(resultText(c))+'</h3>'+meta(c.unavailable||'Formula: '+number(c.numerator.value)+(c.denominator?' ÷ '+number(c.denominator.value)+' × '+c.scale:''))+
       '<dl class="rl-grid">'+[['Baseline',c.baselineValue===null?'Not established':number(c.baselineValue)+' '+c.definition.unit],['Difference',c.delta===null?'Not comparable':(c.delta>=0?'+':'')+c.delta.toFixed(2)],['Baseline source',base.source||'Not recorded'],['Baseline scope',[base.window,base.sampleSize&&'n='+base.sampleSize,base.distribution].filter(Boolean).join(' · ')||'Not recorded']].map(([k,v])=>'<div><dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd></div>').join('')+'</dl>'+evidenceTable([c.numerator,...(c.denominator?[c.denominator]:[])])+meta('Saved by '+c.actor+' · '+utcDisplay(c.createdAt))+
       meta(c.comparisonNote||'')+action('report-from-result','Draft report from this result',id,'primary')+((can('strategy')||can('coordinate'))?action('propose-next','Propose the next test',id,'primary'):'')+action('calculation-export','Export result',id));
   }
@@ -249,17 +249,17 @@
       (learnTab==='Results'?resultView():learnTab==='Growth'?workList():reports());
   }
   function measurementForm(placementId=''){
-    const placements=items('placements').filter(p=>p.state!=='cancelled');
-    if(!placements.length){ctx.toast('Prepare a placement first, or use Single measure for account-level evidence.');return;}
+    const placements=items('placements').filter(p=>p.state==='verified');
+    if(!placements.length){ctx.toast('Verify a release first, or use Single measure for account-level evidence.');return;}
     const p=placements.find(p=>p.id===placementId)||placements.at(-1),post=ctx.scoped().find(x=>x.id===p.contentId),definition=currentBrand().operations?.kpis?.find(k=>k.id===post?.measurementDefinitionId);
     const day=ctx.C.localDate(p.timezone,p.verification?.actualAt||p.scheduledAt),days=Number(definition?.window?.match(/^(\d+)[ -]?day/i)?.[1]||7),end=ctx.C.addDays(day,days-1),primary=[...new Set([definition?.numerator,definition?.denominator,'views','saves','clicks'].filter(Boolean))];
-    const count=(key)=>input(D.rawMeasures[key].label,'value-'+key,'','number',false).replace('<input ','<input placeholder="Unknown" ');
+    const count=(key)=>input(D.rawMeasures[key].label,'value-'+key,'','number',false).replace('<input ','<input '+(key==='netfollowers'?'':'min="0" ')+'placeholder="Unknown" ');
     // Render the complete form once with the selected placement's inherited values.
     form('Record placement results','measure-batch',
-      U.section('Placement and reporting period','One source covers the counts below.',select('placementId','Placement',placements.map(p=>[p.id,contentName(p.contentId)+' · '+p.account+' · '+modeText(p)]),p.id)+input('Period start','start',day,'date')+input('Period end','end',end,'date')+input('Source export or evidence reference','source',p.mode==='simulation'?'Local sample data':''))+
+      U.section('Placement and reporting period','One source covers the counts below.',select('Placement','placementId',placements.map(p=>[p.id,contentName(p.contentId)+' · '+p.account+' · '+modeText(p)]),p.id)+input('Period start','start',day,'date')+input('Period end','end',end,'date')+input('Source export or evidence reference','source',p.mode==='simulation'?'Local sample data':''))+
       U.summary(p.mode==='simulation'?'Sample data':'Recorded performance',p.account+' · '+p.timezone+' · '+(definition?definition.title+' will be calculated from these counts.':'No agreed KPI is linked; the source counts will still be saved.'))+
       U.section('Measured values','Blank means unknown. Enter 0 only when the measured value is zero.','<div class="measurement-values full">'+primary.map(count).join('')+'</div>')+
-      U.optional('Other measures and collection details','<div class="measurement-values full">'+Object.keys(D.rawMeasures).filter(k=>!primary.includes(k)).map(count).join('')+'</div>'+input('Collected on','collectedAt',today()<end?end:today(),'date')+select('Distribution','segment',['organic','paid','mixed'],(definition?.distribution||'Organic').toLowerCase())+select('Aggregation','aggregation',['period','lifetime'],'period')+check('Save corrected values as a new evidence revision.','replace')),
+      U.optional('Other measures and collection details','<div class="measurement-values full">'+Object.keys(D.rawMeasures).filter(k=>!primary.includes(k)).map(count).join('')+'</div>'+input('Collected on','collectedAt',p.mode==='simulation'&&today()<end?end:today(),'date')+select('Distribution','segment',['organic','paid','mixed'],(definition?.distribution||'Organic').toLowerCase())+select('Aggregation','aggregation',['period','lifetime'],'period')+check('Save corrected values as a new evidence revision.','replace')),
       'Save counts and calculate KPI','','The source observations and calculated result are saved together. Future reporting dates are not proof of measured results.');
     document.querySelector('[data-rl-form="measure-batch"]').dataset.primary=JSON.stringify(primary);
   }
@@ -337,20 +337,19 @@
     const summary=c?c.definition.title+': '+resultText(c)+(c.baselineComparable&&c.delta!==null?'; baseline '+c.baselineValue+' '+c.definition.unit+', change '+(c.delta>=0?'+':'')+number(c.delta)+'.':'.'):'';
     const limits=c?[c.origin==='fixture'?'Sample data only; no real audience results.':'',c.unavailable,c.comparisonNote].filter(Boolean).join(' '):'';
     form('Draft a client report','report-create',
-      U.summary('Included automatically',start+' – '+end+' · '+(c?c.definition.title+' and its saved evidence.':'Observations and saved outcomes in this period.'))+
+      (resultId?'<input type="hidden" name="calculationId" value="'+esc(resultId)+'">':'')+U.summary('Included automatically',start+' – '+end+' · '+(c?c.definition.title+' and its saved evidence.':'Observations and saved outcomes in this period.'))+
       U.section('The story and next decision','The measured results are included; add your interpretation.',area('What do the results tell us?','summary',summary)+area('What are the limits?','gaps',limits)+area('What should the client decide?','ask'))+
       U.optional('Report settings and private notes',input('Report title','title',currentBrand().name+' · Results '+end)+input('Reviewer','reviewer',actor())+input('Period start','start',start,'date')+input('Period end','end',end,'date')+select('Evidence set','origin',evidenceOptions(),c?.origin||evidenceFilter||defaultEvidenceOrigin())+area('Internal notes — not shared','internal','',false)),
-      'Save report for review','','Includes all matching results and observations in this reporting period. The report stays private until reviewed.');
+      'Save report for review','',resultId?'Includes this saved result and its original source evidence. The report stays private until reviewed.':'Includes all matching results and observations in this reporting period. The report stays private until reviewed.');
   }
   function reportDetail(id,client=false){
     const r=record('reports',id);
+    const narrative=(title,text)=>'<section class="report-narrative"><h3>'+esc(title)+'</h3><p>'+esc(text)+'</p></section>';
     let body='<div class="rl-controls">'+badge('Version '+r.version)+badge(r.status)+badge(kindText(r.origin))+'</div>'+meta(r.start+' – '+r.end+' · '+r.actor)+
-      '<h3>Findings and progress</h3><p>'+esc(r.summary)+'</p>'+evidenceTable(r.observations)+
-      ((r.calculations||[]).length?'<h3>Measured outcomes</h3>'+r.calculations.map(c=>summaryRow(c.definition.title,resultText(c)+' · baseline '+(c.baselineValue===null?'not established':c.baselineValue)+' · '+(c.baseline.source||'source not recorded')+' · definition v'+c.definition.version)).join(''):'')+'<h3>Delivered work</h3>'+
-      (r.deliveries.length?r.deliveries.map(d=>meta(d.title+' · '+d.account+' · '+utcDisplay(d.actualAt))).join(''):meta('No verified placements in this period.'))+
-      '<h3>Coverage and limitations</h3><p>'+esc(r.gaps)+'</p><h3>Decision needed</h3><p>'+esc(r.ask)+'</p>'+
-      (r.findings.length?'<h3>Reviewed evidence</h3>'+r.findings.map(f=>summaryRow(f.title,f.detail+' · '+f.evidence)).join(''):'')+
-      (!client&&r.internal?'<h3>Internal notes</h3><p>'+esc(r.internal)+'</p>':'');
+      ((r.calculations||[]).length?'<section class="report-narrative"><h3>Measured outcomes</h3>'+r.calculations.map(c=>'<div class="report-result"><strong>'+esc(c.definition.title)+'</strong><p class="task-outcome">'+esc(resultText(c))+'</p>'+meta('Baseline '+(c.baselineValue===null?'not established':c.baselineValue)+' · '+(c.delta===null?'Not comparable':'Change '+(c.delta>=0?'+':'')+number(c.delta))+' · definition v'+c.definition.version)+meta(c.account+' · '+c.source)+'</div>').join('')+'</section>':'')+
+      narrative('What the results tell us',r.summary)+narrative('Coverage and limitations',r.gaps)+narrative('Decision needed',r.ask)+
+      U.optional('Source evidence and delivered work','<div class="full">'+evidenceTable(r.observations)+'<h3>Delivered work</h3>'+(r.deliveries.length?r.deliveries.map(d=>meta(d.title+' · '+d.account+' · '+utcDisplay(d.actualAt))).join(''):meta('No verified placements in this period.'))+(r.findings.length?'<h3>Reviewed evidence</h3>'+r.findings.map(f=>summaryRow(f.title,f.detail+' · '+f.evidence)).join(''):'')+'</div>')+
+      (!client&&r.internal?U.optional('Internal notes — not shared','<p class="full">'+esc(r.internal)+'</p>'):'');
     if(!client)body+='<div class="rl-controls">'+(r.status==='Draft'?action('report-review','Review snapshot',id,'primary'):action('report-feedback','Record client decision',id,'primary')+action('report-client','Client preview',id)+action('report-export','Export client report',id))+'</div>'+
       (r.feedback.length?'<h3>Client decisions</h3>'+r.feedback.map(f=>meta(f.note+' · '+f.actor+' · '+utcDisplay(f.at))).join(''):'');
     else body+='<div class="rl-controls">'+action('print-report','Print report',id)+'</div>';

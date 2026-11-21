@@ -332,15 +332,17 @@
   function snapshot(state,brandId,f,actor){
     requireValue(date(f.start)&&date(f.end)&&f.start<=f.end,'Choose a valid reporting window.');requireValue(origins.includes(f.origin),'Choose evidence type.');
     if(brandId==='demo')requireValue(f.origin==='fixture','Choose fixture evidence in Demo studio.');
-    const db=data(state), previous=db.reports.filter(r=>r.brandId===brandId&&r.start===f.start&&r.end===f.end&&r.origin===f.origin).at(-1);
-    const observations=db.observations.filter(o=>o.brandId===brandId&&!o.supersededBy&&o.origin===f.origin&&o.start>=f.start&&o.end<=f.end);
-    const delivery=db.placements.filter(p=>p.brandId===brandId&&p.state==='verified'&&(p.mode==='simulation')===(f.origin==='fixture')&&releaseDate(p,p.verification.actualAt)>=f.start&&releaseDate(p,p.verification.actualAt)<=f.end);
+    const db=data(state),selected=f.calculationId?entry(state,'calculations',brandId,f.calculationId):null;
+    if(selected)requireValue(selected.origin===f.origin&&selected.start>=f.start&&selected.end<=f.end,'Keep the selected result within the report period and evidence set.');
+    const previous=db.reports.filter(r=>r.brandId===brandId&&r.start===f.start&&r.end===f.end&&r.origin===f.origin&&(r.calculationId||'')===(f.calculationId||'')).at(-1);
+    const observations=selected?[selected.numerator,...(selected.denominator?[selected.denominator]:[])]:db.observations.filter(o=>o.brandId===brandId&&!o.supersededBy&&o.origin===f.origin&&o.start>=f.start&&o.end<=f.end);
+    const delivery=db.placements.filter(p=>p.brandId===brandId&&p.state==='verified'&&(!selected||p.id===selected.placementId)&&(p.mode==='simulation')===(f.origin==='fixture')&&releaseDate(p,p.verification.actualAt)>=f.start&&releaseDate(p,p.verification.actualAt)<=f.end);
     const names=state.posts.filter(p=>p.brandId===brandId);
     const report={id:C.id('report'),brandId,title:clean(f.title,'a report title',true),version:previous?previous.version+1:1,previous:previous?.id||null,
-      start:f.start,end:f.end,origin:f.origin,actor,createdAt:C.now(),summary:clean(f.summary,'findings',true),gaps:clean(f.gaps,'limitations',true),ask:clean(f.ask,'the decision needed',true),
+      start:f.start,end:f.end,origin:f.origin,calculationId:selected?.id||'',actor,createdAt:C.now(),summary:clean(f.summary,'findings',true),gaps:clean(f.gaps,'limitations',true),ask:clean(f.ask,'the decision needed',true),
       internal:clean(f.internal,'internal notes'),reviewer:clean(f.reviewer,'a reviewer',true),status:'Draft',feedback:[],approval:null,
       observations:C.clone(observations),deliveries:delivery.map(p=>({id:p.id,title:names.find(x=>x.id===p.contentId)?.title||p.contentId,platform:p.platform,account:p.account,versionId:p.versionId,actualAt:p.verification.actualAt})),
-      calculations:C.clone((db.calculations||[]).filter(c=>c.brandId===brandId&&c.origin===f.origin&&c.start>=f.start&&c.end<=f.end)),
+      calculations:C.clone(selected?[selected]:(db.calculations||[]).filter(c=>c.brandId===brandId&&c.origin===f.origin&&c.start>=f.start&&c.end<=f.end)),
       findings:C.clone(db.work.filter(w=>w.brandId===brandId&&w.kind==='Finding'&&w.origin===f.origin&&w.due>=f.start&&w.due<=f.end))};
     db.reports.push(report);audit(state,brandId,'Report snapshot created',report.id,actor,report.title);return report;
   }
@@ -428,19 +430,25 @@
     origin=sample?'fixture':origin||'recorded';
     return {account:brand?.name||'',source:origin==='fixture'?'Local sample data':'',metric:measure.label,definition:measure.definition,unit:measure.unit,start:day,end:day,collectedAt:day,timezone:brand?.timezone||Intl.DateTimeFormat().resolvedOptions().timeZone,segment:(definition?.distribution||'Organic').toLowerCase(),aggregation:'period',origin,contentId:'',placementId:''};
   }
+  function matchesChannel(state,brandId,definition,observation){
+    return !definition.channel||!!observation.contentId&&sourcePost(state,brandId,observation.contentId).platform.toLowerCase()===definition.channel.toLowerCase();
+  }
   function compatibleObservations(state,brandId,definitionId,origin,numeratorId=''){
     const definition=state.brands.find(b=>b.id===brandId)?.operations?.kpis?.find(k=>k.id===definitionId);
     if(!definition)return {primary:[],comparison:[]};
     const windowDays=String(definition.window||'').match(/^(\d+)[ -]?day/i);
-    const rows=read(state).observations.filter(o=>o.brandId===brandId&&!o.supersededBy&&o.origin===origin&&(!definition.distribution||definition.distribution.toLowerCase()===o.segment)&&(!windowDays||(Date.parse(o.end)-Date.parse(o.start))/86400000+1===Number(windowDays[1]))&&(!o.contentId||!sourcePost(state,brandId,o.contentId).measurementDefinitionId||sourcePost(state,brandId,o.contentId).measurementDefinitionId===definition.id));
+    const rows=read(state).observations.filter(o=>o.brandId===brandId&&!o.supersededBy&&o.origin===origin&&matchesChannel(state,brandId,definition,o)&&(!definition.distribution||definition.distribution.toLowerCase()===o.segment)&&(!windowDays||(Date.parse(o.end)-Date.parse(o.start))/86400000+1===Number(windowDays[1]))&&(!o.contentId||!sourcePost(state,brandId,o.contentId).measurementDefinitionId||sourcePost(state,brandId,o.contentId).measurementDefinitionId===definition.id));
     const primary=rows.filter(o=>matchingMeasure(o,definition.numerator)),selected=primary.find(o=>o.id===numeratorId)||primary[0];
     return {primary,comparison:definition.denominator&&selected?rows.filter(o=>matchingMeasure(o,definition.denominator)&&sameEvidenceScope(selected,o)):[]};
   }
   function recordMeasurements(state,brandId,fields,values,actor){
     const placement=entry(state,'placements',brandId,fields.placementId),p=sourcePost(state,brandId,placement.contentId);
     const definition=state.brands.find(b=>b.id===brandId)?.operations?.kpis?.find(k=>k.id===p.measurementDefinitionId);
+    requireValue(placement.state==='verified','Verify the release before recording its results. Use Single measure for account-level evidence.');
     const origin=placement.mode==='simulation'?'fixture':'recorded';
+    if(origin==='recorded')requireValue(fields.end<=C.localDate(placement.timezone)&&fields.collectedAt<=C.localDate(placement.timezone),'Recorded measurements cannot use future reporting or collection dates.');
     const keys=Object.keys(values);requireValue(keys.length&&keys.every(k=>rawMeasures[k]),'Choose supported raw measures.');
+    requireValue(keys.every(key=>key==='netfollowers'||values[key]==null||String(values[key]).trim()===''||Number(values[key])>=0),'Counts cannot be negative. Use Net follower change for follows minus unfollows.');
     const rows=keys.map(key=>({...fields,brandId,account:placement.account,contentId:p.id,placementId:placement.id,timezone:placement.timezone,origin,metric:rawMeasures[key].label,definition:rawMeasures[key].definition,unit:rawMeasures[key].unit,value:values[key]}));
     // Validate on a copy: a missing KPI component or changed value cannot partly save a batch.
     const next=C.clone(state),batch=ingest(next,brandId,rows,{name:fields.source,format:'manual-batch',replace:fields.replace===true},actor);
@@ -462,6 +470,7 @@
     const a=entry(state,'observations',brandId,fields.numeratorId),b=definition.denominator?entry(state,'observations',brandId,fields.denominatorId):null;
     const content=a.contentId?sourcePost(state,brandId,a.contentId):null;
     requireValue(!content?.measurementDefinitionId||content.measurementDefinitionId===definition.id,'This content is measured against its pinned KPI definition. Choose that exact version.');
+    requireValue(matchesChannel(state,brandId,definition,a),'Choose content from the channel in this KPI definition.');
     requireValue(matchingMeasure(a,definition.numerator)&&(!b||matchingMeasure(b,definition.denominator)),'Choose source measures and units that match this KPI definition.');
     requireValue(!a.supersededBy&&(!b||!b.supersededBy),'Use the current evidence revisions. Historical calculations remain preserved.');
     if(b)requireValue(sameEvidenceScope(a,b),'Choose distinct observations from the same source, account, content, window, distribution and evidence type.');
