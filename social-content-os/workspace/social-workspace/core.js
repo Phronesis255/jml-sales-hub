@@ -168,9 +168,7 @@
     const v=latest(p),gaps=readiness(p);
     if(p.brief.productionSpec && !p.production)gaps.push('Confirm the production route after restoring this brief');
     if(p.production){
-      const producer=p.production.producer||'The producer',left=p.production.tasks.filter(t=>!t.done).length;
-      if(p.production.startedRevision!==p.briefRevision)gaps.push(producer+' needs to start production for brief revision '+p.briefRevision);
-      if(left)gaps.push(producer+' needs to finish '+left+' production checklist step'+(left===1?'':'s'));
+      // The production checklist is an optional to-do; internal QA never waits on it.
       if(p.production.qcReviewer && actor!==p.production.qcReviewer)gaps.push('Record internal QA as '+p.production.qcReviewer);
       gaps.push(...permissionGaps(p));
     }
@@ -178,7 +176,7 @@
     if(v.briefRevision!==p.briefRevision)gaps.push('Create a new version for the current brief');
     if(!v.caption.trim())gaps.push('Caption is missing');
     if(!v.assets.length && p.format!=='Text post')gaps.push('Content files are missing');
-    if(!qcKeys.every(k=>checks[k]))gaps.push('Tick all '+qcKeys.length+' internal QA checks');
+    if(!qcKeys.every(k=>checks[k]))gaps.push('Confirm the internal check');
     if(v.internalFailure)gaps.push('Submit a revised creative version after the internal QA failure');
     if(['approved','in-review','changes-requested'].includes(v.state))gaps.push('Create a new version before resubmitting');
     if(gaps.length)throw Error(gaps.length===1?gaps[0]+'.':'Not sent yet:\n• '+gaps.join('\n• '));

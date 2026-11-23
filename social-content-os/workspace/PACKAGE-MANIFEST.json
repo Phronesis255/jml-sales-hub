@@ -1450,8 +1450,8 @@
     },
     {
       "path": "social-workspace/app.js",
-      "bytes": 88953,
-      "sha256": "4d0abb89e96611fb3c5e03ed47d81cdcf7992e870bb4e7e16fbef1ddcf83b20f"
+      "bytes": 95011,
+      "sha256": "6983e9fcad809c90f8216b8d17b696259f9e0a449ff2c2769a0e3d549309ef5c"
     },
     {
       "path": "social-workspace/attention.js",
@@ -1485,8 +1485,8 @@
     },
     {
       "path": "social-workspace/core.js",
-      "bytes": 22233,
-      "sha256": "690f3c8397ec8e87fa4d8661cf7343583d3fce7ea212a773d6223d071b749f9a"
+      "bytes": 21942,
+      "sha256": "16f1d63b3a44b80cb4a794d7a388fd3a7f09a6a9fe34bcc2cffbd76221eeab0f"
     },
     {
       "path": "social-workspace/demo-data.js",
@@ -1555,8 +1555,8 @@
     },
     {
       "path": "social-workspace/governance.js",
-      "bytes": 75668,
-      "sha256": "1e5f0d8c97908f7433c4886655b5898350a94f32fb57c7a5a4d6fc1e3ca2a439"
+      "bytes": 76241,
+      "sha256": "81c0db1d8e3b3e1b85e08ab6fcb8adc37db04f5265cb6cdfaa536252319ffd4c"
     },
     {
       "path": "social-workspace/jml-mark.svg",
@@ -1575,8 +1575,8 @@
     },
     {
       "path": "social-workspace/navigation.js",
-      "bytes": 5952,
-      "sha256": "ab43cf8ab9a03ed629ba230208d847b2241b329aabecdceab9d64fc1f6fedd26"
+      "bytes": 5773,
+      "sha256": "2ac4f71953b31bbcba7040179465cf48052dd4115aa1501e9058a8959fd1ad46"
     },
     {
       "path": "social-workspace/operations.css",
@@ -1585,8 +1585,8 @@
     },
     {
       "path": "social-workspace/operations.js",
-      "bytes": 76827,
-      "sha256": "6d27342ff6071d3126510b350624dfb983f82ea28802e24f93ee44228111a5df"
+      "bytes": 79857,
+      "sha256": "8b8ca07c201664634ffdc18023c5359816f63fe625fa84873946c881e7312a27"
     },
     {
       "path": "social-workspace/personas.css",
@@ -1595,8 +1595,8 @@
     },
     {
       "path": "social-workspace/personas.js",
-      "bytes": 24169,
-      "sha256": "4b3e797e8383f6cf7d75ae80b63fe35533ba274fbc73a97695feafb63f246dad"
+      "bytes": 24134,
+      "sha256": "f009e6c357786fc1364b19500e9cfeee0a50dac69056fa40f2b3c05f4d7f4ac5"
     },
     {
       "path": "social-workspace/planner-frame.js",
@@ -1650,8 +1650,8 @@
     },
     {
       "path": "social-workspace/release-learning.js",
-      "bytes": 75570,
-      "sha256": "ae51ac9b613132fbfd00138235e85ddf9fde0d2d22b45985467ba21a660b304d"
+      "bytes": 76499,
+      "sha256": "3fe93d22c82b41891af64e418ff097c93cefbf1abb86ca4d19da98fc18c9af5f"
     },
     {
       "path": "social-workspace/research.css",
@@ -1700,8 +1700,8 @@
     },
     {
       "path": "social-workspace.html",
-      "bytes": 3580,
-      "sha256": "6a4b3685e5ed3faba8625b9618ca9d3d13bf10f8afa9504aa01faa5088b36b28"
+      "bytes": 3595,
+      "sha256": "cff500b6e3a15462008f0f40596f32c8aefc2d3d3eea0c3075ae0e27c1cc7cb7"
     }
   ]
 }

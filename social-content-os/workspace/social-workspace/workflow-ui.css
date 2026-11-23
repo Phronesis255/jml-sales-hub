@@ -232,3 +232,69 @@ dialog.wide {width:min(1040px,calc(100vw - 32px))}
 .ux-step,.ux-step>a {flex-direction:column;align-items:flex-start;gap:6px}
 .ux-step-text {background:none!important;padding:0 8px 0 0}
 @media(max-width:760px){.ux-step,.ux-step>a{flex-direction:row;align-items:center}}
+/* Simplified handoff */
+.sample-steps {margin:0 0 14px;padding-left:20px;display:grid;gap:6px;font-size:14px}
+.qa-actions {gap:8px}
+.content-tabs {scrollbar-width:none;gap:20px}
+.content-tabs::-webkit-scrollbar {display:none}
+.version-meta {display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;color:var(--muted)}
+.version-meta p {flex-basis:100%;margin:4px 0 0;color:var(--ink)}
+.requested-changes {align-items:center;margin-bottom:20px}
+.requested-changes .requested-comment {font-size:15px;color:var(--ink);margin:6px 0}
+
+/* Collapsible sections: card-style accordions with a chevron, title and a short summary on the right */
+.task-options {border:1px solid var(--line)!important;border-radius:8px;background:var(--paper);padding:0!important;margin:12px 0!important;overflow:hidden}
+.task-options>summary {list-style:none;display:flex;align-items:center;gap:12px;padding:14px 18px!important;margin:0!important;min-height:52px;cursor:pointer;font:600 14px/1.4 var(--sans);color:var(--ink)}
+.task-options>summary::-webkit-details-marker {display:none}
+.task-options>summary::before {content:'';flex-shrink:0;width:7px;height:7px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:transform .15s ease;margin:0 2px}
+.task-options[open]>summary::before {transform:rotate(45deg)}
+.task-options>summary:hover {background:var(--mist)}
+.task-options[open]>summary {border-bottom:1px solid var(--line)}
+.task-options>summary .opt-title {flex:1;min-width:0}
+.task-options>summary .opt-meta {font:500 12px/1.3 var(--sans);color:var(--muted);text-align:right}
+.task-options>.form-grid {padding:16px 18px}
+.task-options .task-note {margin-top:0}
+/* Cards nested inside a section lose their own frame */
+.task-options .ops-panel {border:0;border-radius:0;box-shadow:none;background:none}
+.task-options .ops-panel+.ops-panel {border-top:1px solid var(--line)}
+.task-options .ops-panel .panel-head {padding-left:0;padding-right:0}
+.task-options .ops-panel .panel-body {padding-left:0;padding-right:0}
+.task-options .task-options {background:var(--mist);margin:8px 0 0!important}
+/* Media requests */
+.request-list {display:grid;gap:12px}
+.request-card {background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:16px 18px;display:grid;gap:10px}
+.request-head {display:flex;align-items:center;justify-content:space-between;gap:12px}
+.request-head strong {font-size:15px}
+.request-card>p {margin:0;font-size:12px}
+.request-file {display:flex;gap:12px;align-items:center;background:var(--mist);border-radius:6px;padding:10px}
+.request-file img {width:72px;height:72px;object-fit:cover;border-radius:4px}
+.request-file-icon {width:48px;height:48px;display:grid;place-items:center;background:var(--soft);border-radius:4px}
+.request-file div {display:grid;gap:2px}
+.request-file small {color:var(--muted);font-size:11px}
+.request-file .link-btn {padding:2px 0}
+.request-thread>summary {cursor:pointer;font-size:12px;color:var(--muted)}
+.request-thread p {white-space:pre-wrap;font-size:12px;margin:8px 0 0}
+.request-card .actions {gap:8px;align-items:center}
+.rl-place-preview[hidden] {display:none!important}
+/* Calendar approval bar and rejection alert */
+.cal-bar {display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 22px;margin:0 0 12px;background:var(--paper);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:8px}
+.cal-bar h2 {font:600 17px/1.35 var(--sans);margin:2px 0 4px}
+.cal-bar p {font-size:13px;margin:0;max-width:75ch}
+.cal-bar .eyebrow {margin:0}
+.cal-bar.ok {border-left-color:var(--green)}
+.cal-bar.wait {border-left-color:var(--warn)}
+.cal-bar.urgent {border-left-color:var(--error);background:#fff4f4;border-color:#f0c4c4}
+.cal-bar.urgent h2 {color:var(--error)}
+.cal-bar.urgent p {color:var(--ink);font-size:15px}
+.cal-bar .actions {flex-shrink:0}
+.cal-how {margin:0 0 10px;padding-left:20px;display:grid;gap:6px;font-size:13px}
+.cal-alert {display:flex;align-items:center;gap:14px;padding:16px 20px;margin:0 0 20px;background:#fff4f4;border:1px solid #f0c4c4;border-left:5px solid var(--error);border-radius:8px}
+.cal-alert>svg {color:var(--error);width:22px;height:22px}
+.cal-alert>div {flex:1;min-width:0}
+.cal-alert strong {color:var(--error);font-size:15px}
+.cal-alert p {color:var(--ink);font-size:14px;margin:4px 0}
+.cal-alert small {color:var(--muted)}
+.attention-urgent {background:#fff4f4;border-left:4px solid var(--error)}
+.attention-urgent strong {color:var(--error)}
+.attention-urgent>svg:first-child {color:var(--error)}
+@media(max-width:760px){.cal-bar,.cal-alert{flex-direction:column;align-items:flex-start}}

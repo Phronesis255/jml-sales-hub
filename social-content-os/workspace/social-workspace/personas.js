@@ -137,10 +137,10 @@
     else {
       const waiting=[...data.plans,...data.creatives].filter(x=>x.state==='in-review');
       const activeInputs=data.inputs.filter(x=>x.state!=='accepted');
-      body=panel(read?'Pending approvals':'Awaiting your review',waiting,role,'Nothing is waiting for your decision.')+panel('Requested inputs',activeInputs,role,'You have no outstanding input requests.');
+      body=panel(read?'Pending approvals':'Awaiting your review',waiting,role,'Nothing is waiting for your decision.')+(activeInputs.length?panel('Requested inputs',activeInputs,role,''):'');
       if(data.reports.length)body+=panel('Latest report',data.reports.slice(0,1),role,'');
     }
-    return '<div class="persona-workspace">'+ctx.heading(read?'Read-only viewer · local preview':'Client reviewer · local preview',title,escape(description))+body+'</div>';
+    return '<div class="persona-workspace">'+ctx.heading(read?'Read-only viewer · local preview':'Client view',title,escape(description))+body+'</div>';
   }
 
   const fact=(label,value)=>value===undefined || value===null || value===''?'':'<div><dt>'+escape(label)+'</dt><dd>'+escape(value)+'</dd></div>';

@@ -212,6 +212,20 @@ Switch to **Sam** → **Review → Plan approvals** → approve the strategy ver
 ## Stage 6 — Content calendar
 **Who:** Asha · **Approved by:** Sam
 
+**What "the calendar" is:** there is no separate calendar document to build. **Every post with a proposed date is on the calendar.** *Sending the calendar* takes a snapshot of everything planned in a period and asks the client to approve it. The snapshot covers topic, channel, format, date and goal, and the client still approves each finished post later.
+
+The **Calendar approval** bar at the top of **Content Planner → Calendar** always shows where you are:
+
+| Bar | Meaning | Action |
+|---|---|---|
+| *Agree the strategy first* | The strategy isn't approved yet | Go to Strategy & KPIs |
+| *Not sent for approval yet* (grey) | Planned posts exist, none sent | **Send calendar for approval** |
+| *Calendar Vn is with Sam* (amber) | Sent, waiting for a decision | See what was sent |
+| *Sam asked for changes to Calendar Vn* (red) | Rejected, with Sam's note | Fix the posts, then **Send revised calendar** |
+| *Calendar Vn approved by Sam* (green) | Approved | If posts were added or changed since: **Send update for approval** |
+
+The bar's **How posts get onto the calendar** section repeats the options below.
+
 ### 6.1 Create drafts
 There are four ways to create drafts:
 
@@ -230,14 +244,17 @@ Each draft gets a channel, format, producer and **proposed date**. A date is nee
 Optional: **Reserved trend slots** (on Strategy & KPIs → *Calendar approvals and reserved slots*) hold capacity for topical posts, each with an evergreen fallback.
 
 ### 6.3 Send the calendar for approval
-1. Use either:
-   - **Send calendar for approval** on any draft's **Production readiness** card, or
-   - Strategy & KPIs → *Calendar approvals and reserved slots* → **Send calendar for approval**. This section opens on its own when drafts are waiting.
-2. Choose the period. The dialog shows how many planned items are included.
-3. Click **Send to {client approver}**.
+1. Click **Send calendar for approval** on the Calendar approval bar. The same button is on any draft's **Production readiness** card and under Strategy & KPIs.
+2. Choose the period. It starts from the last version's period, and the dialog shows how many planned items are included.
+3. Click **Send to {client approver}**. The bar turns amber: *Calendar Vn is with Sam*.
 
-### 6.4 The client approves the calendar
+### 6.4 The client decides
 Switch to **Sam** → **Today → Awaiting your review → Calendar plan** (or Review → Plan approvals). The review shows every planned item with its channel, format, purpose, KPI and date. Sam clicks **Approve calendar Vn**, or **Request changes** (a note is required).
+
+### 6.5 If the client asks for changes
+- Asha's **Today** shows a red alert at the top: *Sam asked for changes to Calendar Vn*, with Sam's note and **Revise the calendar**. It also counts in **Needs attention**.
+- The Calendar bar turns red, and the readiness card on each affected post shows the request.
+- Fix the posts in the calendar, then click **Send revised calendar**. The dialog repeats Sam's note and reuses the same period.
 
 **Done when:** each draft's readiness card shows **✓ Calendar approved**. This approves the *plan* only; each finished creative is still approved separately.
 
@@ -260,7 +277,9 @@ On the **Production readiness** card, click **Set up production** and fill in:
 
 1. **What are we making?** Choose a route:
 
-   | Route | Checklist steps |
+   Each type comes with an **optional to-do list** the producer can use for their own tracking. Nothing waits on it.
+
+   | Route | Optional to-do steps |
    |---|---|
    | Designed static | Set layout and visual references → Design and adapt each placement → Check slide order, copy and export |
    | Motion graphics | Prepare script and style frames → Approve style frames → Animate and add sound → Render and check captions |
@@ -282,35 +301,30 @@ When every row on the readiness card is ticked, click **Accept production brief*
 ## Stage 8 — Create the content
 **Who:** Luca · **Where:** Today → assignment, then the post's **Production workflow** and **Creative versions** tabs
 
-1. **Accept the assignment.** On Today, open the row's **Details** and click **Accept work**. You can also mark **I'm blocked** or **Request reassignment**, with a note.
-2. **Start production.** On **Production workflow**, click **Start production**. The checklist unlocks only after this.
-3. **Request inputs if needed.** On **Media requests**, click **Add media request**, naming the item, the responsible person and a due date. The client can answer with text and an attached file. The team accepts the file (**Accept supplied input**) or asks for a correction.
-4. **Work through the checklist.** Tick finished steps and click **Save ticked steps**. Sign-off steps (for example *Approve style frames*) need the named person.
-5. **Upload the creative.** On **Creative versions**, click **Upload first version** / **Upload new version**:
-   - Add images or video (PNG, JPG, WebP, GIF, MP4, WebM; up to 30 MB each). Unsupported files are listed and skipped.
-   - Reorder files and add alt text.
-   - Confirm the **exact caption** and describe **What changed?**.
-   - Every upload creates a new version; earlier versions are kept.
-6. If the post isn't ready for QA yet, a **Before internal QA** notice says what's still missing.
+1. **Open the assignment.** On Today, the row's button says what to do: **Upload the draft**, or **See requested changes** after client feedback. **Details** lets you **Accept work**, mark **I'm blocked**, or **Request reassignment**, with a note. Accepting is optional.
+2. **Request inputs if needed.** On **Media requests**, click **Add media request**, naming the item, the responsible person and a due date. The client can answer with text and an attached file. On the same **Media requests** tab, the team sees a preview of the file and clicks **Accept file**; the file is attached to the post with nothing to re-upload. **Ask again** sends the request back to the client with a note. If you have the file yourself, use **Attach it myself**.
+3. **Optional: use the to-do.** On **Production workflow**, open **Production to-do (optional)** to tick steps for your own tracking. Nothing waits on it.
+4. **Upload the creative.** Click **Upload the draft** (later **Upload new version**):
+   - Text posts only need the caption; adding an image is optional.
+   - Image and video posts: add files (PNG, JPG, WebP, GIF, MP4, WebM; up to 30 MB each), reorder them and add alt text. Unsupported files are listed and skipped.
+   - Confirm the **exact caption**. Version 1 takes an optional note for the reviewer; later versions ask **What changed?**.
+   - Click **Save and send to {reviewer}**. Every upload creates a new version; earlier versions are kept.
 
-**Done when:** the current version exists, production has started on the current brief, and all checklist steps are done. Internal QA then shows **Ready to check**.
+**Done when:** the version is saved. The toast says it was sent to the reviewer, and Handoffs shows **Production ✓** and **Internal QA** assigned.
 
 ---
 
-## Stage 9 — Internal QA
-**Who:** Asha (the internal reviewer) · **Where:** **Review → Internal QA** → **Check Vn**
+## Stage 9 — Quick check (internal QA)
+**Who:** Asha (the internal reviewer) · **Where:** Today → **Check and send**, or **Review → Internal QA** → **Check Vn**
 
-1. Look at every file (use the arrows under the preview) and the caption snapshot.
-2. Tick all five checks:
-   - Matches the approved brief
-   - Copy and claims checked
-   - Brand and legibility checked
-   - Files and slide order checked
-   - Usage permissions checked
-3. Then either:
-   - **Send to client**, which hands the version to the client approver, or
-   - **Return to producer** with a note. Luca uploads a corrected version and QA starts again.
-4. Optional: **Add annotation** (Production workflow tab) to comment on a slide, frame or timecode.
+1. Look over the files (use the arrows under the preview) and the caption.
+2. Choose one:
+   - **Looks good — send to {client}**: one click hands this exact version to the client approver.
+   - **Fix the caption**: correct a typo yourself. Your fix is saved as a new version with the same files and goes straight to the client in the same step, with no round trip to the producer.
+   - **Return to producer**, with a note, for real problems. The producer uploads a new version, and it comes back to you.
+3. Optional: **Add annotation** (Production workflow tab) to comment on a slide, frame or timecode.
+
+Every new version passes this quick check once before the client sees it, including versions made after the client asked for changes.
 
 **Done when:** Handoffs shows **Internal QA ✓** and **Client decision** assigned.
 
@@ -321,35 +335,29 @@ When every row on the readiness card is ticked, click **Accept production brief*
 
 1. Open the item. The files are on the left; the caption and decision are on the right.
 2. Click **Approve Vn** to approve this exact version (these files and this caption), **or** **Request changes**, explaining what needs to change (required).
-3. If changes are requested, Luca uploads a new version, it passes QA again, and it comes back to Sam.
+3. If changes are requested, Luca's Today shows **See requested changes**. Sam's note appears at the top of the post with an **Upload new version** button. The new version passes the quick check again and comes back to Sam.
 
 **Done when:** the post shows **Approved** and appears under **Publish → Ready to place**.
 
 ---
 
 ## Stage 11 — Publish and verify
-**Who:** Asha prepares the placement; Luca publishes · **Where:** **Publish → Publishing desk**
+**Who:** Asha or Luca prepares the placement; Luca publishes · **Where:** **Publish → Publishing desk**
 
-### 11.1 Prepare a placement (Asha)
+### 11.1 Prepare a placement
 1. Under **Ready to place**, click **Prepare placement**.
-2. Check the preview of the approved creative, then set:
-   - **Destination platform**, **Destination account**, **Delivery method** (*Manual handoff* or *Simulation*), **Output format**.
-   - **Planned local date and time** and **Destination time zone**. If this differs from the brief, tick the timing-change approval.
-   - **Assigned publisher** and **Community handoff owner** (who watches the first comments).
-   - Optional: permission expiry, finishing instructions, links and tags.
-3. Tick **Release approval covers this destination and the selected creative and caption** and click **Save placement**.
-4. To publish the same creative elsewhere, use **Add another destination** under *Approved creatives already placed*.
+2. Check the preview of the approved creative, then set the three essentials: **Destination platform**, **Planned local date and time**, and **Publisher**. If the time differs from the brief, tick the timing-change approval.
+3. Everything else is pre-filled from the approved creative and sits under **More options**: destination account, delivery method (*Simulation* or *Manual handoff*), output format, time zone, community handoff owner, permission expiry, finishing instructions.
+4. Click **Save placement**. Saving is the release approval for this exact, client-approved version, so there's no checkbox to tick. The placement dialog opens straight away.
+5. To publish the same creative elsewhere, use **Add another destination** under *Approved creatives already placed*.
 
 ### 11.2 Publish it (Luca)
-The placement dialog shows a progress bar: **Prepared → Publisher accepts → Schedule → Verify**. It stays open between steps.
+The placement dialog shows a progress bar: **Prepared → Publisher accepts → Schedule → Verify**.
 
-1. **Accept approved package** after checking the exact files and caption.
-2. **Download approved files (ZIP)** and **Download manifest** if needed. The manifest binds the files to their hashes.
-3. **Schedule** (*Simulate schedule*, or *Record handoff* for manual delivery):
-   - Simulation lets you choose the platform response: Accepted / Rejected by the platform / No response (outcome unknown).
-   - Tick the account, files, caption, links and timing check.
-4. **Verify publication** once it's live. Manual mode asks for the live post URL, the actual time and evidence.
-5. If delivery is uncertain or failed, use **Reconcile attempt**. **Cancel placement** and **Pause placement** are also available. Coordinators can pause all releases under **Release controls**.
+- **Simulation:** check the files and caption, then click **Publish now (simulated)**. That one click accepts the package, schedules it and verifies the publication.
+- **Manual handoff:** **Accept approved package**, then **Record handoff**, then **Verify publication** with the live post URL and time. No confirmation boxes to tick; clicking the button is the confirmation.
+- **Download approved files (ZIP)** and **Download manifest** are there if you need the exact files.
+- If a release is uncertain or failed, use **Reconcile attempt**. **Cancel placement** and **Pause placement** are also available. Coordinators can pause all releases under **Release controls**.
 
 ### 11.3 Community handoff
 After verification, the community owner gets **Accept community handoff** on Today and watches the first comments.
@@ -409,7 +417,8 @@ Other ways to add evidence, under **Performance evidence**:
 | Readiness: *Calendar Vn … is waiting for a decision* | Sent, waiting on the client | Client: Review → Plan approvals |
 | Readiness: *Set up production* | No route, producer or reviewer yet | Click **Set up production** |
 | Readiness: *Add slide copy…*, *Add the working caption*, *Planned date is missing* | Brief fields are missing | Open **Brief & copy**, fill them in and save a version |
-| *Before internal QA: … needs to start production and finish N steps* | Production not started or checklist incomplete | Producer: Production workflow → **Start production**, tick steps |
+| *Waiting for {reviewer} to give it a quick check* | The version is with the internal reviewer | Switch to the reviewer, or wait for them |
+| *{client} asked for changes to Vn* (top of the post) | The client wants a fix | Producer: **Upload new version** with the fix |
 | *Waiting for {name}* chip | Someone else owns this decision | Switch person, or ask them |
 | *Only {name} can do this* | Your role can't do this action | Switch to the named person |
 | *This reporting period ends before the post was published* | Results window is too early | Pick dates on or after the publish date |

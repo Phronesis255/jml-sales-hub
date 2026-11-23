@@ -3,7 +3,7 @@
   'use strict';
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const section=(title,note,fields)=>'<fieldset class="task-section full"><legend>'+esc(title)+'</legend>'+(note?'<p class="task-note">'+esc(note)+'</p>':'')+'<div class="form-grid">'+fields+'</div></fieldset>';
-  const optional=(title,fields,open=false)=>'<details class="task-options full"'+(open?' open':'')+'><summary>'+esc(title)+'</summary><div class="form-grid">'+fields+'</div></details>';
+  const optional=(title,fields,open=false)=>{const at=String(title).indexOf(' · '),main=at<0?title:String(title).slice(0,at),meta=at<0?'':String(title).slice(at+3);return '<details class="task-options full"'+(open?' open':'')+'><summary><span class="opt-title">'+esc(main)+'</span>'+(meta?'<span class="opt-meta">'+esc(meta)+'</span>':'')+'</summary><div class="form-grid">'+fields+'</div></details>';};
   const summary=(title,text)=>'<div class="task-summary full"><strong>'+esc(title)+'</strong><p>'+esc(text)+'</p></div>';
   const lead=(title,text,action='')=>'<section class="task-lead"><div><h2>'+esc(title)+'</h2><p>'+esc(text)+'</p></div>'+action+'</section>';
 

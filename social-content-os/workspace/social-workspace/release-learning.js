@@ -91,13 +91,15 @@
     const defaultPublisher=assigned?.personId||(people.some(x=>x.id===ctx.ui.personId)?ctx.ui.personId:people.find(x=>!x.agencyAdmin)?.id||people[0]?.id);
     const preview=posts.map(v=>{const latest=ctx.C.latest(v),a=latest?.assets?.find(x=>x.type==='image');return '<div class="full rl-place-preview" data-preview-for="'+esc(v.id)+'"'+(v.id===p.id?'':' hidden')+'>'+(a?'<img src="'+esc(root.JMLStorage.mediaURL(a.url))+'" alt="">':'')+'<div><strong>V'+latest.number+' · '+esc(v.format)+' · '+latest.assets.length+' file'+(latest.assets.length===1?'':'s')+'</strong><p>'+esc(String(latest.caption||'').slice(0,180))+(String(latest.caption||'').length>180?'…':'')+'</p></div></div>';}).join('');
     form('Prepare a placement','new-placement',select('Approved creative','contentId',posts.map(v=>[v.id,root.JMLWorkflowUI.clean(v.title).slice(0,70)+' · V'+ctx.C.latest(v).number]),p.id)+preview+
-      input('Destination platform','platform',p.platform)+input('Destination account','account',platformAccount)+select('Delivery method','mode',p.example||brand()==='demo'?[['simulation','Simulation']]:[['manual','Manual handoff'],['simulation','Simulation']])+
-      input('Output format','format',p.format)+input('Planned local date and time','scheduledLocal',D.briefSchedule(p).local,'datetime-local')+input('Destination time zone','timezone',p.timezone||'UTC')+
+      input('Destination platform','platform',p.platform)+input('Planned local date and time','scheduledLocal',D.briefSchedule(p).local,'datetime-local')+
+      (people.length?select('Publisher','ownerPersonId',people.map(x=>[x.id,x.name]),defaultPublisher):input('Publisher','owner',actor()))+
       '<p class="full" data-placement-timing role="status"></p><div class="full" data-timing-change hidden>'+check('Approval covers this timing change from the creative brief.','timingChangeApproved')+'</div>'+
-      (people.length?select('Assigned publisher','ownerPersonId',people.map(x=>[x.id,x.name]),defaultPublisher):input('Publisher','owner',actor()))+
-      (community.length?select('Community handoff owner (watches first comments)','communityOwnerPersonId',community.map(x=>[x.id,x.name]),(root.JMLGovernance?.eligiblePeople(ctx.state,brand(),'account')||[]).find(x=>!x.agencyAdmin&&community.some(c=>c.id===x.id))?.id||community.find(x=>x.id===defaultPublisher)?.id||community.find(x=>x.name===p.brief.approver)?.id):input('Community handoff owner','communityOwner',actor()))+
-      input('Permission expiry (if applicable)','rightsUntil',p.brief.productionSpec?.rightsExpiry||'','date',false)+area('Finishing instructions, links and tags','nativeNotes','',false)+
-      check('Release approval covers this destination and the selected creative and caption.','scopeApproved',true),'Save placement','','The saved package keeps the approved creative version and its assets in order.');
+      root.JMLWorkflowUI.optional('More options · account, method, time zone, community owner',
+        input('Destination account','account',platformAccount)+select('Delivery method','mode',p.example||brand()==='demo'?[['simulation','Simulation']]:[['manual','Manual handoff'],['simulation','Simulation']])+
+        input('Output format','format',p.format)+input('Destination time zone','timezone',p.timezone||'UTC')+
+        (community.length?select('Community handoff owner (watches first comments)','communityOwnerPersonId',community.map(x=>[x.id,x.name]),(root.JMLGovernance?.eligiblePeople(ctx.state,brand(),'account')||[]).find(x=>!x.agencyAdmin&&community.some(c=>c.id===x.id))?.id||community.find(x=>x.id===defaultPublisher)?.id||community.find(x=>x.name===p.brief.approver)?.id):input('Community handoff owner','communityOwner',actor()))+
+        input('Permission expiry (if applicable)','rightsUntil',p.brief.productionSpec?.rightsExpiry||'','date',false)+area('Finishing instructions, links and tags','nativeNotes','',false)),
+      'Save placement','','Choose where and when it goes out. Everything else comes from the client-approved creative.');
     updatePlacementTiming(document.querySelector('[data-rl-form="new-placement"]'));
   }
   function updatePlacementTiming(form,reset=false){
@@ -105,7 +107,7 @@
     form.querySelectorAll('[data-preview-for]').forEach(el=>el.hidden=el.dataset.previewFor!==form.elements.contentId.value);
     const post=ctx.scoped().find(p=>p.id===form.elements.contentId.value),f=Object.fromEntries(new FormData(form));
     const note=form.querySelector('[data-placement-timing]'),change=form.querySelector('[data-timing-change]'),approval=form.elements.timingChangeApproved;
-    if(reset){approval.checked=false;form.elements.scopeApproved.checked=false;}
+    if(reset){approval.checked=false;}
     try{
       const schedule=D.placementSchedule(post,f);
       note.textContent='Planned publication: '+f.scheduledLocal.replace('T',' at ')+' · '+f.timezone+' ('+utcDisplay(schedule.instant)+'). '+(schedule.changed?'Changed from creative brief: '+(schedule.approved.local.replace('T',' at ')||'no time set')+' · '+schedule.approved.timezone+'. Confirm approval for the new timing.':'Matches the creative brief timing.');
@@ -118,8 +120,10 @@
     if(!can('coordinate',p)&&!publisher(p)&&!communityOwner(p))throw Error('This release is assigned to another person.');
     const editable=can('publish',p)&&publisher(p),h=p.handoff;
     let tools=action('manifest','Download manifest',id)+(h&&D.currentPackage(ctx.state,p)&&(editable||can('coordinate',p))?action('bundle','Download approved files (ZIP)',id):'');
-    if(editable&&!p.receipt&&!['cancelled','verified'].includes(p.state)&&!issues.length)tools+=action('receive-package','Accept approved package',id,'primary');
-    if(editable&&['ready','failed'].includes(p.state)&&!issues.length&&(!h||p.receipt))tools+=action('release-step',p.mode==='manual'?'Record handoff':'Simulate schedule',id+'|schedule','primary');
+    const quick=editable&&p.mode==='simulation'&&['ready','failed'].includes(p.state)&&!issues.length;
+    if(quick)tools+=action('publish-now','Publish now (simulated)',id,'primary');
+    if(editable&&!quick&&!p.receipt&&!['cancelled','verified'].includes(p.state)&&!issues.length)tools+=action('receive-package','Accept approved package',id,'primary');
+    if(editable&&!quick&&['ready','failed'].includes(p.state)&&!issues.length&&(!h||p.receipt))tools+=action('release-step',p.mode==='manual'?'Record handoff':'Simulate schedule',id+'|schedule','primary');
     if(editable&&p.state==='uncertain')tools+=action('release-step','Reconcile attempt',id+'|reconcile','primary');
     if(editable&&['handed-off','scheduled'].includes(p.state)&&D.currentPackage(ctx.state,p))tools+=action('release-step','Verify publication',id+'|verify','primary');
     if(editable&&(!['verified','cancelled','cancel-pending'].includes(p.state)||p.state==='cancel-pending'&&p.mode==='simulation'))tools+=action('release-step','Cancel placement',id+'|cancel');
@@ -133,7 +137,7 @@
       '<dl class="rl-grid">'+[['Destination',p.platform+' / '+p.account],['Planned',root.JMLWorkflowUI.when(p.scheduledAt,p.timezone)],['Package','Creative V'+v.number+' · brief r'+p.briefRevision],['Release approver',p.approval.actor],['Publisher',p.owner],['Community handoff',p.communityOwner]].map(([k,v])=>'<div><dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd></div>').join('')+'</dl>'+
       (h?'<p class="rl-handoff" title="'+esc('Decision reference '+h.decisionId)+'">Approved by '+esc(h.sender)+' · '+esc(utcDisplay(h.decision.at))+'<br><small>Handed to '+esc(h.recipient)+' for publishing</small></p>':'')+
       '<h3>Exact approved caption</h3><pre class="rl-caption">'+esc(h?.caption||v.caption)+'</pre>'+(assets?'<h3>Approved files in release order</h3><div class="rl-assets">'+assets+'</div>':meta('Text-only release. The caption is the complete creative.'))+
-      (p.receipt?meta('Publisher accepted · '+p.receipt.actor+' · '+utcDisplay(p.receipt.at)):publisher(p)?'<p class="rl-yourturn"><b>Your turn:</b> check the files and caption above, then accept the package.</p>':meta('Waiting for '+p.owner+' to accept this package.'))+
+      (p.receipt?meta('Publisher accepted · '+p.receipt.actor+' · '+utcDisplay(p.receipt.at)):publisher(p)?'<p class="rl-yourturn"><b>Your turn:</b> check the files and caption above, then '+(p.mode==='simulation'&&['ready','failed'].includes(p.state)?'publish.':'accept the package.')+'</p>':meta('Waiting for '+p.owner+' to accept this package.'))+
       (p.communityReceipt?meta('Community handoff accepted · '+p.communityReceipt.actor+' · '+utcDisplay(p.communityReceipt.at)):'')+
       (p.nativeNotes?'<p>'+esc(p.nativeNotes)+'</p>':'')+(issues.length?'<div class="rl-message">'+esc(issues.join(' '))+'</div>':'')+
       (p.verification?'<p>Verified by '+esc(p.verification.actor)+' · '+esc(utcDisplay(p.verification.actualAt))+'<br>'+esc(p.verification.url||p.verification.note)+'</p>':'')+
@@ -147,13 +151,13 @@
     let fields='';
     if(op==='schedule'){
       if(p.mode==='simulation')fields+=select('Simulated platform response','scenario',[['accept','Accepted'],['reject','Rejected by the platform'],['timeout','No response (outcome unknown)']]);
-      fields+=check('I checked the account, approved files, caption, links, timing and native finishing tasks.','checked',true);
+
     }
     if(op==='cancel'&&p.mode==='simulation'&&['scheduled','uncertain','cancel-pending'].includes(p.state))fields+=select('Simulated response','scenario',[['accept','Cancellation confirmed'],['reject','Cancellation unconfirmed']]);
-    if(op==='confirm-cancel')fields+=check('I checked the external account and confirmed cancellation.','checked',true);
+
     if(op==='verify'){
       if(p.mode==='manual')fields+=input('Live HTTPS post','url','','url')+timeField('Actual publication time','actualAt',new Date().toISOString())+area('Verification evidence','note');
-      fields+=check('The destination, approved version and caption match.','checked',true);
+
     }
     form(titles[op],'release-step',fields,titles[op],key,contentName(p.contentId)+' · '+p.account+' · '+modeText(p));
   }
@@ -385,7 +389,8 @@
     if(cmd==='learn-tab'){learnTab=key;ctx.render();return;}
     if(cmd==='new-placement')return placementForm(key);
     if(cmd==='placement')return placementDetail(key);
-    if(cmd==='release-step')return stepForm(key);
+    if(cmd==='publish-now'){const p=record('placements',key);allow('publish',p);if(!publisher(p))throw Error('Only the assigned publisher can publish this placement.');const needsReceipt=!!p.handoff&&!p.receipt;await emit((s,b,a)=>{if(needsReceipt)D.receiveHandoff(s,b,key,a,ctx.ui.personId);D.advance(s,b,key,'schedule',{scenario:'accept',checked:true},a);D.advance(s,b,key,'verify',{checked:true},a);},'Published (simulated) to '+p.platform+'.'+(p.communityOwner?' '+p.communityOwner+' will watch the first comments.':''));placementDetail(key);return;}
+    if(cmd==='release-step'){const [pid,op]=key.split('|'),pl=record('placements',pid);if(pl.mode==='simulation'&&op==='verify'){allow('publish',pl);if(!publisher(pl))throw Error('Only the assigned publisher can operate this placement.');await emit((s,b,a)=>D.advance(s,b,pid,'verify',{checked:true},a),'Publication verified.');placementDetail(pid);return;}return stepForm(key);}
     if(cmd==='pause')return pauses();
     if(cmd==='toggle-pause'||cmd==='placement-pause'){
       const [scope,target]=cmd==='placement-pause'?['placement',key]:JSON.parse(key);
@@ -494,9 +499,10 @@
       if(f.ownerPersonId)f.owner=root.JMLGovernance.person(ctx.state,f.ownerPersonId)?.name;
       if(f.communityOwnerPersonId)f.communityOwner=root.JMLGovernance.person(ctx.state,f.communityOwnerPersonId)?.name;
       f.approver=ctx.C.latest(post).decisions.slice().reverse().find(d=>d.action==='approved')?.actor;
+      f.scopeApproved=true; // Saving the placement is the release approval for this exact, client-approved version.
       let created;await emit((s,b,a)=>{created=D.createPlacement(s,b,f,a);},'Placement prepared for '+(f.owner||'the publisher')+'.');if(created?.id)placementDetail(created.id);return;
     }
-    if(cmd==='release-step'){const [id,step]=key.split('|'),p=record('placements',id);allow('publish',p);if(!publisher(p))throw Error('Only the assigned publisher can operate this placement.');if(f.actualAt)f.actualAt=utc(f.actualAt);await emit((s,b,a)=>D.advance(s,b,id,step,f,a),{schedule:p.mode==='manual'?'Handoff recorded.':f.scenario==='reject'?'The platform rejected the schedule (simulated). Check the details and try again.':f.scenario==='timeout'?'No response (simulated). Reconcile the attempt before retrying.':'Scheduled (simulated) for '+utcDisplay(p.scheduledAt)+'.',verify:'Publication verified.',cancel:'Cancellation recorded.','confirm-cancel':'Cancellation confirmed.',reconcile:'Delivery reconciled.'}[step]||'Release history updated.');placementDetail(id);return;}
+    if(cmd==='release-step'){f.checked=true;const [id,step]=key.split('|'),p=record('placements',id);allow('publish',p);if(!publisher(p))throw Error('Only the assigned publisher can operate this placement.');if(f.actualAt)f.actualAt=utc(f.actualAt);await emit((s,b,a)=>D.advance(s,b,id,step,f,a),{schedule:p.mode==='manual'?'Handoff recorded.':f.scenario==='reject'?'The platform rejected the schedule (simulated). Check the details and try again.':f.scenario==='timeout'?'No response (simulated). Reconcile the attempt before retrying.':'Scheduled (simulated) for '+utcDisplay(p.scheduledAt)+'.',verify:'Publication verified.',cancel:'Cancellation recorded.','confirm-cancel':'Cancellation confirmed.',reconcile:'Delivery reconciled.'}[step]||'Release history updated.');placementDetail(id);return;}
     if(cmd==='calculate-kpi')return emit((s,b,a)=>D.calculate(s,b,f,a),'Measured outcome saved.');
     if(cmd==='propose-next'){if(!can('strategy'))allow('coordinate');if(f.ownerPersonId)f.owner=root.JMLGovernance.person(ctx.state,f.ownerPersonId)?.name;return emit((s,b,a)=>D.proposeNext(s,b,key,f,a),'Next-plan proposal saved.');}
     if(cmd==='proposal-decision'){if(!can('strategy'))allow('coordinate');f.personId=ctx.ui.personId;return emit((s,b,a)=>D.decideProposal(s,b,key,f,a),'Planning decision saved.');}
