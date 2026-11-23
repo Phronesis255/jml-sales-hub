@@ -309,7 +309,7 @@
       const anchor=posts.filter(r=>r.brand_id===activeBrandId && r.date).sort((a,b)=>a.date.localeCompare(b.date))[0]?.date;
       if(view?.week)activeWeekStart=view.week;
       else if(!Object.hasOwn(planAccounts,activeBrandId) && activeBrandId!=='brand_zees' && anchor)activeWeekStart=anchor;
-      el('artworkFilter').value=view?.artwork || (posts.some(p=>p.brand_id===activeBrandId && creativeFor(p))?'artwork':'all');
+      el('artworkFilter').value=view?.artwork || 'all';
       installHooks();renderAll();applyRoleUI();
       if(view?.search)el('searchInput').value=view.search;
       if(view?.platform)el('platformFilter').value=view.platform;

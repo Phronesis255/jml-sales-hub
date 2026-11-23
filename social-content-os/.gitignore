@@ -1,0 +1,50 @@
+# Social Content OS: keep agent work, test tooling and app exports out of commits.
+# The repo-root .gitignore already covers CLAUDE.md/AGENTS.md, .claude/, .codex/,
+# .agent-work/, .agent-tmp/ and Playwright state. These rules add what is
+# specific to this prototype. Patterns are relative to social-content-os/.
+
+# Agent plans, research, scratch scripts, screenshots and verification output.
+# Put all agent output under .agent-work/ (e.g. .agent-work/verification/).
+.agent-work/
+.agent-tmp/
+.scratch/
+tmp/
+temp/
+*.tmp
+*.bak
+*.log
+*.orig
+
+# Test tooling (Playwright/Node checks described in social-workspace/README.md).
+node_modules/
+coverage/
+test-results/
+playwright-report/
+__pycache__/
+*.pyc
+
+# Files the running prototype downloads. Saved by accident into the repo, they
+# can hold client data and large media. Tracked sample inputs in
+# workspace/social-workspace/examples/ are not matched.
+*.jmlpack
+jml-workspace-*.json
+jml-before-people-migration.json
+*-prepared-artwork.json
+*-approved.zip
+client-report-v*.json
+import-validation.json
+measurement-import-errors.json
+recovered-brief-*
+prepared-prompt*.txt
+
+# Rebuilt distribution ZIPs of the packaged workspace.
+/*.zip
+/workspace/*.zip
+
+# OS and editor clutter.
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+.vscode/
+.idea/

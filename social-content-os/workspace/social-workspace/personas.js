@@ -82,12 +82,14 @@
       return;
     }
     if(kind==='input') {
-      if(item.state!=='requested' || outcome!=='respond' || !note)fail('Enter a response for this open request.');
+      const file=command.attachment;
+      if(item.state!=='requested' || outcome!=='respond' || (!note&&!file))fail('Add a short response or attach the requested file.');
       const p=state.posts.find(p=>p.id===parent && p.brandId===ui.brand), r=p.requests.find(r=>r.id===id);
       r.state='received';
-      const response=actor+' · '+C.now().slice(0,10)+'\n'+note;
+      if(file)(r.clientFiles||=[]).push({id:C.id('client-file'),name:String(file.name).slice(0,200),type:file.type,size:file.size,url:file.url,at:C.now(),actor});
+      const response=actor+' · '+C.now().slice(0,10)+'\n'+(note||'Attached '+file.name);
       r.note=[r.note,response].filter(Boolean).join('\n\n');
-      C.event(p,'Client input received',r.title+'\n'+note,actor);
+      C.event(p,'Client input received',r.title+'\n'+(note||'')+(file?'\nFile: '+file.name:''),actor);
       return;
     }
     if(item.state!=='in-review')fail('This version already has a decision.');
@@ -105,11 +107,14 @@
   }
 
   const openButton=(item,label) => '<button type="button" class="btn small" data-persona-open="'+escape(item.kind)+'" data-id="'+escape(item.id)+'" data-parent="'+escape(item.parent||'')+'">'+label+'</button>';
-  const dateText = value => value ? String(value).slice(0,10) : '';
+  const UX=()=>root.JMLWorkflowUI||{day:x=>String(x||'').slice(0,10),clean:x=>x};
+  const dateText = value => value ? UX().day(String(value).slice(0,10)) : '';
   function row(item,role) {
-    const meta={input:[item.postTitle,item.due?'Due '+item.due:''],creative:[item.platform,item.format,'V'+item.version],foundation:['V'+item.version],strategy:['V'+item.version],calendar:[item.body?.start,item.body?.end,'V'+item.version],report:[item.start+' – '+item.end,'V'+item.version,item.origin==='fixture'?'Sample data':'Recorded data']}[item.kind];
+    const U=UX(),meta={input:[U.clean(item.postTitle),item.due?'Due '+U.day(item.due):''],creative:[item.platform,item.format,'V'+item.version],foundation:['V'+item.version],strategy:['V'+item.version],calendar:[item.body?U.day(item.body.start)+' – '+U.day(item.body.end):'',item.body?.entries?item.body.entries.length+' items':'','V'+item.version],report:[U.day(item.start)+' – '+U.day(item.end),'V'+item.version,item.origin==='fixture'?'Sample data':'Recorded data']}[item.kind];
     const action=role==='client' && item.kind==='input' && item.state==='requested'?'Respond':role==='client' && item.state==='in-review'?'Review':'View';
-    return '<article class="rl-row"><div><h3>'+escape(item.title)+'</h3><p class="rl-meta">'+meta.filter(Boolean).map(escape).join(' · ')+'</p></div><div class="rl-controls">'+(item.state?'<span class="rl-badge">'+escape(statusLabels[item.state])+'</span>':'')+openButton(item,action)+'</div></article>';
+    const art=item.kind==='creative'&&item.assets?.[0]&&item.assets[0].type!=='video'?'<img class="rl-thumb" src="'+escape(root.JMLStorage?.mediaURL(item.assets[0].url)||item.assets[0].url)+'" alt="" loading="lazy">':'';
+    const waiting=role==='client'&&(item.state==='in-review'||(item.kind==='input'&&item.state==='requested'));
+    return '<article class="rl-row'+(waiting?' rl-waiting':'')+'">'+art+'<div><h3>'+escape(U.clean(item.title))+'</h3><p class="rl-meta">'+meta.filter(Boolean).map(escape).join(' · ')+'</p></div><div class="rl-controls">'+(item.state?'<span class="rl-badge">'+escape(statusLabels[item.state])+'</span>':'')+openButton(item,action).replace('class="btn small"',waiting?'class="btn small primary"':'class="btn small"')+'</div></article>';
   }
   function panel(title,items,role,empty) {
     return '<section class="rl-panel"><header><h2>'+title+'</h2><span class="count-note">'+items.length+'</span></header>'+(items.length?items.map(i=>row(i,role)).join(''):'<p class="muted">'+empty+'</p>')+'</section>';
@@ -118,7 +123,7 @@
     const {ui}=ctx, data=shared(ctx.state,ui), brand=ctx.state.brands.find(b=>b.id===ui.brand);
     const role=ui.role, read=role==='viewer',route=ui.route;
     const reviewSection=['planning','inputs'].includes(ui.section)?ui.section:'client';
-    const reviewTitles={client:'Creative review',planning:'Planning decisions',inputs:'Requested inputs'};
+    const reviewTitles={client:'Creative approvals',planning:'Plan approvals',inputs:'Requested inputs'};
     const reviewDescriptions={client:'Inspect the exact creative versions shared with '+ui.actor+'.',planning:'Review the onboarding, strategy and calendar versions shared with '+ui.actor+'.',inputs:'Track the information and files requested from '+ui.actor+'.'};
     const title=route==='review'?reviewTitles[reviewSection]:{learn:'Shared reports',today:'Today'}[route]||'Today';
     const description=route==='review'?reviewDescriptions[reviewSection]:{learn:'Read the reports the team has released for '+(brand?.name||'this account')+'.',today:'Inputs, decisions and reports for '+ui.actor+'.'}[route]||'';
@@ -127,12 +132,12 @@
     else if(route==='review'){
       if(reviewSection==='planning')body=panel('Plan approvals',data.plans,role,'No current plan is shared with this person.');
       else if(reviewSection==='inputs')body=panel('Requested inputs',data.inputs.filter(x=>x.state!=='accepted'),role,'You have no outstanding input requests.');
-      else body=panel('Creative versions',data.creatives,role,'No submitted creative is shared with this person.');
+      else body=panel('Creative versions',[...data.creatives].sort((a,b)=>(b.state==='in-review')-(a.state==='in-review')),role,'No submitted creative is shared with this person.');
     }
     else {
       const waiting=[...data.plans,...data.creatives].filter(x=>x.state==='in-review');
       const activeInputs=data.inputs.filter(x=>x.state!=='accepted');
-      body=panel('Requested inputs',activeInputs,role,'You have no outstanding input requests.')+panel(read?'Pending approvals':'Awaiting your review',waiting,role,'You have no pending approvals.');
+      body=panel(read?'Pending approvals':'Awaiting your review',waiting,role,'Nothing is waiting for your decision.')+panel('Requested inputs',activeInputs,role,'You have no outstanding input requests.');
       if(data.reports.length)body+=panel('Latest report',data.reports.slice(0,1),role,'');
     }
     return '<div class="persona-workspace">'+ctx.heading(read?'Read-only viewer · local preview':'Client reviewer · local preview',title,escape(description))+body+'</div>';
@@ -145,7 +150,7 @@
     return calculations.length?'<section class="persona-copy"><h3>Measured outcomes</h3>'+calculations.map(c=>'<article class="persona-copy"><h4>'+escape(c.title)+'</h4><p><strong>'+(c.value===null?'Unavailable':escape(value(c.value)+' '+c.unit))+'</strong></p><dl class="persona-facts">'+fact('Baseline',c.baseline==null?'Not established':value(c.baseline)+' '+c.unit)+fact('Change from baseline',c.comparable&&c.delta!=null?(c.delta>=0?'+':'')+value(c.delta)+' '+c.unit:'Not comparable')+fact('Measurement period',c.start+' – '+c.end)+fact('Source',c.source)+fact('Baseline source',c.baselineSource)+fact('Definition version','V'+c.version)+'</dl>'+para('Comparison and limitations',[c.unavailable,c.comparisonNote].filter(Boolean).join(' '))+'</article>').join('')+'</section>':'';
   }
   function details(item) {
-    if(item.kind==='input')return '<dl class="persona-facts">'+fact('Requested for',item.postTitle)+fact('Due',item.due)+fact('Status',statusLabels[item.state])+'</dl>'+para('Request details',item.instructions);
+    if(item.kind==='input')return '<dl class="persona-facts">'+fact('Requested for',item.postTitle)+fact('Due',item.due?UX().day(item.due):'')+fact('Status',statusLabels[item.state])+'</dl>'+para('Request details',item.instructions);
     if(item.kind==='report') {
       const metrics=item.observations.map(o=>'<tr><th scope="row">'+escape(o.metric)+(o.definition?'<small>'+escape(o.definition)+'</small>':'')+'</th><td>'+(o.value===null?'Missing':escape(o.value)+' '+escape(o.unit))+'</td><td>'+escape(o.account)+'</td><td>'+escape(o.start)+' – '+escape(o.end)+'</td></tr>').join('');
       return '<p>'+escape(item.start)+' – '+escape(item.end)+' · V'+item.version+' · '+(item.origin==='fixture'?'Sample data':'Recorded data')+'</p>'+
@@ -157,7 +162,7 @@
     }
     let main='';
     if(item.kind==='creative') {
-      main='<p>'+escape([item.platform,item.format,'V'+item.version,item.date].filter(Boolean).join(' · '))+'</p>'+
+      main='<p>'+escape([item.platform,item.format,'V'+item.version,item.date?UX().day(item.date):''].filter(Boolean).join(' · '))+'</p>'+
         (item.assets.length?'<div class="persona-media">'+item.assets.map((a,i)=>{
           const url=escape(root.JMLStorage?.mediaURL(a.url)||a.url),alt=escape(a.alt||'Creative '+(i+1));
           const media=a.type==='video'?'<video controls preload="metadata" src="'+url+'" aria-label="'+alt+'"></video>':'<img loading="lazy" src="'+url+'" alt="'+alt+'">';
@@ -168,8 +173,9 @@
       main='<dl class="persona-facts">'+strategyFields.map(([k,l])=>fact(l,item.body[k])).join('')+'</dl>';
     } else {
       const b=item.body;
-      main='<p>'+escape(b.start)+' – '+escape(b.end)+'</p><div class="persona-table"><table><caption>Planned content and reserved slots</caption><thead><tr><th>Content</th><th>Channel / format</th><th>Purpose / KPI</th><th>Planned date</th></tr></thead><tbody>'+
-        [...b.entries,...b.slots.map(s=>({...s,platform:'Reserved slot'}))].sort((a,b)=>a.date.localeCompare(b.date)).map(s=>'<tr><th scope="row">'+escape(s.title)+'</th><td>'+escape(s.platform)+(s.format?'<small>'+escape(s.format)+'</small>':'')+'</td><td>'+escape(s.objective||'')+'<small>'+escape(s.kpi||'')+'</small>'+(s.angle?'<small>'+escape(s.angle)+'</small>':'')+'</td><td>'+escape([s.date,s.time,s.timezone].filter(Boolean).join(' · '))+'</td></tr>').join('')+'</tbody></table></div>';
+      const U=UX(),counts=b.entries.reduce((m,x)=>(m[x.platform]=(m[x.platform]||0)+1,m),{});
+      main='<div class="task-summary"><strong>'+b.entries.length+' planned item'+(b.entries.length===1?'':'s')+(b.slots.length?' and '+b.slots.length+' reserved slot'+(b.slots.length===1?'':'s'):'')+' · '+escape(U.day(b.start))+' – '+escape(U.day(b.end))+'</strong><p>'+escape(Object.entries(counts).map(([k,n])=>k+' '+n).join(' · '))+'</p></div><div class="persona-table"><table><caption>Planned content and reserved slots</caption><thead><tr><th>Content</th><th>Channel / format</th><th>Purpose / KPI</th><th>Planned date</th></tr></thead><tbody>'+
+        [...b.entries,...b.slots.map(s=>({...s,platform:'Reserved slot'}))].sort((a,b)=>a.date.localeCompare(b.date)).map(s=>'<tr><th scope="row">'+escape(s.title)+'</th><td>'+escape(s.platform)+(s.format?'<small>'+escape(s.format)+'</small>':'')+'</td><td>'+escape(s.objective||'')+'<small>'+escape(s.kpi||'')+'</small>'+(s.angle?'<small>'+escape(s.angle)+'</small>':'')+'</td><td>'+escape(UX().day(s.date))+(s.time?'<small>'+escape(s.time)+'</small>':'')+'</td></tr>').join('')+'</tbody></table></div>';
     }
     return main+item.decisions.map(d=>para(statusLabels[d.state]+' · '+d.actor+' · '+dateText(d.at),d.note||'Decision recorded.')).join('');
   }
@@ -178,11 +184,15 @@
     if(ui.role!=='client'||item.canAct===false)return '';
     const decision=item.state==='in-review',input=item.kind==='input' && item.state==='requested',report=item.kind==='report';
     if(!decision && !input && !report)return '';
-    const prompt=decision?'Feedback':input?'Response or file reference':'Feedback for the team';
-    const buttons=decision?'<button type="submit" class="btn primary" name="outcome" value="approved">Approve V'+item.version+'</button><button type="submit" class="btn" name="outcome" value="changes-requested">Request changes</button>':
+    const prompt=decision?'Feedback (needed if you request changes)':input?'Your response':'Feedback for the team';
+    const what={calendar:'calendar V'+item.version,strategy:'strategy V'+item.version,foundation:'foundation V'+item.version,creative:'V'+item.version}[item.kind]||'V'+item.version;
+    const summary=!decision?'':item.kind==='calendar'?'You’re approving '+(item.body?.entries?.length||0)+' planned items from '+UX().day(item.body?.start)+' to '+UX().day(item.body?.end)+'. The team can then start production; you’ll still approve each finished creative.':item.kind==='creative'?'You’re approving version '+item.version+' exactly as shown — these files and this caption.':'You’re approving this '+item.kind+' version as written.';
+    const buttons=decision?'<button type="submit" class="btn primary" name="outcome" value="approved">Approve '+escape(what)+'</button><button type="submit" class="btn" name="outcome" value="changes-requested">Request changes</button>':
       '<button type="submit" class="btn primary" name="outcome" value="'+(input?'respond':'feedback')+'">'+(input?'Send response':'Send feedback')+'</button>';
     return '<form data-persona-form="'+escape(item.kind)+'" data-id="'+escape(item.id)+'" data-parent="'+escape(item.parent||'')+'" data-brand="'+escape(ui.brand)+'" data-actor="'+escape(ui.actor)+'" class="persona-form">'+
-      '<label>'+prompt+'<textarea name="note" maxlength="5000" rows="3" '+(decision?'':'required')+'></textarea></label>'+(decision?'<small>Describe the change when requesting a revision.</small>':'')+
+      (summary?'<p class="persona-approve-summary">'+escape(summary)+'</p>':'')+
+      '<label>'+prompt+'<textarea name="note" maxlength="5000" rows="3" '+(decision||input?'':'required')+'></textarea></label>'+
+      (input?'<label>Attach the requested file (optional)<input type="file" name="file" accept="image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm,application/pdf"><small class="muted">Images, video or PDF · up to 30 MB</small></label>':'')+
       '<p class="form-error" role="alert"></p><div class="actions">'+buttons+'</div></form>';
   }
 
@@ -196,7 +206,10 @@
       if(!b || !roleAllowed(current.ui.role))return;
       try {
         const item=findItem(shared(current.state,current.ui),b.dataset.personaOpen,b.dataset.id,b.dataset.parent||'');
-        current.showModal(escape(item.title),'<div class="modal-body persona-detail">'+details(item)+actionForm(item,current.ui)+'</div>');
+        const wide=['calendar','creative','report'].includes(item.kind);
+        if(item.kind==='creative'){const html=details(item),split=html.indexOf('<section class="persona-copy"><h3>Submitted caption</h3>');current.showModal(escape(UX().clean(item.title)),'<div class="modal-body persona-detail persona-review-grid"><div class="persona-review-media">'+(split>=0?html.slice(0,split):html)+'</div><aside class="persona-review-side">'+(split>=0?html.slice(split):'')+actionForm(item,current.ui)+'</aside></div>');}
+        else current.showModal(escape(UX().clean(item.title)),'<div class="modal-body persona-detail">'+details(item)+actionForm(item,current.ui)+'</div>');
+        document.getElementById('modal')?.classList.toggle('wide',wide);
       } catch(err){current.toast(err.message);}
     });
     document.addEventListener('submit',async ev=>{
@@ -206,9 +219,16 @@
       const ctx=current;
       const command={kind:f.dataset.personaForm,id:f.dataset.id,parent:f.dataset.parent,actor:f.dataset.actor,brand:f.dataset.brand,note:f.elements.note.value,outcome:ev.submitter?.value};
       if(!command.outcome)return;
-      const buttons=[...f.querySelectorAll('button')];
+      const buttons=[...f.querySelectorAll('button')],note=f.elements.note;
+      if(command.outcome==='changes-requested'&&!command.note.trim()){const el=f.querySelector('[role="alert"]');el.textContent='Explain what needs to change so the team can fix it.';note.setAttribute('aria-invalid','true');note.focus();return;}
       buttons.forEach(b=>b.disabled=true);
-      try {await ctx.commit(next=>perform(next,ctx.ui,command),'Saved to the account history.');}
+      try {
+        const file=f.elements.file?.files?.[0];
+        if(file){if(file.size>30*1024*1024)throw Error(file.name+' is larger than 30 MB.');command.attachment={name:file.name,type:file.type,size:file.size,url:await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('Could not read '+file.name));reader.readAsDataURL(file);})};}
+        const what={calendar:'Calendar',strategy:'Strategy',foundation:'Foundation',creative:'Creative'}[command.kind]||'Response';
+        const message=command.kind==='input'?'Response sent to the team.':command.kind==='report'?'Feedback sent to the team.':command.outcome==='approved'?what+' approved. The team has been handed the next step.':'Changes requested. The team will send a new version.';
+        await ctx.commit(next=>perform(next,ctx.ui,command),message);
+      }
       catch(err){const el=f.querySelector('[role="alert"]');el.textContent=err.message;el.tabIndex=-1;el.focus();}
       finally {buttons.forEach(b=>b.disabled=false);}
     },true);

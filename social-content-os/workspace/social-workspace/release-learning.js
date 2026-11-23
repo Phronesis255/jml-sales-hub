@@ -24,11 +24,11 @@
   const empty=(title,content)=>'<div class="rl-empty"><strong>'+esc(title)+'</strong><p>'+esc(content)+'</p></div>';
   const meta=s=>'<p class="rl-meta">'+esc(s)+'</p>';
   const summaryRow=(title,sub,controls='',tag='')=>'<article class="rl-row"><div>'+tag+'<h3>'+esc(title)+'</h3>'+meta(sub)+'</div><div class="rl-controls">'+controls+'</div></article>';
-  const utcDisplay=v=>new Date(v).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short',timeZone:'UTC'})+' UTC';
+  const utcDisplay=v=>root.JMLWorkflowUI?root.JMLWorkflowUI.when(v,currentBrand()?.timezone):new Date(v).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short',timeZone:'UTC'})+' UTC';
   const timeField=(label,name,v)=>input(label+' · UTC',name,v?(v.length===10?v+'T09:00':new Date(v).toISOString().slice(0,16)):'','datetime-local');
   const utc=v=>v?v+':00Z':'';
   const modeText=p=>p.mode==='simulation'?'Simulation':'Manual';
-  const kindText=v=>v==='fixture'?'Sample data':'Recorded evidence';
+  const kindText=v=>v==='fixture'?'Simulated or sample data':'Recorded evidence';
   const stateName={ready:'Ready',failed:'Failed','handed-off':'Handed off',uncertain:'Delivery unknown',scheduled:'Schedule confirmed',verified:'Verified',cancelled:'Cancelled','cancel-pending':'Cancellation pending'};
   function getStrategy(){
     const ops=currentBrand()?.operations||{};
@@ -50,7 +50,8 @@
   function contentLink(id){return '<a href="#content/'+encodeURIComponent(id)+'/versions">Open creative</a>';}
   function record(k,id){return D.entry(ctx.state,k,brand(),id);}
   function historyRows(events){
-    return events.length?'<ol class="rl-timeline">'+events.slice().reverse().map(r=>'<li><strong>'+esc(r.type||r.outcome||r.decision)+'</strong><small>'+esc(utcDisplay(r.at)+' · '+r.actor)+'</small><p>'+esc(r.note||r.receipt||'')+'</p></li>').join('')+'</ol>':meta('No activity yet.');
+    const U=root.JMLWorkflowUI;
+    return events.length?'<ol class="rl-timeline">'+events.slice().sort((a,b)=>String(a.at).localeCompare(String(b.at))).reverse().map(r=>'<li><strong>'+esc(U.sentence(U.clean(r.type||r.outcome||r.decision||'')))+'</strong><small>'+esc(utcDisplay(r.at)+' · '+r.actor)+'</small>'+(r.note?'<p>'+esc(r.note)+'</p>':'')+(r.receipt?'<p class="rl-receipt" title="'+esc(r.receipt)+'">Receipt reference saved</p>':'')+'</li>').join('')+'</ol>':meta('No activity yet.');
   }
   function emit(s,msg){
     const b=brand(),who=actor();return ctx.commit(n=>{s(n,b,who);D.validate(n);},msg);
@@ -62,16 +63,23 @@
     const visible=placements.filter(p=>queueFilter==='All'||queueFilter==='Ready'&&p.state==='ready'||queueFilter==='Needs attention'&&needing.includes(p)||queueFilter==='Verified'&&p.state==='verified'||queueFilter==='In progress'&&['scheduled','handed-off','uncertain','cancel-pending'].includes(p.state));
     const paused=D.read(ctx.state).pauses.filter(r=>r.active&&(r.scope==='workspace'||r.brandId===brand()));
     const status=paused.length?'<div class="rl-message">'+esc(paused.map(r=>r.scope+' pause'+(r.target?' · '+r.target:'')).join(' / '))+'</div>':'';
+    const order={'cancel-pending':0,uncertain:0,failed:0,ready:1,'handed-off':2,scheduled:2,verified:3,cancelled:4};
+    visible.sort((a,b)=>(needing.includes(a)?-1:order[a.state]??2)-(needing.includes(b)?-1:order[b.state]??2)||String(a.scheduledAt).localeCompare(String(b.scheduledAt)));
+    const placedCount=id=>placements.filter(x=>x.contentId===id&&x.state!=='cancelled').length;
+    const toPlace=approved.filter(p=>!placedCount(p.id)),placed=approved.filter(p=>placedCount(p.id));
+    const thumbOf=p=>{const a=ctx.C.latest(p)?.assets?.find(x=>x.type==='image');return a?'<img class="rl-thumb" src="'+esc(root.JMLStorage.mediaURL(a.url))+'" alt="" loading="lazy">':'';};
     const list=visible.map(p=>{
       const stale=!['verified','cancelled'].includes(p.state)&&!D.currentPackage(ctx.state,p);
-      return summaryRow(contentName(p.contentId),p.platform+' · '+p.account+' · '+utcDisplay(p.scheduledAt),action('placement','Open placement',p.id),badge(modeText(p))+' '+badge(stale?'Approval changed':stateName[p.state],stale||needing.includes(p)?'warning':''));
+      return summaryRow(root.JMLWorkflowUI.clean(contentName(p.contentId)),p.platform+' · '+root.JMLWorkflowUI.clean(p.account)+' · '+utcDisplay(p.scheduledAt),action('placement',needing.includes(p)||p.state==='ready'?'Open and act':'Open placement',p.id,needing.includes(p)||(p.state==='ready'&&publisher(p))?'primary small':'small'),badge(stale?'Approval changed':stateName[p.state],stale||needing.includes(p)?'warning':p.state==='verified'?'ok':'')+' '+badge(modeText(p)));
     }).join('');
     return ctx.heading('Delivery','Publishing desk','Prepare approved packages and track each destination through verification.',can('coordinate')||can('publish')?action('new-placement','Prepare placement','','primary'):'')+
       status+'<div class="rl-stats">'+[ [approved.length,'Approved creatives'],[placements.filter(p=>p.state==='ready').length,'Ready placements'],[needing.length,'Need attention'],[placements.filter(p=>p.state==='verified').length,'Verified receipts'] ].map(x=>'<div><b>'+x[0]+'</b><span>'+x[1]+'</span></div>').join('')+'</div>'+
+      (toPlace.length?panel('Ready to place · '+toPlace.length,toPlace.map(p=>'<article class="rl-row">'+thumbOf(p)+'<div><h3>'+esc(root.JMLWorkflowUI.clean(p.title))+'</h3>'+meta(p.platform+' · '+p.format+' · approved V'+ctx.C.latest(p).number+' · planned '+root.JMLWorkflowUI.day(p.date))+'</div><div class="rl-controls">'+(can('coordinate',p)||can('publish',p)?action('new-placement','Prepare placement',p.id,'primary small'):'')+contentLink(p.id)+'</div></article>').join('')):'')+
       panel('Release queue',list||empty('No placements in this queue',approved.length?'Prepare a placement from an approved creative.':'When creative approval is recorded, the package becomes available here.'),asAttributes('Show','queue',scopes,queueFilter))+
-      panel('Approved creative packages',approved.length?approved.map(p=>summaryRow(p.title,p.platform+' · '+p.format+' · Version '+ctx.C.latest(p).number,(can('coordinate',p)||can('publish',p)?action('new-placement','Prepare placement',p.id):'')+contentLink(p.id))).join(''):empty('No approved packages','Open Review to check the current creative version.'))+
+      (placed.length?panel('Approved creatives already placed',placed.map(p=>'<article class="rl-row">'+thumbOf(p)+'<div><h3>'+esc(root.JMLWorkflowUI.clean(p.title))+'</h3>'+meta(p.platform+' · '+p.format+' · Version '+ctx.C.latest(p).number+' · '+placedCount(p.id)+' placement'+(placedCount(p.id)===1?'':'s'))+'</div><div class="rl-controls">'+(can('coordinate',p)||can('publish',p)?action('new-placement','Add another destination',p.id,'small'):'')+contentLink(p.id)+'</div></article>').join('')):'')+
+      (!approved.length?panel('Approved creative packages',empty('No approved packages yet','Approved creatives appear here, ready for a placement. Open Review to check the current creative version.')):'')+
       (D.legacyCandidates(ctx.state,brand()).placements.length?panel('Earlier publishing records',D.legacyCandidates(ctx.state,brand()).placements.map(p=>summaryRow(p.title,p.publishing.state+' · '+p.publishing.date,action('legacy-placement','Bring into desk',p.id))).join('')):'')+
-      (can('coordinate')?panel('Release controls',meta('A pause stops local release requests. Confirm cancellation for any schedule already accepted.'),action('pause','Manage pauses')):'');
+      (can('coordinate')?panel('Release controls',meta('Pausing stops scheduled releases from going out. If a platform already accepted a schedule, confirm its cancellation there too.'),action('pause','Manage pauses')):'');
   }
   function placementForm(id){
     const posts=ctx.scoped().filter(ctx.C.isApproved);if(!posts.length){ctx.toast('Approve a current creative version in Review first.');return;}
@@ -81,18 +89,20 @@
     const people=root.JMLGovernance?.eligiblePeople(ctx.state,brand(),'publish')||[],community=root.JMLGovernance?.eligiblePeople(ctx.state,brand())||[];
     const assigned=ctx.state.governance?.assignments.find(a=>a.brandId===brand()&&a.contentId===p.id&&a.kind==='publish'&&a.state!=='superseded');
     const defaultPublisher=assigned?.personId||(people.some(x=>x.id===ctx.ui.personId)?ctx.ui.personId:people.find(x=>!x.agencyAdmin)?.id||people[0]?.id);
-    form('Prepare a placement','new-placement',select('Approved creative','contentId',posts.map(v=>[v.id,v.title+' · V'+ctx.C.latest(v).number]),p.id)+
+    const preview=posts.map(v=>{const latest=ctx.C.latest(v),a=latest?.assets?.find(x=>x.type==='image');return '<div class="full rl-place-preview" data-preview-for="'+esc(v.id)+'"'+(v.id===p.id?'':' hidden')+'>'+(a?'<img src="'+esc(root.JMLStorage.mediaURL(a.url))+'" alt="">':'')+'<div><strong>V'+latest.number+' · '+esc(v.format)+' · '+latest.assets.length+' file'+(latest.assets.length===1?'':'s')+'</strong><p>'+esc(String(latest.caption||'').slice(0,180))+(String(latest.caption||'').length>180?'…':'')+'</p></div></div>';}).join('');
+    form('Prepare a placement','new-placement',select('Approved creative','contentId',posts.map(v=>[v.id,root.JMLWorkflowUI.clean(v.title).slice(0,70)+' · V'+ctx.C.latest(v).number]),p.id)+preview+
       input('Destination platform','platform',p.platform)+input('Destination account','account',platformAccount)+select('Delivery method','mode',p.example||brand()==='demo'?[['simulation','Simulation']]:[['manual','Manual handoff'],['simulation','Simulation']])+
       input('Output format','format',p.format)+input('Planned local date and time','scheduledLocal',D.briefSchedule(p).local,'datetime-local')+input('Destination time zone','timezone',p.timezone||'UTC')+
       '<p class="full" data-placement-timing role="status"></p><div class="full" data-timing-change hidden>'+check('Approval covers this timing change from the creative brief.','timingChangeApproved')+'</div>'+
       (people.length?select('Assigned publisher','ownerPersonId',people.map(x=>[x.id,x.name]),defaultPublisher):input('Publisher','owner',actor()))+
-      (community.length?select('Community handoff owner','communityOwnerPersonId',community.map(x=>[x.id,x.name]),community.find(x=>x.name===p.brief.approver)?.id):input('Community handoff owner','communityOwner',p.brief.approver||actor()))+
+      (community.length?select('Community handoff owner (watches first comments)','communityOwnerPersonId',community.map(x=>[x.id,x.name]),(root.JMLGovernance?.eligiblePeople(ctx.state,brand(),'account')||[]).find(x=>!x.agencyAdmin&&community.some(c=>c.id===x.id))?.id||community.find(x=>x.id===defaultPublisher)?.id||community.find(x=>x.name===p.brief.approver)?.id):input('Community handoff owner','communityOwner',actor()))+
       input('Permission expiry (if applicable)','rightsUntil',p.brief.productionSpec?.rightsExpiry||'','date',false)+area('Finishing instructions, links and tags','nativeNotes','',false)+
       check('Release approval covers this destination and the selected creative and caption.','scopeApproved',true),'Save placement','','The saved package keeps the approved creative version and its assets in order.');
     updatePlacementTiming(document.querySelector('[data-rl-form="new-placement"]'));
   }
   function updatePlacementTiming(form,reset=false){
     if(!form)return;
+    form.querySelectorAll('[data-preview-for]').forEach(el=>el.hidden=el.dataset.previewFor!==form.elements.contentId.value);
     const post=ctx.scoped().find(p=>p.id===form.elements.contentId.value),f=Object.fromEntries(new FormData(form));
     const note=form.querySelector('[data-placement-timing]'),change=form.querySelector('[data-timing-change]'),approval=form.elements.timingChangeApproved;
     if(reset){approval.checked=false;form.elements.scopeApproved.checked=false;}
@@ -117,15 +127,17 @@
     if(can('coordinate',p)&&!['cancelled','verified'].includes(p.state))tools+=action('placement-pause',D.read(ctx.state).pauses.some(r=>r.scope==='placement'&&r.target===id&&r.active)?'Resume placement':'Pause placement',id);
     if(p.state==='verified'&&communityOwner(p)&&!p.communityReceipt)tools+=action('receive-community','Accept community handoff',id,'primary');
     const assets=(h?.assets||v.assets).map((a,i)=>'<figure>'+(a.type==='video'?'<video controls preload="metadata" src="'+esc(root.JMLStorage.mediaURL(a.url))+'"></video>':'<img loading="lazy" src="'+esc(root.JMLStorage.mediaURL(a.url))+'" alt="'+esc(a.alt||a.name)+'">')+'<figcaption>'+esc((i+1)+'. '+a.name)+(h?.files?.[i]?'<small>SHA-256 '+esc(h.files[i].sha256)+'</small>':'')+'</figcaption></figure>').join('');
-    const detail= '<div class="rl-controls">'+badge(modeText(p))+badge(stateName[p.state])+'</div><h3>'+esc(contentName(p.contentId))+'</h3>'+
-      '<dl class="rl-grid">'+[['Destination',p.platform+' / '+p.account],['Planned',new Date(p.scheduledAt).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short',timeZone:p.timezone})+' · '+p.timezone],['Package','Creative V'+v.number+' · brief r'+p.briefRevision],['Release approver',p.approval.actor],['Publisher',p.owner],['Community handoff',p.communityOwner]].map(([k,v])=>'<div><dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd></div>').join('')+'</dl>'+
-      (h?'<p class="rl-handoff">'+esc(h.sender+' → '+h.recipient)+'<br><small>'+esc('Client approval '+h.decisionId+' · '+utcDisplay(h.decision.at))+'</small></p>':'')+
+    const U=root.JMLWorkflowUI,stage=p.state==='verified'?4:['scheduled','handed-off'].includes(p.state)?3:p.receipt||!h?2:1,trouble=['failed','uncertain','cancel-pending'].includes(p.state);
+    const steps=[{label:'Prepared',state:'done',note:p.approval?.actor||''},{label:'Publisher accepts',state:stage>1?'done':'current',note:p.owner},{label:p.mode==='manual'?'Hand off':'Schedule',state:stage>2?'done':stage===2?(trouble?'blocked':'current'):'todo',note:trouble?stateName[p.state]:''},{label:'Verify',state:stage>3?'done':stage===3?'current':'todo',note:p.state==='verified'?'Published':''}];
+    const detail=(p.state==='cancelled'?'':U.stepper(steps,'Release progress'))+'<div class="rl-controls">'+badge(stateName[p.state],p.state==='verified'?'ok':trouble?'warning':'')+badge(modeText(p))+'</div><h3>'+esc(U.clean(contentName(p.contentId)))+'</h3>'+
+      '<dl class="rl-grid">'+[['Destination',p.platform+' / '+p.account],['Planned',root.JMLWorkflowUI.when(p.scheduledAt,p.timezone)],['Package','Creative V'+v.number+' · brief r'+p.briefRevision],['Release approver',p.approval.actor],['Publisher',p.owner],['Community handoff',p.communityOwner]].map(([k,v])=>'<div><dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd></div>').join('')+'</dl>'+
+      (h?'<p class="rl-handoff" title="'+esc('Decision reference '+h.decisionId)+'">Approved by '+esc(h.sender)+' · '+esc(utcDisplay(h.decision.at))+'<br><small>Handed to '+esc(h.recipient)+' for publishing</small></p>':'')+
       '<h3>Exact approved caption</h3><pre class="rl-caption">'+esc(h?.caption||v.caption)+'</pre>'+(assets?'<h3>Approved files in release order</h3><div class="rl-assets">'+assets+'</div>':meta('Text-only release. The caption is the complete creative.'))+
-      (p.receipt?meta('Publisher accepted · '+p.receipt.actor+' · '+utcDisplay(p.receipt.at)):meta('Waiting for '+p.owner+' to accept this exact package.'))+
+      (p.receipt?meta('Publisher accepted · '+p.receipt.actor+' · '+utcDisplay(p.receipt.at)):publisher(p)?'<p class="rl-yourturn"><b>Your turn:</b> check the files and caption above, then accept the package.</p>':meta('Waiting for '+p.owner+' to accept this package.'))+
       (p.communityReceipt?meta('Community handoff accepted · '+p.communityReceipt.actor+' · '+utcDisplay(p.communityReceipt.at)):'')+
       (p.nativeNotes?'<p>'+esc(p.nativeNotes)+'</p>':'')+(issues.length?'<div class="rl-message">'+esc(issues.join(' '))+'</div>':'')+
       (p.verification?'<p>Verified by '+esc(p.verification.actor)+' · '+esc(utcDisplay(p.verification.actualAt))+'<br>'+esc(p.verification.url||p.verification.note)+'</p>':'')+
-      '<div class="rl-controls">'+tools+'</div><h3>Release history</h3>'+historyRows(p.attempts);
+      '<div class="rl-controls rl-actions">'+tools+'</div><h3>Release history</h3>'+historyRows([...(p.receipt?[{type:'Publisher accepted the package',at:p.receipt.at,actor:p.receipt.actor}]:[]),...(p.communityReceipt?[{type:'Community handoff accepted',at:p.communityReceipt.at,actor:p.communityReceipt.actor}]:[]),...p.attempts]);
     show('Release placement',detail);
   }
   function stepForm(key){
@@ -134,7 +146,7 @@
     const titles={schedule:p.mode==='manual'?'Record manual handoff':'Simulate scheduling',cancel:'Cancel placement','confirm-cancel':'Confirm external cancellation',verify:p.mode==='manual'?'Verify live publication':'Verify simulated publication',reconcile:'Reconcile uncertain delivery'};
     let fields='';
     if(op==='schedule'){
-      if(p.mode==='simulation')fields+=select('Simulated response','scenario',[['accept','Accepted'],['reject','Definitive rejection'],['timeout','Accepted, response timed out']]);
+      if(p.mode==='simulation')fields+=select('Simulated platform response','scenario',[['accept','Accepted'],['reject','Rejected by the platform'],['timeout','No response (outcome unknown)']]);
       fields+=check('I checked the account, approved files, caption, links, timing and native finishing tasks.','checked',true);
     }
     if(op==='cancel'&&p.mode==='simulation'&&['scheduled','uncertain','cancel-pending'].includes(p.state))fields+=select('Simulated response','scenario',[['accept','Cancellation confirmed'],['reject','Cancellation unconfirmed']]);
@@ -155,7 +167,7 @@
   const evidenceOptions=()=>brand()==='demo'||currentBrand().example?[["fixture","Sample data"]]:[["recorded","Recorded data"],["fixture","Sample data"]];
   function defaultEvidenceOrigin(){return ctx.state.demoData?.accounts?.[brand()]?.groups?.learn&&!items('observations').some(o=>!o.supersededBy&&o.origin==='recorded')?'fixture':defaults().origin;}
   function evidenceRows(){const origin=evidenceFilter||defaultEvidenceOrigin();return items('observations').filter(o=>!o.supersededBy&&o.origin===origin);}
-  function evidenceTable(rows){return rows.length?'<div class="table-wrap"><table><thead><tr><th>Metric</th><th>Account &amp; source</th><th>Window</th><th>Value</th></tr></thead><tbody>'+rows.map(o=>'<tr><td>'+esc(o.metric)+'<small>'+esc(o.definition)+'</small></td><td>'+esc(o.account)+'<small>'+esc(o.source+' · '+o.segment+' · '+o.aggregation)+'</small></td><td>'+esc(o.start)+'<small>through '+esc(o.end)+'</small></td><td>'+esc(number(o.value))+'<small>'+esc(o.unit)+'</small></td></tr>').join('')+'</tbody></table></div>':empty('No observations for this selection','Enter an observation, import a local export or load labeled sample data.');}
+  function evidenceTable(rows){const U=root.JMLWorkflowUI;return rows.length?'<div class="table-wrap"><table><thead><tr><th>Metric</th><th>Account &amp; source</th><th>Window</th><th>Value</th></tr></thead><tbody>'+rows.map(o=>'<tr><td>'+esc(U.human(o.metric))+'<small>'+esc(o.definition)+'</small></td><td>'+esc(U.clean(o.account))+'<small>'+esc(o.source+' · '+U.human(o.segment)+' · '+U.human(o.aggregation))+'</small></td><td>'+esc(U.day(o.start))+'<small>through '+esc(U.day(o.end))+'</small></td><td>'+(o.value===null?'<span class="ux-chip wait">Unknown</span>':esc(number(o.value)))+'<small>'+esc(o.unit)+'</small></td></tr>').join('')+'</tbody></table></div>':empty('No observations for this selection','Enter an observation, import a local export or load labeled sample data.');}
   function filteredEvidence(){
     const ui=ctx.ui, posts=new Map(ctx.scoped().map(p=>[p.id,p]));
     return evidenceRows().filter(o=>{
@@ -189,19 +201,22 @@
         (obs.some(o=>o.contentId)?'<details class="rl-pad"><summary>Content filters</summary><div class="rl-filters">'+
           filter('Campaign','campaign',choices(ctx.scoped().map(p=>p.brief.campaign)),ctx.ui.learnCampaign)+filter('Objective','objective',choices(ctx.scoped().map(p=>p.brief.objective)),ctx.ui.learnObjective)+filter('Format','format',choices(ctx.scoped().map(p=>p.format)),ctx.ui.learnFormat)+'</div></details>':'')+
         seriesSummary(rows)+evidenceTable(rows.slice().reverse())+
-        (rows.length?'<div class="rl-pad">'+meta(rows.length+' source observations · '+rows.filter(o=>o.value===null).length+' unknown values')+action('compare','Compare observations')+' '+action('rate','Calculate rate')+' '+action('export-evidence','Export evidence')+'</div>':''),
+        (rows.length?'<div class="rl-pad">'+meta(root.JMLWorkflowUI.plural(rows.length,'source observation')+' · '+root.JMLWorkflowUI.plural(rows.filter(o=>o.value===null).length,'unknown value'))+'<span title="Compare two observations of the same measure over time">'+action('compare','Compare two periods')+'</span> <span title="Divide one measure by another, for example saves per 1,000 views">'+action('rate','Calculate a rate')+'</span> '+action('export-evidence','Export evidence (JSON)')+'</div>':''),
         '<div class="rl-controls">'+action('observe','Single measure')+action('import','Import file')+'</div>')+
       (D.legacyCandidates(ctx.state,brand()).metrics.length?panel('Earlier post observations',meta('Bring '+D.legacyCandidates(ctx.state,brand()).metrics.length+' saved post records into the shared evidence register.'),action('legacy-metrics','Bring in observations')):'')+
       U.optional('Evidence imports and sample data',panel('Evidence imports',batches.length?batches.map(b=>summaryRow(b.name,utcDisplay(b.at)+' · '+b.actor+' · '+b.count+' saved / '+b.duplicates+' duplicates / '+b.overlaps+' overlapping windows')).join(''):meta('Import history appears here after the first file or manual entry.'),action('fixture','Load sample evidence')));
   }
   function workList(){
     const list=items('work').filter(w=>can('coordinate',w)||can('analyze',w)||can('strategy',w)||(w.ownerPersonId?w.ownerPersonId===ctx.ui.personId:w.owner===actor())).slice().reverse();
-    return proposalList()+panel('Growth and decisions',list.length?list.map(w=>summaryRow(w.title,w.owner+' · review '+w.due,action('work-item','Open',w.id),badge(w.kind)+' '+badge(w.status)+(w.origin==='fixture'?' '+badge('Sample data'):''))).join(''):empty('Start a growth decision','Record a finding, audience opportunity, experiment, watchlist, collaboration or community case.'),action('work-type','Add record','','primary'));
+    const U=root.JMLWorkflowUI,groups=[...new Set(list.map(w=>w.kind))];
+    return proposalList()+panel('Growth and decisions',list.length?groups.map(kind=>{const rows=list.filter(w=>w.kind===kind);return '<h3 class="rl-group">'+esc(kind)+' <span class="count-note">'+rows.length+'</span></h3>'+rows.map(w=>summaryRow(U.clean(w.title),w.owner+' · review '+U.day(w.due),action('work-item','Open',w.id,'small'),badge(w.status,w.status==='Open'?'':'ok')+(w.origin==='fixture'?' '+badge('Sample'):''))).join('');}).join(''):empty('Start a growth decision','Record a finding, audience opportunity, experiment, watchlist, collaboration or community case.'),action('work-type','Add record','','primary'));
   }
   function resultText(c){return c.result===null?'Unavailable':c.result.toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:1})+' '+c.definition.unit;}
   function savedResults(){
     const rows=items('calculations').slice().reverse();
-    return panel('Measured outcomes',rows.length?'<div class="outcome-list">'+rows.map(c=>'<article class="outcome-row"><div>'+badge(kindText(c.origin))+'<h3>'+esc(c.definition.title)+'</h3><p class="task-outcome">'+esc(resultText(c))+'</p><p>'+esc(c.account+' · '+c.start+' – '+c.end)+'</p>'+meta(c.unavailable||(c.delta===null?'Baseline comparison unavailable':(c.delta>=0?'+':'')+c.delta.toFixed(1)+' versus baseline'))+'</div><div class="actions">'+action('calculation','Inspect result',c.id)+' '+(can('analyze')||can('coordinate')?action('report-from-result','Draft report',c.id):'')+'</div></article>').join('')+'</div>':empty('Turn evidence into the next test','Record a placement’s counts to calculate its agreed KPI, then draft a report.'),can('analyze')?action('calculate-kpi','Calculate from existing evidence'):'');
+    const U=root.JMLWorkflowUI,bar=c=>{if(c.result===null)return '';const base=c.baselineValue,max=Math.max(c.result,base||0)*1.15||1,w=v=>Math.max(2,Math.round(v/max*100));return '<div class="kpi-bars" role="img" aria-label="Result '+esc(resultText(c))+(base!=null?' against baseline '+base:'')+'"><div><span>Result</span><i style="width:'+w(c.result)+'%"></i><b>'+esc(c.result.toFixed(1))+'</b></div>'+(base!=null?'<div class="base"><span>Baseline</span><i style="width:'+w(base)+'%"></i><b>'+esc(Number(base).toFixed(1))+'</b></div>':'')+'</div>';};
+    const delta=c=>c.delta===null||c.delta===undefined?'':'<span class="ux-chip '+(c.delta>=0?'ok':'wait')+'">'+(c.delta>=0?'▲ +':'▼ ')+c.delta.toFixed(1)+' vs baseline</span>';
+    return panel('Measured outcomes',rows.length?'<div class="outcome-list">'+rows.map(c=>'<article class="outcome-row"><div>'+badge(kindText(c.origin))+'<h3>'+esc(U.clean(c.numerator?.contentId?contentName(c.numerator.contentId):c.definition.title))+'</h3><p class="muted">'+esc(c.definition.title)+'</p><p class="task-outcome">'+esc(resultText(c))+' '+delta(c)+'</p>'+bar(c)+'<p>'+esc(U.clean(c.account)+' · '+U.day(c.start)+' – '+U.day(c.end))+'</p>'+meta(c.unavailable||(c.delta===null?'Baseline comparison unavailable':''))+'</div><div class="actions">'+action('calculation','Inspect result',c.id)+' '+(can('analyze')||can('coordinate')?action('report-from-result','Draft report',c.id):'')+'</div></article>').join('')+'</div>':empty('Turn evidence into the next test','Record a placement’s counts to calculate its agreed KPI, then draft a report.'),can('analyze')?action('calculate-kpi','Calculate from existing evidence'):'');
   }
   function kpiForm(){
     allow('analyze');
@@ -231,7 +246,8 @@
   }
   function proposalList(){
     const rows=items('proposals').slice().reverse();
-    return panel('Next-plan proposals',rows.length?rows.map(p=>summaryRow(p.title,p.kind+' · '+p.owner+' · review '+p.due,action('proposal','Review proposal',p.id),badge(p.status))).join(''):meta('Proposals made from a saved outcome appear here. Accepting one creates a draft or a planning request; approvals stay with their original versions.'));
+    const U=root.JMLWorkflowUI;
+    return panel('Next-plan proposals',rows.length?rows.map(p=>summaryRow(U.clean(p.title),U.human(p.kind)+' change · '+p.owner+' · review '+U.day(p.due),action('proposal','Review proposal',p.id,'small'),badge(p.status))).join(''):meta('Proposals made from a saved outcome appear here. Accepting one creates a draft or a planning request; approvals stay with their original versions.'));
   }
   function proposalDetail(id){
     const p=record('proposals',id),c=record('calculations',p.calculationId);
@@ -402,7 +418,7 @@
         const blob=root.JMLReleaseFiles.bundle(D.manifest(ctx.state,record('placements',key)),prepared),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=p.contentId+'-v'+p.handoff.versionNumber+'-approved.zip';link.click();setTimeout(()=>URL.revokeObjectURL(url),10000);placementDetail(key);
       }finally{el.disabled=false;el.textContent='Download approved files (ZIP)';}return;
     }
-    if(cmd==='receive-package'){const p=record('placements',key);allow('publish',p);return emit((s,b,a)=>D.receiveHandoff(s,b,key,a,ctx.ui.personId),'Approved handoff accepted.');}
+    if(cmd==='receive-package'){const p=record('placements',key);allow('publish',p);await emit((s,b,a)=>D.receiveHandoff(s,b,key,a,ctx.ui.personId),'Package accepted. Next: '+(p.mode==='manual'?'record the handoff.':'schedule it.'));placementDetail(key);return;}
     if(cmd==='receive-community'){const p=record('placements',key);if(!communityOwner(p))throw Error('Only the assigned community owner can accept this handoff.');return emit((s,b,a)=>D.receiveCommunity(s,b,key,a,ctx.ui.personId),'Community handoff accepted.');}
     if(cmd==='calculate-kpi'||cmd==='rate')return kpiForm();
     if(cmd==='calculation')return calculationDetail(key);
@@ -478,17 +494,21 @@
       if(f.ownerPersonId)f.owner=root.JMLGovernance.person(ctx.state,f.ownerPersonId)?.name;
       if(f.communityOwnerPersonId)f.communityOwner=root.JMLGovernance.person(ctx.state,f.communityOwnerPersonId)?.name;
       f.approver=ctx.C.latest(post).decisions.slice().reverse().find(d=>d.action==='approved')?.actor;
-      return emit((s,b,a)=>D.createPlacement(s,b,f,a),'Placement prepared.');
+      let created;await emit((s,b,a)=>{created=D.createPlacement(s,b,f,a);},'Placement prepared for '+(f.owner||'the publisher')+'.');if(created?.id)placementDetail(created.id);return;
     }
-    if(cmd==='release-step'){const [id,step]=key.split('|'),p=record('placements',id);allow('publish',p);if(!publisher(p))throw Error('Only the assigned publisher can operate this placement.');if(f.actualAt)f.actualAt=utc(f.actualAt);return emit((s,b,a)=>D.advance(s,b,id,step,f,a),'Release history updated.');}
+    if(cmd==='release-step'){const [id,step]=key.split('|'),p=record('placements',id);allow('publish',p);if(!publisher(p))throw Error('Only the assigned publisher can operate this placement.');if(f.actualAt)f.actualAt=utc(f.actualAt);await emit((s,b,a)=>D.advance(s,b,id,step,f,a),{schedule:p.mode==='manual'?'Handoff recorded.':f.scenario==='reject'?'The platform rejected the schedule (simulated). Check the details and try again.':f.scenario==='timeout'?'No response (simulated). Reconcile the attempt before retrying.':'Scheduled (simulated) for '+utcDisplay(p.scheduledAt)+'.',verify:'Publication verified.',cancel:'Cancellation recorded.','confirm-cancel':'Cancellation confirmed.',reconcile:'Delivery reconciled.'}[step]||'Release history updated.');placementDetail(id);return;}
     if(cmd==='calculate-kpi')return emit((s,b,a)=>D.calculate(s,b,f,a),'Measured outcome saved.');
     if(cmd==='propose-next'){if(!can('strategy'))allow('coordinate');if(f.ownerPersonId)f.owner=root.JMLGovernance.person(ctx.state,f.ownerPersonId)?.name;return emit((s,b,a)=>D.proposeNext(s,b,key,f,a),'Next-plan proposal saved.');}
     if(cmd==='proposal-decision'){if(!can('strategy'))allow('coordinate');f.personId=ctx.ui.personId;return emit((s,b,a)=>D.decideProposal(s,b,key,f,a),'Planning decision saved.');}
     if(cmd==='measure-batch'){
       const primary=JSON.parse(el.dataset.primary||'[]');
       const values=Object.fromEntries(Object.entries(f).filter(([k,v])=>k.startsWith('value-')&&(v!==''||primary.includes(k.slice(6)))).map(([k,v])=>[k.slice(6),v]));
+      if(!Object.values(values).some(v=>String(v??'').trim()!==''))throw Error('Enter at least one measured value. Leave a field blank only when that value is unknown.');
+      const placement=record('placements',f.placementId),published=String(placement?.verification?.actualAt||placement?.scheduledAt||'').slice(0,10);
+      if(published&&f.end&&f.end<published)throw Error('This reporting period ends before the post was published ('+root.JMLWorkflowUI.day(published)+'). Choose a period that starts on or after that date.');
       let result;await emit((s,b,a)=>{result=D.recordMeasurements(s,b,f,values,a);},'Source counts saved.');
-      if(result?.result)ctx.toast('Counts saved and '+resultText(result.result)+' calculated.');else ctx.toast('Counts saved. A KPI needs matching measures, period and distribution.');return;
+      const c=result?.result;
+      if(c&&c.result!==null)ctx.toast('Counts saved. '+c.definition.title+': '+resultText(c)+'.');else if(c)ctx.toast('Counts saved, but '+c.definition.title+' could not be calculated: '+(c.unavailable||'a required count is unknown')+'.');else ctx.toast('Counts saved. A KPI needs matching measures, period and distribution.');return;
     }
     if(cmd==='observe'){evidenceFilter=f.origin;return emit((s,b,a)=>D.ingest(s,b,[f],{name:f.source,format:'manual',replace:f.replace},a),'Observation saved.');}
     if(cmd==='input-file'){
@@ -568,7 +588,7 @@
       const observationForm=ev.target.closest('[data-rl-form="observe"]');if(observationForm)updateObservationForm(observationForm,ev.target.name);
       const calculationForm=ev.target.closest('[data-rl-form="calculate-kpi"]');if(calculationForm&&['definitionId','numeratorId'].includes(ev.target.name))updateKpiChoices(calculationForm);
       const placementFormEl=ev.target.closest('[data-rl-form="new-placement"]');
-      if(placementFormEl&&['scheduledLocal','timezone'].includes(ev.target.name))updatePlacementTiming(placementFormEl,true);
+      if(placementFormEl&&['scheduledLocal','timezone','contentId'].includes(ev.target.name))updatePlacementTiming(placementFormEl,ev.target.name!=='contentId');
       const el=ev.target.closest('[data-rl-change]');if(!el)return;
       const field=el.dataset.rlChange;
       if(field==='queue')queueFilter=el.value;

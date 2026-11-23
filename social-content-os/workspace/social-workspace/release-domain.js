@@ -111,7 +111,7 @@
       state:'ready',attempts:[],verification:null,createdAt:C.now()};
     if(placement.rightsUntil)requireValue(date(placement.rightsUntil),'Choose a valid permission expiry date.');
     placement.handoff=handoffSnapshot(post,version,placement,actor);placement.receipt=null;
-    data(state).placements.push(placement);audit(state,brandId,'Placement prepared',placement.id,actor,platform+' Â· '+account);return placement;
+    data(state).placements.push(placement);audit(state,brandId,'Placement prepared',placement.id,actor,platform+' · '+account);return placement;
   }
   function receiveHandoff(state,brandId,id,actor,personId='') {
     const p=entry(state,'placements',brandId,id);
@@ -121,7 +121,7 @@
     requireValue(!p.receipt,'The publisher already accepted this handoff.');
     if(!p.handoff)p.handoff=handoffSnapshot(sourcePost(state,brandId,p.contentId),sourcePost(state,brandId,p.contentId).versions.find(v=>v.id===p.versionId),p,actor);
     p.receipt={id:C.id('receipt'),handoffId:p.handoff.id,versionId:p.versionId,decisionId:p.handoff.decisionId,actor,personId,at:C.now()};
-    audit(state,brandId,'Publisher accepted approved package',p.id,actor,'Version '+p.handoff.versionNumber+' Â· decision '+p.handoff.decisionId);return p.receipt;
+    audit(state,brandId,'Publisher accepted approved package',p.id,actor,'Version '+p.handoff.versionNumber+' · decision '+p.handoff.decisionId);return p.receipt;
   }
   function receiveCommunity(state,brandId,id,actor,personId='') {
     const p=entry(state,'placements',brandId,id);
@@ -206,7 +206,7 @@
       const checked=adapters[p.mode].verify(p,fields);
       p.verification={...checked,at:C.now(),actor,versionId:p.versionId};
       result={state:'verified',outcome:p.mode==='manual'?'Live publication verified manually':'Simulated publication verified',receipt:p.mode==='manual'?fields.url:'SIM-'+key};
-      const community=addWork(state,brandId,{kind:'Community case',title:'Community handoff Â· '+sourcePost(state,brandId,p.contentId).title,owner:p.communityOwner,due:releaseDate(p,p.verification.actualAt),evidence:result.receipt,detail:'Review replies and recurring questions for '+p.account+'.',fixture:p.mode==='simulation',placementId:p.id},actor);
+      const community=addWork(state,brandId,{kind:'Community case',title:'Community handoff · '+sourcePost(state,brandId,p.contentId).title,owner:p.communityOwner,due:releaseDate(p,p.verification.actualAt),evidence:result.receipt,detail:'Review replies and recurring questions for '+p.account+'.',fixture:p.mode==='simulation',placementId:p.id},actor);
       community.contentId=p.contentId;community.versionId=p.versionId;community.ownerPersonId=p.communityOwnerPersonId||'';p.communityWorkId=community.id;
     }else throw Error('Unknown release operation.');
     p.attempts.push({id:C.id('attempt'),key,payloadHash:packageFingerprint(p),operation,actor,at:C.now(),prior,state:result.state,outcome:result.outcome,receipt:result.receipt||''});
@@ -387,7 +387,7 @@
       attempts:[],verification:verified?{at:q.verifiedAt||C.now(),actualAt:new Date(f.actualAt||f.scheduledAt).toISOString(),actor,url:mode==='manual'?q.url:'',note:'Imported manual verification. '+q.note,versionId:v.id}:null,createdAt:C.now()};
     data(state).placements.push(placement);
     if(q.state==='on-hold')pause(state,brandId,'placement',placement.id,actor);
-    audit(state,brandId,'Prior publishing record transferred',placement.id,actor,q.state+' Â· '+placement.account);
+    audit(state,brandId,'Prior publishing record transferred',placement.id,actor,q.state+' · '+placement.account);
     return placement;
   }
   function liftMetrics(state,brandId,f,actor){
@@ -511,7 +511,7 @@
       const post=C.makePost({brandId,title:p.title,owner:actor,source:'Result proposal '+p.id,sourceId:p.id,caption:p.detail,example:p.origin==='fixture'});
       post.measurementDefinitionId=p.definitionId;post.resultProposalId=p.id;
       const source=state.posts.find(x=>x.brandId===brandId&&x.id===p.contentId);if(source?.strategyVersionId)post.strategyVersionId=source.strategyVersionId;
-      state.posts.push(post);p.targetId=post.id;C.event(post,'Proposed from measured result',result.definition.title+' Â· '+(result.result===null?'Unknown':result.result)+' Â· '+p.detail,actor);
+      state.posts.push(post);p.targetId=post.id;C.event(post,'Proposed from measured result',result.definition.title+' · '+(result.result===null?'Unknown':result.result)+' · '+p.detail,actor);
     }
     if(fields.action==='accept'&&p.kind!=='content'){
       const Ops=typeof module==='object'&&module.exports?require('./operations.js'):root.JMLOps;
