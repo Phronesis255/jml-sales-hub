@@ -55,8 +55,8 @@ To try everything with fictional data first, open **Today → Start here → Loa
 | 10 | Client creative approval | Sam | Sam | Review → Creative approvals |
 | 11 | Publish and verify | Asha prepares, Luca publishes | — | Publish → Publishing desk |
 | 12 | Measure results | Asha | — | Learn → Results |
-| 13 | Report to the client | Asha | Asha marks it client-ready | Learn → Reports |
-| 14 | Growth and the next cycle | Asha | Back to Sam via the plan | Learn → Growth |
+| 13 | Report to the client | Asha | Sam answers its yes/no question | Learn → Reports |
+| 14 | Growth and the next cycle | Asha | Back to Sam via the calendar | Today → Client replies, Learn → Growth |
 
 The **Content Planner** progress strip at the top of Foundation, Research and Strategy shows stages 3–6 at a glance: done (green), current, or waiting for the client (amber).
 
@@ -401,13 +401,15 @@ After verification, the community owner gets **Accept community handoff** on Tod
 ---
 
 ## Stage 12 — Measure results
-**Who:** Asha (analyst) · **Where:** **Learn → Results**
+**Who:** Asha (analyst) · **Where:** **Learn → Results**, or **Today → Results to record**
 
-1. Click **Record results** and choose the published placement.
-2. Set the **reporting period**. It can't end before the publish date.
-3. Enter the counts the KPI needs (for example **Saves** and **Views**). Leave a field blank only when that value is unknown; enter 0 only when it was zero. At least one value is required.
+1. Click **Record results**. The published post is already selected. Once a post's agreed window has ended (for example 7 days after publication), Today shows it under **Results to record**, and the button there opens this form for that post.
+2. The **reporting period** is pre-filled. If the agreed window is still running, the period ends today and the form says so: *The agreed 7-day window runs until Nov 29. Record what the platform shows so far…*
+3. Enter the counts the KPI needs (for example **Saves** and **Views**), and where they came from. Leave a field blank only when that value is unknown; enter 0 only when it was zero. At least one value is required.
 4. Optional (**Other measures and collection details**): reach, impressions, likes, comments, shares, follows, leads; collection date; organic/paid; aggregation.
-5. Click **Save counts and calculate KPI**. The **Measured outcomes** card shows the result, a bar against the baseline, and the change versus baseline.
+5. Click **Save counts and calculate KPI**.
+   - **Full window:** the **Measured outcomes** card shows the result and the change versus the baseline.
+   - **Window still running:** the counts are saved, and the message says when the KPI will be calculated: *…is calculated on the full 7-day window (Nov 23 – Nov 29). Add that reading after Nov 29; Today will remind you.*
 
 Other ways to add evidence, under **Performance evidence**:
 - **Single measure**: one account-level observation.
@@ -415,29 +417,38 @@ Other ways to add evidence, under **Performance evidence**:
 - **Compare two periods**, **Calculate a rate**, **Export evidence (JSON)**.
 - **Calculate from existing evidence**: compute a KPI from saved observations.
 
-**Done when:** each published post's KPI result is saved.
+**Done when:** each published post's KPI result is saved for its full window.
 
 ---
 
 ## Stage 13 — Report to the client
-**Who:** Asha · **Read by:** Sam / client viewers · **Where:** **Learn → Reports**
+**Who:** Asha · **Answered by:** Sam · **Where:** **Learn → Reports**
 
-1. Click **Draft report** on a result card, or **Create report** on the Reports tab.
-2. Write the findings, limitations and the decision you're asking the client for, and attach the measured outcomes.
-3. The assigned reviewer opens the snapshot, ticks *I checked period, sources, definitions, calculations and limitations*, and clicks **Mark client ready**.
-4. The client sees it under **Today → Latest report** and **Learn → Shared reports**, and can **Send feedback**, which creates a follow-up for the team.
+1. Click **Draft report** on a result card, or **Create report** on the Reports tab. The title, period, agreed measure and counts are filled in for you.
+2. Answer three questions:
+   - **What do the results tell us?**
+   - **What are the limits?**
+   - **What should the client decide?** Ask a yes/no question.
+3. Click **Share with {client}**. That's it: the message says *Report shared with Sam Rivera.* If someone else should check it first, tick **Have someone else review it before the client sees it** under *Report settings*. It is then saved as a draft, and that reviewer marks it client-ready.
+4. The client's Today shows the report under **Awaiting your review** as *Your answer needed*. It opens with the agreed KPI:
+   - the **Result**, or an **Early reading** if the window is still running;
+   - the target, then what the results tell us and the limits;
+   - **Decision we need from you**, followed by the numbers behind it and the published posts.
 
-**Done when:** the report is *Client ready* and shared.
+   Sam clicks **Yes, go ahead** or **Not now**, with an optional note.
+5. The answer appears on the planner's Today under **Client replies**, with a **Record next step** button.
+
+**Done when:** the client has answered and the reply is on Today.
 
 ---
 
 ## Stage 14 — Growth and the next cycle
-**Who:** Asha · **Where:** **Learn → Growth**
+**Who:** Asha · **Where:** **Today → Client replies**, or **Learn → Growth**
 
-1. **Record growth work** with **Add record**: finding, audience opportunity, experiment, watchlist, collaboration or community case. Each has an owner and a review date. Records are grouped by type.
-2. **Propose the next step** from a measured outcome (**Propose the next test**). The proposal can be a new research question, a strategy revision, a calendar item or a brief.
-3. **Review the proposal** and accept or decline it. Accepted proposals create the draft or planning request and keep a link to the result they came from.
-4. Accepted changes flow back into **Stage 4–6**. A changed strategy or calendar goes back to the client for approval, and the cycle repeats.
+1. From a client reply, click **Record next step**. Choose what happens next: *Continue: do more of this*, *Improve it and try again*, *Test it again* or *Stop doing this*. Say why.
+2. Tick **Add a new post idea for this** and give it a title. The idea is a normal planned draft: it's linked to the current strategy and KPI, and it has the client approver and a producer. The message says *Next step saved. "…" is on Today under Ideas to schedule.*
+3. On Today, **Plan for {client}** now shows **Ideas to schedule** with a **Set a date →** link for each idea. Giving it a date puts it on the calendar, and the calendar bar then asks you to send Sam an update. From there the cycle repeats: calendar approval, hand-off, quick check, client approval, publishing.
+4. Other growth work lives under **Learn → Growth**, via **Add record**: findings, audience opportunities, experiments, watchlists, collaborations and community cases, each with an owner and a review date. **Propose the next test** from a measured outcome creates a proposal that can become a research question, a strategy revision, a calendar item or a brief.
 
 ---
 

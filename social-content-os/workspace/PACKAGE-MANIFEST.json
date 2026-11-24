@@ -226,7 +226,7 @@
     {
       "path": "content-planner.html",
       "bytes": 498597,
-      "sha256": "f5d10b8b186d93b978843d216bfe7b0e38f736806bd32a4700a755791642f349"
+      "sha256": "a1730c51b461061b01f929c718836576c299496943e3582699061779b1bd0793"
     },
     {
       "path": "creative-brief/index.html",
@@ -1450,8 +1450,8 @@
     },
     {
       "path": "social-workspace/app.js",
-      "bytes": 101665,
-      "sha256": "9025f724c551025aaffaefb6980bc7eba0059ea872d40ac2290fa8f765184cf7"
+      "bytes": 104378,
+      "sha256": "a1b335fcd07e28f14e39c6d8bf25f4c9eb14b68e0d4cf22c7b97b3d177826cc9"
     },
     {
       "path": "social-workspace/attention.js",
@@ -1585,8 +1585,8 @@
     },
     {
       "path": "social-workspace/operations.js",
-      "bytes": 95576,
-      "sha256": "eb11e4766e18f06963d66cee6dae9bd72c03a31a3b5099c5e2ce7bc49ac34849"
+      "bytes": 96167,
+      "sha256": "20fd738756186e79fcda1b1bef01bce7d7ab2ef2768f1a1cbb782d41c00d89ee"
     },
     {
       "path": "social-workspace/personas.css",
@@ -1595,8 +1595,8 @@
     },
     {
       "path": "social-workspace/personas.js",
-      "bytes": 26773,
-      "sha256": "df1a64c67472c10508cf7ecae729a0fa314999a3a3201c31c38a636c1ada94a7"
+      "bytes": 29162,
+      "sha256": "eefdb47297e63881994c757e4876071999ad0bd388246c1baf42c19ae0107087"
     },
     {
       "path": "social-workspace/planner-frame.js",
@@ -1635,8 +1635,8 @@
     },
     {
       "path": "social-workspace/release-domain.js",
-      "bytes": 57768,
-      "sha256": "5fc23c6ea5a944469847e8ad399355e19b67c33fa2f86284828ea9f2bccaf14f"
+      "bytes": 60053,
+      "sha256": "486d36d17032ad52f2f2cc6591defde2fbbad988bea61ece17b52dcb9aa92398"
     },
     {
       "path": "social-workspace/release-files.js",
@@ -1650,8 +1650,8 @@
     },
     {
       "path": "social-workspace/release-learning.js",
-      "bytes": 78261,
-      "sha256": "6dac2e232e43774051179af5a263af39fd8f64d68776664f1ce9c064b5a31245"
+      "bytes": 80826,
+      "sha256": "618aa0f0aa5b5faff35ff14a3a46b6cee120b505624b42b92b613e1d4f1b5ae9"
     },
     {
       "path": "social-workspace/research.css",
@@ -1701,7 +1701,7 @@
     {
       "path": "social-workspace.html",
       "bytes": 3640,
-      "sha256": "ee9c579b6e913b0d176fecc75767971040b1f8009ca6b5ed3de1b81f0759b763"
+      "sha256": "c6b470f08ede60f32a341f679e7b579a0adbde18724fb5c9c6242fdddd07506c"
     }
   ]
 }

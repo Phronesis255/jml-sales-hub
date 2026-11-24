@@ -307,9 +307,15 @@
     if(f.placementId)item.links.push(f.placementId);
     data(state).work.push(item);audit(state,brandId,item.kind+' created',item.id,actor,item.title);return item;
   }
+  // A post proposed from results is a normal planned draft: linked to the current strategy and KPI, with the client approver and a producer.
   function draft(state,brandId,title,detail,sourceId,actor,origin){
-    const post=C.makePost({brandId,title,source:(origin==='fixture'?'Fixture learning decision ':'Learning decision ')+sourceId,caption:detail,owner:actor,example:brandId==='demo'||origin==='fixture'});
-    C.event(post,'Proposed from learning',sourceId,actor);state.posts.push(post);return post;
+    const brand=state.brands.find(b=>b.id===brandId),ops=brand?.operations,strategy=ops?.strategies?.at(-1),db=data(state);
+    const src=(db.work||[]).find(w=>w.id===sourceId)||(db.reports||[]).find(r=>r.id===sourceId);
+    const g=state.governance,producer=(g?.memberships||[]).filter(m=>m.brandId===brandId&&m.active!==false&&(m.functions||[]).includes('design')).map(m=>g.people.find(p=>p.id===m.personId)).find(p=>p&&!p.agencyAdmin&&p.active!==false)?.name||actor;
+    const post=C.makePost({brandId,title,source:(origin==='fixture'?'Sample results: ':'From results: ')+(src?.title||'a learning decision'),owner:producer,objective:strategy?.body?.objective||'',audience:strategy?.body?.audience||'',timezone:brand?.timezone,example:brandId==='demo'||origin==='fixture'});
+    if(strategy)Object.assign(post,{strategyVersionId:strategy.id,measurementDefinitionId:strategy.body?.kpiDefinitionId,planningProposal:true});
+    Object.assign(post.brief,{direction:detail||'',approver:ops?.foundation?.finalApprover||''});post.sourceLearningId=sourceId;
+    C.event(post,'Proposed from results',src?.title||sourceId,actor);state.posts.push(post);return post;
   }
   function decideWork(state,brandId,id,f,actor){
     const item=entry(state,'work',brandId,id);
@@ -344,7 +350,20 @@
       observations:C.clone(observations),deliveries:delivery.map(p=>({id:p.id,title:names.find(x=>x.id===p.contentId)?.title||p.contentId,platform:p.platform,account:p.account,versionId:p.versionId,actualAt:p.verification.actualAt})),
       calculations:C.clone(selected?[selected]:(db.calculations||[]).filter(c=>c.brandId===brandId&&c.origin===f.origin&&c.start>=f.start&&c.end<=f.end)),
       findings:C.clone(db.work.filter(w=>w.brandId===brandId&&w.kind==='Finding'&&w.origin===f.origin&&w.due>=f.start&&w.due<=f.end))};
+    report.headline=reportHeadline(state,brandId,report);
     db.reports.push(report);audit(state,brandId,'Report snapshot created',report.id,actor,report.title);return report;
+  }
+  /* The agreed KPI first: the saved result if there is one, otherwise an early reading from the same source counts. */
+  function reportHeadline(state,brandId,report){
+    const ops=state.brands.find(b=>b.id===brandId)?.operations,strategy=ops?.strategies?.at(-1)?.body,target=strategy?.target||'';
+    const c=report.calculations?.find(x=>x.result!==null);
+    if(c)return {title:c.definition.title,unit:c.definition.unit,value:c.result,start:c.start,end:c.end,partial:false,window:c.definition.window,target};
+    const def=ops?.kpis?.find(k=>k.id===strategy?.kpiDefinitionId);if(!def)return null;
+    const a=report.observations.find(o=>matchingMeasure(o,def.numerator)&&o.value!==null);if(!a)return null;
+    const b=def.denominator?report.observations.find(o=>matchingMeasure(o,def.denominator)&&sameEvidenceScope(a,o)&&Number(o.value)>0):null;
+    if(def.denominator&&!b)return null;
+    const value=b?Number(a.value)/Number(b.value)*Number(def.scale??1):Number(a.value);
+    return {title:def.title,unit:def.unit,value,start:a.start,end:a.end,partial:true,window:def.window,target};
   }
   function reportDecision(state,brandId,id,f,actor){
     const r=entry(state,'reports',brandId,id);
@@ -358,7 +377,7 @@
     requireValue(date(due),'Choose a valid due date.');
     const action=addWork(state,brandId,{kind:'Audience opportunity',title:clean(f.title,'an action',true),owner,due,detail:note,evidence:r.id,fixture:r.origin==='fixture'},actor);
     if(f.propose)action.links.push(draft(state,brandId,f.title,note,id,actor,r.origin).id);
-    r.feedback.push({actor,at:C.now(),note,actionId:action.id});audit(state,brandId,'Report feedback recorded',id,actor,note);
+    r.feedback.push({actor,at:C.now(),note,decision:['yes','no'].includes(f.decision)?f.decision:'',actionId:action.id});audit(state,brandId,'Report feedback recorded',id,actor,note);
   }
   // Historical facts stay in the original records. Resolve account/time ambiguity once at import.
   function legacyCandidates(state,brandId){
@@ -446,7 +465,7 @@
     const definition=state.brands.find(b=>b.id===brandId)?.operations?.kpis?.find(k=>k.id===p.measurementDefinitionId);
     requireValue(placement.state==='verified','Verify the release before recording its results. Use Single measure for account-level evidence.');
     const origin=placement.mode==='simulation'?'fixture':'recorded';
-    if(origin==='recorded')requireValue(fields.end<=C.localDate(placement.timezone)&&fields.collectedAt<=C.localDate(placement.timezone),'Recorded measurements cannot use future reporting or collection dates.');
+    if(origin==='recorded')requireValue(fields.end<=C.localDate(placement.timezone)&&fields.collectedAt<=C.localDate(placement.timezone),'The reporting period and collection date can’t be later than today. Record what you have so far, then add a later reading.');
     const keys=Object.keys(values);requireValue(keys.length&&keys.every(k=>rawMeasures[k]),'Choose supported raw measures.');
     requireValue(keys.every(key=>key==='netfollowers'||values[key]==null||String(values[key]).trim()===''||Number(values[key])>=0),'Counts cannot be negative. Use Net follower change for follows minus unfollows.');
     const rows=keys.map(key=>({...fields,brandId,account:placement.account,contentId:p.id,placementId:placement.id,timezone:placement.timezone,origin,metric:rawMeasures[key].label,definition:rawMeasures[key].definition,unit:rawMeasures[key].unit,value:values[key]}));

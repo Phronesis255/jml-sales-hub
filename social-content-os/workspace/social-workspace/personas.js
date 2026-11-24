@@ -9,7 +9,7 @@
   const escape = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const roleAllowed = role => role === 'client' || role === 'viewer';
   const planLabels = {foundation:'Client foundation',strategy:'Strategy & KPIs',calendar:'Calendar plan'};
-  const statusLabels = {'in-review':'Awaiting review',approved:'Approved','changes-requested':'Changes requested',requested:'Input requested',received:'Response received',accepted:'Accepted'};
+  const statusLabels = {'awaiting-answer':'Your answer needed','in-review':'Awaiting review',approved:'Approved','changes-requested':'Changes requested',requested:'Input requested',received:'Response received',accepted:'Accepted'};
   const sameName = (a,b) => !!a?.trim() && a.trim() === b?.trim();
   const fail = message => { throw Error(message); };
 
@@ -55,13 +55,15 @@
           decisions:d?[{state:d.decision,at:d.at,actor:d.actor,note:d.note}]:[]});
       }
     }
-    const reports=(state.releaseLearning?.reports||[]).filter(r=>r.brandId===brand.id && r.status==='Client ready').slice().reverse().map(r=>({
-      kind:'report',id:r.id,title:r.title,version:r.version,start:r.start,end:r.end,origin:r.origin,summary:r.summary,gaps:r.gaps,ask:r.ask,
+    // Only the latest version of each report; any reply (an answer or written feedback) counts as answered.
+    const allReports=(state.releaseLearning?.reports||[]).filter(r=>r.brandId===brand.id && r.status==='Client ready');
+    const reports=allReports.filter(r=>!allReports.some(x=>x.previous===r.id)).slice().reverse().map(r=>({
+      kind:'report',state:r.ask&&!r.feedback.length?'awaiting-answer':undefined,needsAnswer:!!r.ask&&!r.feedback.length,headline:r.headline||null,id:r.id,title:r.title,version:r.version,start:r.start,end:r.end,origin:r.origin,summary:r.summary,gaps:r.gaps,ask:r.ask,
       calculations:(r.calculations||[]).map(c=>({title:c.definition.title,version:c.definition.version,unit:c.definition.unit,value:c.result,unavailable:c.unavailable,baseline:c.baselineValue,delta:c.delta,comparable:c.baselineComparable,comparisonNote:c.comparisonNote,source:c.source,baselineSource:c.baseline?.source,start:c.start,end:c.end})),
       observations:r.observations.map(o=>({metric:o.metric,value:o.value,unit:o.unit,definition:o.definition,start:o.start,end:o.end,account:o.account})),
       deliveries:r.deliveries.map(d=>({title:d.title,platform:d.platform,account:d.account,at:d.actualAt})),
       findings:r.findings.map(f=>({title:f.title,detail:f.detail})),
-      feedback:r.feedback.filter(f=>sameName(f.actor,ui.actor)).map(f=>({at:f.at,note:f.note}))}));
+      feedback:r.feedback.filter(f=>sameName(f.actor,ui.actor)).map(f=>({at:f.at,note:f.note,decision:f.decision||''}))}));
     inputs.sort((a,b)=>(a.due||'9999').localeCompare(b.due||'9999'));
     return {inputs,creatives,plans,reports};
   }
@@ -80,9 +82,11 @@
     if(['creative','foundation','strategy','calendar'].includes(kind)&&item.canAct===false)fail('This decision belongs to the named approver. You can read the shared material.');
     if(state.governance&&['creative','foundation','strategy','calendar'].includes(kind))G.assert(state,ui,'approve',kind==='creative'?state.posts.find(p=>p.id===parent):{brandId:ui.brand,id:ui.brand});
     if(kind==='report') {
-      if(outcome!=='feedback' || !note)fail('Enter the feedback you want to share.');
+      const decision=outcome==='decision-yes'?'yes':outcome==='decision-no'?'no':'';
+      if(!decision&&(outcome!=='feedback' || !note))fail('Enter the feedback you want to share.');
       const report=state.releaseLearning.reports.find(r=>r.id===id && r.brandId===ui.brand);
-      R.reportDecision(state,ui.brand,id,{action:'feedback',title:'Follow up on '+report.title,note,owner:report.reviewer,due:C.addDays(C.now().slice(0,10),7),propose:false},actor);
+      const text=(decision==='yes'?'Yes, go ahead.':decision==='no'?'Not now.':'')+(note?(decision?' ':'')+note:'');
+      R.reportDecision(state,ui.brand,id,{action:'feedback',decision,title:'Client reply: '+report.title,note:text,owner:report.reviewer,due:C.addDays(C.now().slice(0,10),7),propose:false},actor);
       return;
     }
     if(kind==='input') {
@@ -115,9 +119,9 @@
   const dateText = value => value ? UX().day(String(value).slice(0,10)) : '';
   function row(item,role) {
     const U=UX(),meta={input:[U.clean(item.postTitle),item.due?'Due '+U.day(item.due):''],creative:[item.platform,item.format,'V'+item.version],foundation:['V'+item.version],strategy:['V'+item.version],calendar:[item.body?U.day(item.body.start)+' – '+U.day(item.body.end):'',item.body?.entries?item.body.entries.length+' items':'','V'+item.version],report:[U.day(item.start)+' – '+U.day(item.end),'V'+item.version,item.origin==='fixture'?'Sample data':'Recorded data']}[item.kind];
-    const action=role==='client' && item.kind==='input' && item.state==='requested'?'Respond':role==='client' && item.state==='in-review'?'Review':'View';
+    const action=role==='client' && item.kind==='input' && item.state==='requested'?'Respond':role==='client' && item.state==='in-review'?'Review':role==='client' && item.needsAnswer?'Answer':'View';
     const art=item.kind==='creative'&&item.assets?.[0]&&item.assets[0].type!=='video'?'<img class="rl-thumb" src="'+escape(root.JMLStorage?.mediaURL(item.assets[0].url)||item.assets[0].url)+'" alt="" loading="lazy">':'';
-    const waiting=role==='client'&&(item.state==='in-review'||(item.kind==='input'&&item.state==='requested'));
+    const waiting=role==='client'&&(item.state==='in-review'||item.needsAnswer||(item.kind==='input'&&item.state==='requested'));
     return '<article class="rl-row'+(waiting?' rl-waiting':'')+'">'+art+'<div><h3>'+escape(U.clean(item.title))+'</h3><p class="rl-meta">'+meta.filter(Boolean).map(escape).join(' · ')+'</p></div><div class="rl-controls">'+(item.state?'<span class="rl-badge">'+escape(statusLabels[item.state])+'</span>':'')+openButton(item,action).replace('class="btn small"',waiting?'class="btn small primary"':'class="btn small"')+'</div></article>';
   }
   function panel(title,items,role,empty) {
@@ -139,10 +143,10 @@
       else body=panel('Creative versions',[...data.creatives].sort((a,b)=>(b.state==='in-review')-(a.state==='in-review')),role,'No submitted creative is shared with this person.');
     }
     else {
-      const waiting=[...data.plans,...data.creatives].filter(x=>x.state==='in-review');
+      const waiting=[...data.plans,...data.creatives].filter(x=>x.state==='in-review').concat(data.reports.filter(r=>r.needsAnswer));
       const activeInputs=data.inputs.filter(x=>x.state!=='accepted');
       body=panel(read?'Pending approvals':'Awaiting your review',waiting,role,'Nothing is waiting for your decision.')+(activeInputs.length?panel('Requested inputs',activeInputs,role,''):'');
-      if(data.reports.length)body+=panel('Latest report',data.reports.slice(0,1),role,'');
+      const shownReports=data.reports.filter(r=>!r.needsAnswer);if(shownReports.length)body+=panel('Latest report',shownReports.slice(0,1),role,'');
     }
     return '<div class="persona-workspace">'+ctx.heading(read?'Read-only viewer · local preview':'Client view',title,escape(description))+body+'</div>';
   }
@@ -156,13 +160,17 @@
   function details(item) {
     if(item.kind==='input')return '<dl class="persona-facts">'+fact('Requested for',item.postTitle)+fact('Due',item.due?UX().day(item.due):'')+fact('Status',statusLabels[item.state])+'</dl>'+para('Request details',item.instructions);
     if(item.kind==='report') {
-      const metrics=item.observations.map(o=>'<tr><th scope="row">'+escape(o.metric)+(o.definition?'<small>'+escape(o.definition)+'</small>':'')+'</th><td>'+(o.value===null?'Missing':escape(o.value)+' '+escape(o.unit))+'</td><td>'+escape(o.account)+'</td><td>'+escape(o.start)+' – '+escape(o.end)+'</td></tr>').join('');
-      return '<p>'+escape(item.start)+' – '+escape(item.end)+' · V'+item.version+' · '+(item.origin==='fixture'?'Sample data':'Recorded data')+'</p>'+
-        outcomeCards(item.calculations||[])+para('Findings',item.summary)+para('Limitations',item.gaps)+para('Decision requested',item.ask)+
-        (metrics?'<div class="persona-table"><table><caption>Reported measurements</caption><thead><tr><th>Metric</th><th>Value</th><th>Account</th><th>Period</th></tr></thead><tbody>'+metrics+'</tbody></table></div>':'')+
-        (item.deliveries.length?'<section class="persona-copy"><h3>Verified placements</h3><ul>'+item.deliveries.map(d=>'<li>'+escape([d.title,d.platform,d.account,dateText(d.at)].filter(Boolean).join(' · '))+'</li>').join('')+'</ul></section>':'')+
+      const U=UX(),num=v=>v===null||v===undefined||v===''?'Missing':Number(v).toLocaleString('en-US',{maximumFractionDigits:1});
+      const metrics=item.observations.map(o=>'<tr><th scope="row">'+escape(o.metric)+(o.definition?'<small>'+escape(o.definition)+'</small>':'')+'</th><td>'+escape(num(o.value))+(o.value===null?'':' '+escape(o.unit))+'</td><td>'+escape(o.account)+'</td><td>'+escape(U.day(o.start))+' – '+escape(U.day(o.end))+'</td></tr>').join('');
+      const h=item.headline;
+      const headline=h?'<section class="kpi-focus"><span class="eyebrow">'+(h.partial?'Early reading':'Result')+' · '+escape(U.day(h.start))+' – '+escape(U.day(h.end))+'</span><h3>'+escape(h.title)+': '+escape(num(h.value))+' '+escape(h.unit)+'</h3>'+(h.target?'<p>Target: '+escape(h.target)+'</p>':'')+(h.partial?'<p class="muted">Early numbers, before the agreed measurement window ('+escape(h.window)+') has ended. The full reading follows.</p>':'')+'</section>':outcomeCards(item.calculations||[]);
+      const answer=item.feedback.find(f=>f.decision);
+      return '<p>'+escape(U.day(item.start))+' – '+escape(U.day(item.end))+' · V'+item.version+' · '+(item.origin==='fixture'?'Sample data':'Recorded data')+'</p>'+
+        headline+para('What the results tell us',item.summary)+para('Limits',item.gaps)+para('Decision we need from you',item.ask)+(answer?'<p class="persona-approve-summary">Your answer: '+(answer.decision==='yes'?'Yes, go ahead':'Not now')+' · '+escape(dateText(answer.at))+'</p>':'')+
+        (metrics?'<div class="persona-table"><table><caption>The numbers behind it</caption><thead><tr><th>Metric</th><th>Value</th><th>Account</th><th>Period</th></tr></thead><tbody>'+metrics+'</tbody></table></div>':'')+
+        (item.deliveries.length?'<section class="persona-copy"><h3>Published posts</h3><ul>'+item.deliveries.map(d=>'<li>'+escape([d.title,d.platform,d.account,dateText(d.at)].filter(Boolean).join(' · '))+'</li>').join('')+'</ul></section>':'')+
         item.findings.map(f=>para(f.title,f.detail)).join('')+
-        item.feedback.map(f=>para('Your feedback · '+dateText(f.at),f.note)).join('');
+        item.feedback.map(f=>para('Your reply · '+dateText(f.at),f.note)).join('');
     }
     let main='';
     if(item.kind==='creative') {
@@ -195,6 +203,7 @@
     const prompt=decision?'Feedback (needed if you request changes)':input?'Your response':'Feedback for the team';
     const what={calendar:'calendar V'+item.version,strategy:'KPIs',foundation:'foundation V'+item.version,creative:'V'+item.version}[item.kind]||'V'+item.version;
     const summary=!decision?'':item.kind==='calendar'?'You’re approving '+(item.body?.entries?.length||0)+' planned items from '+UX().day(item.body?.start)+' to '+UX().day(item.body?.end)+'. The team can then start production; you’ll still approve each finished creative.':item.kind==='creative'?'You’re approving version '+item.version+' exactly as shown — these files and this caption.':item.kind==='strategy'?'You’re approving how success is measured and reported. The team plans the calendar against these KPIs; you’ll approve the calendar and each finished post separately.':'You’re approving this '+item.kind+' version as written.';
+    if(report&&item.needsAnswer)return '<form data-persona-form="report" data-id="'+escape(item.id)+'" data-parent="" data-brand="'+escape(ui.brand)+'" data-actor="'+escape(ui.actor)+'" class="persona-form"><p class="persona-approve-summary">'+escape(item.ask)+'</p><label>Anything to add? (optional)<textarea name="note" maxlength="5000" rows="3"></textarea></label><p class="form-error" role="alert"></p><div class="actions"><button type="submit" class="btn primary" name="outcome" value="decision-yes">Yes, go ahead</button><button type="submit" class="btn" name="outcome" value="decision-no">Not now</button></div></form>';
     const buttons=decision?'<button type="submit" class="btn primary" name="outcome" value="approved">Approve '+escape(what)+'</button><button type="submit" class="btn" name="outcome" value="changes-requested">Request changes</button>':
       '<button type="submit" class="btn primary" name="outcome" value="'+(input?'respond':'feedback')+'">'+(input?'Send response':'Send feedback')+'</button>';
     return '<form data-persona-form="'+escape(item.kind)+'" data-id="'+escape(item.id)+'" data-parent="'+escape(item.parent||'')+'" data-brand="'+escape(ui.brand)+'" data-actor="'+escape(ui.actor)+'" class="persona-form">'+
@@ -237,7 +246,7 @@
         const planKey={foundation:'foundationVersions',strategy:'strategies',calendar:'calendars'}[command.kind];
         const sender=(planKey&&O?.account?.(ctx.state,command.brand)?.[planKey]?.find(v=>v.id===command.id)?.actor)||'The team';
         const next={foundation:sender+' can now set the strategy with you.',strategy:sender+' will plan the calendar against them next.',calendar:sender+' will hand these posts to production. You’ll still approve each finished post.',creative:'The team will schedule it for publishing.'}[command.kind]||'';
-        const message=command.kind==='input'?'Response sent to the team.':command.kind==='report'?'Feedback sent to the team.':command.outcome==='approved'?what+' approved. '+next:sender+' has your note and will send a new version.';
+        const message=command.kind==='input'?'Response sent to the team.':command.kind==='report'?(String(command.outcome).startsWith('decision')?'Thanks. Your answer is with the team.':'Feedback sent to the team.'):command.outcome==='approved'?what+' approved. '+next:sender+' has your note and will send a new version.';
         await ctx.commit(next=>perform(next,ctx.ui,command),message);
       }
       catch(err){const el=f.querySelector('[role="alert"]');el.textContent=err.message;el.tabIndex=-1;el.focus();}

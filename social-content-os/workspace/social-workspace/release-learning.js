@@ -276,15 +276,16 @@
     const placements=items('placements').filter(p=>p.state==='verified');
     if(!placements.length){ctx.toast('Verify a release first, or use Single measure for account-level evidence.');return;}
     const p=placements.find(p=>p.id===placementId)||placements.at(-1),post=ctx.scoped().find(x=>x.id===p.contentId),definition=currentBrand().operations?.kpis?.find(k=>k.id===post?.measurementDefinitionId);
-    const day=ctx.C.localDate(p.timezone,p.verification?.actualAt||p.scheduledAt),days=Number(definition?.window?.match(/^(\d+)[ -]?day/i)?.[1]||7),end=ctx.C.addDays(day,days-1),primary=[...new Set([definition?.numerator,definition?.denominator,'views','saves','clicks'].filter(Boolean))];
+    // The period can't end in the future: if the agreed window is still running, end it today and say when the full window closes.
+    const day=ctx.C.localDate(p.timezone,p.verification?.actualAt||p.scheduledAt),days=Number(definition?.window?.match(/^(\d+)[ -]?day/i)?.[1]||7),fullEnd=ctx.C.addDays(day,days-1),running=p.mode!=='simulation'&&fullEnd>today(),end=running?today():fullEnd,primary=[...new Set([definition?.numerator,definition?.denominator,'views','saves','clicks'].filter(Boolean))];
     const count=(key)=>input(D.rawMeasures[key].label,'value-'+key,'','number',false).replace('<input ','<input '+(key==='netfollowers'?'':'min="0" ')+'placeholder="Unknown" ');
     // Render the complete form once with the selected placement's inherited values.
     form('Record placement results','measure-batch',
       U.section('Placement and reporting period','One source covers the counts below.',select('Placement','placementId',placements.map(p=>[p.id,contentName(p.contentId)+' · '+p.account+' · '+modeText(p)]),p.id)+input('Period start','start',day,'date')+input('Period end','end',end,'date')+input('Source export or evidence reference','source',p.mode==='simulation'?'Local sample data':''))+
-      U.summary(p.mode==='simulation'?'Sample data':'Recorded performance',p.account+' · '+p.timezone+' · '+(definition?definition.title+' will be calculated from these counts.':'No agreed KPI is linked; the source counts will still be saved.'))+
+      U.summary(p.mode==='simulation'?'Sample data':'Recorded performance',p.account+' · '+String(p.timezone||'').split('/').pop().replace(/_/g,' ')+' time · '+(definition?definition.title+' will be calculated from these counts.':'No agreed KPI is linked; the source counts will still be saved.'))+
       U.section('Measured values','Blank means unknown. Enter 0 only when the measured value is zero.','<div class="measurement-values full">'+primary.map(count).join('')+'</div>')+
       U.optional('Other measures and collection details','<div class="measurement-values full">'+Object.keys(D.rawMeasures).filter(k=>!primary.includes(k)).map(count).join('')+'</div>'+input('Collected on','collectedAt',p.mode==='simulation'&&today()<end?end:today(),'date')+select('Distribution','segment',['organic','paid','mixed'],(definition?.distribution||'Organic').toLowerCase())+select('Aggregation','aggregation',['period','lifetime'],'period')+check('Save corrected values as a new evidence revision.','replace')),
-      'Save counts and calculate KPI','','The source observations and calculated result are saved together. Future reporting dates are not proof of measured results.');
+      'Save counts and calculate KPI','',running?'The agreed '+days+'-day window runs until '+U.day(fullEnd)+'. Record what the platform shows so far; you can add the full-window reading after that date.':'Copy the numbers from the platform’s export. The agreed measure is calculated for you, and the numbers are kept with their source.');
     document.querySelector('[data-rl-form="measure-batch"]').dataset.primary=JSON.stringify(primary);
   }
   function manualObservation(){
@@ -350,7 +351,7 @@
   function workDetail(id){
     const w=record('work',id);
     show(w.title,'<div class="rl-controls">'+badge(w.kind)+badge(w.status)+badge(kindText(w.origin))+'</div>'+
-      meta(w.owner+' · review '+w.due)+'<p>'+esc(w.detail)+'</p>'+meta(w.evidence)+
+      meta(w.owner+' · review by '+root.JMLWorkflowUI.day(w.due))+'<p>'+esc(w.detail)+'</p>'+meta(String(w.evidence||'').startsWith('report-')?'From the report “'+((ctx.state.releaseLearning?.reports||[]).find(r=>r.id===w.evidence)?.title||'')+'”':w.evidence)+
       (w.kind==='Experiment'?'<dl class="rl-grid">'+[['Variable',w.variable],['Success measure',w.metric],['Comparison',w.baseline],['Window',w.window]].map(([k,v])=>'<div><dt>'+k+'</dt><dd>'+esc(v)+'</dd></div>').join('')+'</dl>':'')+
       '<div class="rl-controls">'+action('work-decision','Record decision',id,'primary')+(w.kind==='Watchlist'?action('watch-run','Record collection',id):'')+'</div>'+
       (w.runs.length?'<h3>Collection runs</h3>'+w.runs.map(r=>summaryRow(r.signal,r.coverage+' · '+r.source+' · '+utcDisplay(r.at))).join(''):'')+
@@ -361,10 +362,10 @@
     const summary=c?c.definition.title+': '+resultText(c)+(c.baselineComparable&&c.delta!==null?'; baseline '+c.baselineValue+' '+c.definition.unit+', change '+(c.delta>=0?'+':'')+number(c.delta)+'.':'.'):'';
     const limits=c?[c.origin==='fixture'?'Sample data only; no real audience results.':'',c.unavailable,c.comparisonNote].filter(Boolean).join(' '):'';
     form('Draft a client report','report-create',
-      (resultId?'<input type="hidden" name="calculationId" value="'+esc(resultId)+'">':'')+U.summary('Included automatically',start+' – '+end+' · '+(c?c.definition.title+' and its saved evidence.':'Observations and saved outcomes in this period.'))+
+      (resultId?'<input type="hidden" name="calculationId" value="'+esc(resultId)+'">':'')+U.summary('Included automatically',root.JMLWorkflowUI.day(start)+' – '+root.JMLWorkflowUI.day(end)+' · '+(c?c.definition.title+' and its saved evidence.':'Observations and saved outcomes in this period.'))+
       U.section('The story and next decision','The measured results are included; add your interpretation.',area('What do the results tell us?','summary',summary)+area('What are the limits?','gaps',limits)+area('What should the client decide?','ask'))+
-      U.optional('Report settings and private notes',input('Report title','title',currentBrand().name+' · Results '+end)+input('Reviewer','reviewer',actor())+input('Period start','start',start,'date')+input('Period end','end',end,'date')+select('Evidence set','origin',evidenceOptions(),c?.origin||evidenceFilter||defaultEvidenceOrigin())+area('Internal notes — not shared','internal','',false)),
-      'Save report for review','',resultId?'Includes this saved result and its original source evidence. The report stays private until reviewed.':'Includes all matching results and observations in this reporting period. The report stays private until reviewed.');
+      U.optional('Report settings and private notes',input('Report title','title','Results · '+root.JMLWorkflowUI.day(start)+' – '+root.JMLWorkflowUI.day(end))+check('Have someone else review it before the client sees it','needsReview')+input('Reviewer (if someone else reviews it)','reviewer',actor())+input('Period start','start',start,'date')+input('Period end','end',end,'date')+select('Evidence set','origin',evidenceOptions(),c?.origin||evidenceFilter||defaultEvidenceOrigin())+area('Internal notes — not shared','internal','',false)),
+      'Share with '+(currentBrand().operations?.foundation?.finalApprover||'the client'),'','The agreed measure and the counts in this period are included for you. Sharing sends it to '+(currentBrand().operations?.foundation?.finalApprover||'the client')+' straight away; tick “Have someone else review it” under Report settings to keep it as a draft.');
   }
   function reportDetail(id,client=false){
     const r=record('reports',id);
@@ -442,7 +443,7 @@
     }
     if(cmd==='proposal')return proposalDetail(key);
     if(cmd==='proposal-decision')return form('Review next-plan proposal','proposal-decision',select('Decision','action',[['accept','Accept for planning'],['return','Return with feedback']])+area('Decision rationale','note'),'Record decision',key);
-    if(cmd==='measure-batch')return measurementForm();
+    if(cmd==='measure-batch')return measurementForm(key);
     if(cmd==='report-from-result'){if(!can('coordinate'))allow('analyze');return reportForm(key);}
     if(cmd==='observe')return manualObservation();
     if(cmd==='import'){pending=null;return importForm();}
@@ -466,8 +467,9 @@
     if(cmd==='work-item')return workDetail(key);
     if(cmd==='work-decision'){
       const w=record('work',key);
-      form('Review '+w.kind.toLowerCase(),'decision',select('Decision','decision',w.kind==='Community case'?['Resolve','Escalate','Test again']:['Continue','Improve','Test again','Retire'])+
-        area('Observation, interpretation and next action','note')+check('Create a proposed content brief from this decision.','propose')+input('Proposed brief title','title',w.title,'text',false),'Save decision',key);return;
+      const fromReport=String(w.evidence||'').startsWith('report-');
+      form(fromReport?'Record the next step':'Review '+w.kind.toLowerCase(),'decision',(fromReport?'<p class="full rl-meta">'+esc(w.detail)+'</p>':'')+select(fromReport?'What happens next':'Decision','decision',w.kind==='Community case'?['Resolve','Escalate','Test again']:[['Continue','Continue: do more of this'],['Improve','Improve it and try again'],['Test again','Test it again'],['Retire','Stop doing this']])+
+        area(fromReport?'Why, and what the team will do':'Observation, interpretation and next action','note')+check('Add a new post idea for this (it appears on Today under “Ideas to schedule”)','propose')+input('Post idea title','title',fromReport?'':w.title,'text',false),'Save next step',key);return;
     }
     if(cmd==='watch-run'){
       form('Record collection run','run',input('Source or export','source')+input('Signal or recurring question','signal')+area('Coverage, exclusions and gaps','coverage')+check('Create an audience opportunity for this signal.','route'),'Save collection run',key);return;
@@ -525,7 +527,12 @@
       if(published&&f.end&&f.end<published)throw Error('This reporting period ends before the post was published ('+root.JMLWorkflowUI.day(published)+'). Choose a period that starts on or after that date.');
       let result;await emit((s,b,a)=>{result=D.recordMeasurements(s,b,f,values,a);},'Source counts saved.');
       const c=result?.result;
-      if(c&&c.result!==null)ctx.toast('Counts saved. '+c.definition.title+': '+resultText(c)+'.');else if(c)ctx.toast('Counts saved, but '+c.definition.title+' could not be calculated: '+(c.unavailable||'a required count is unknown')+'.');else ctx.toast('Counts saved. A KPI needs matching measures, period and distribution.');return;
+      if(c&&c.result!==null)ctx.toast('Counts saved. '+c.definition.title+': '+resultText(c)+'.');else if(c)ctx.toast('Counts saved, but '+c.definition.title+' could not be calculated: '+(c.unavailable||'a required count is unknown')+'.');else{
+        // Explain why there's no KPI yet: it's calculated on the agreed window only.
+        const post=ctx.scoped().find(x=>x.id===placement?.contentId),def=currentBrand().operations?.kpis?.find(k=>k.id===post?.measurementDefinitionId),days=Number(def?.window?.match(/^(\d+)[ -]?day/i)?.[1]||0),day=root.JMLWorkflowUI.day;
+        const pub=placement?ctx.C.localDate(placement.timezone,placement.verification?.actualAt||placement.scheduledAt):'',fullEnd=days&&pub?ctx.C.addDays(pub,days-1):'';
+        ctx.toast(def&&fullEnd?'Counts saved. '+def.title+' is calculated on the full '+days+'-day window ('+day(pub)+' – '+day(fullEnd)+'). Add that reading after '+day(fullEnd)+'; Today will remind you.':'Counts saved. No agreed measure is linked to this post, so nothing was calculated.');
+      }return;
     }
     if(cmd==='observe'){evidenceFilter=f.origin;return emit((s,b,a)=>D.ingest(s,b,[f],{name:f.source,format:'manual',replace:f.replace},a),'Observation saved.');}
     if(cmd==='input-file'){
@@ -559,9 +566,13 @@
       if(f.observationId){const o=record('observations',f.observationId);f.evidence=(f.evidence?f.evidence+' · ':'')+o.id+' · '+o.source;if(o.origin==='fixture')f.fixture=true;}
       return emit((s,b,a)=>D.addWork(s,b,{...f,kind:key},a),'Learning record saved.');
     }
-    if(cmd==='decision')return emit((s,b,a)=>D.decideWork(s,b,key,f,a),'Decision recorded.');
+    if(cmd==='decision')return emit((s,b,a)=>D.decideWork(s,b,key,f,a),f.propose?'Next step saved. “'+(f.title||'New idea')+'” is on Today under Ideas to schedule.':'Next step saved.');
     if(cmd==='run')return emit((s,b,a)=>D.watchRun(s,b,key,f,a),'Collection run recorded.');
-    if(cmd==='report-create')return emit((s,b,a)=>D.snapshot(s,b,f,a),'Report snapshot created.');
+    if(cmd==='report-create'){
+      // The author is usually the reviewer: share in one step unless someone else is asked to review first.
+      const client=currentBrand().operations?.foundation?.finalApprover||'the client',share=!f.needsReview&&(!f.reviewer||f.reviewer===actor());if(share)f.reviewer=actor();
+      return emit((s,b,a)=>{const r=D.snapshot(s,b,f,a);if(share)D.reportDecision(s,b,r.id,{action:'review'},a);},share?'Report shared with '+client+'.':'Report saved as a draft. '+f.reviewer+' reviews it before '+client+' sees it.');
+    }
     if(cmd==='approve-report')return emit((s,b,a)=>D.reportDecision(s,b,key,{action:'review'},a),'Report ready for client review.');
     if(cmd==='feedback')return emit((s,b,a)=>D.reportDecision(s,b,key,f,a),'Client decision and action recorded.');
     if(cmd==='calc-rate'||cmd==='calc-compare'){
