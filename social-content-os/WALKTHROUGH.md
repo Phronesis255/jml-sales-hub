@@ -24,6 +24,8 @@ The example team uses three roles. Use **Switch person** (top right) to act as e
 | **Sam Rivera** | Client approver | Approves the strategy & KPIs (once), the calendar, and each finished creative. Supplies requested inputs. Never sees the internal foundation brief. |
 | **Client stakeholder** | Client viewer | Read-only view of shared material and reports. |
 
+> **Demo branch:** every pop-up form has a **Fill with demo data** button next to the close button. It fills the empty fields with believable values (and placeholder artwork in upload dialogs) so you can run the whole workflow live in a meeting. It never submits: you still click the form's own button, so every rule and approval still applies.
+
 To try everything with fictional data first, open **Today → Start here → Load full demo workspace**, or use **Switch person → Try a sample handoff**.
 
 ### How the app tells you what's next
