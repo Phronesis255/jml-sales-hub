@@ -226,7 +226,7 @@
     {
       "path": "content-planner.html",
       "bytes": 498597,
-      "sha256": "4ab7f3749b20b27310b5c2219fac17b78f01735f703f0e0d331bde43cc40adca"
+      "sha256": "333d1526018ff8e1c85b59ed6d9498027ff4a3bdc26931c85e503abf98558ef6"
     },
     {
       "path": "creative-brief/index.html",
@@ -1450,8 +1450,8 @@
     },
     {
       "path": "social-workspace/app.js",
-      "bytes": 97577,
-      "sha256": "594bde079d098923ab082692c86173ecf39b2f3d2b988f98ef870923f3d13d7f"
+      "bytes": 99029,
+      "sha256": "5a28dbf9a98067a5d8de0393521edff1ab9485999c55549bb4836315225da3e8"
     },
     {
       "path": "social-workspace/attention.js",
@@ -1555,8 +1555,8 @@
     },
     {
       "path": "social-workspace/governance.js",
-      "bytes": 80429,
-      "sha256": "6b92d725f5279e69da20c03120b8b42882857d015cdc64ee3283240a442f2b90"
+      "bytes": 80782,
+      "sha256": "0495286ff44ab3ac1f301fa0aa6a012e07c2176d466ceb847609341167ed3182"
     },
     {
       "path": "social-workspace/jml-mark.svg",
@@ -1585,8 +1585,8 @@
     },
     {
       "path": "social-workspace/operations.js",
-      "bytes": 90510,
-      "sha256": "1fb32a355430b57cc6e369721761437b4431429598c580e0b08297c9eddaf669"
+      "bytes": 95576,
+      "sha256": "eb11e4766e18f06963d66cee6dae9bd72c03a31a3b5099c5e2ce7bc49ac34849"
     },
     {
       "path": "social-workspace/personas.css",
@@ -1701,7 +1701,7 @@
     {
       "path": "social-workspace.html",
       "bytes": 3640,
-      "sha256": "9bcb33c7e104dd44266f6c9c1d0791bbc3f2e6d385737b80c3e14dcf9f78e345"
+      "sha256": "6c95b9d1c70f373fc45c7f742b5e873938e7decf6d532c43c8fbafbd7fb50e78"
     }
   ]
 }

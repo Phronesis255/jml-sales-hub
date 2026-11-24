@@ -49,7 +49,7 @@ To try everything with fictional data first, open **Today → Start here → Loa
 | 4 | Research | Asha | — | Content Planner → Research |
 | 5 | Strategy & KPIs | Asha | Sam | Content Planner → Strategy & KPIs |
 | 6 | Content calendar | Asha | Sam | Content Planner → Calendar / Research / Bulk import |
-| 7 | Brief and production set-up | Asha (+ Luca for copy) | Asha accepts the brief | Post → Brief & copy |
+| 7 | Hand off to production | Asha | — (the client already approved the calendar) | Post → Production workflow |
 | 8 | Create the content | Luca | — | Post → Production workflow / Creative versions |
 | 9 | Internal QA | Asha | — | Review → Internal QA |
 | 10 | Client creative approval | Sam | Sam | Review → Creative approvals |
@@ -273,43 +273,60 @@ Switch to **Sam** → **Today → Awaiting your review → Calendar plan** (or R
 
 ---
 
-## Stage 7 — Brief and production set-up
-**Who:** Asha (copy fields may be Luca's) · **Where:** open the post → **Brief & copy**
+## Stage 7 — Hand off to production
+**Who:** Asha · **Where:** **Today → Plan for {client}**, or the post's **Production workflow** tab
 
 Every post has tabs: **Brief & copy · Production workflow · Creative versions · Review & feedback · Media requests · Version history**.
 
 ### 7.1 Complete the brief
 - **Content:** title, platform, format, working caption, visual direction, slide copy or script, call to action.
 - **Audience and objective** (inherited from the strategy).
-- **People and timing:** content owner, final approver, publication date, time and time zone.
+- **People and timing:** content owner and client approver. The date and time change with **Change date** (no new brief version).
 - Optional: **Open full Creative Brief Studio** for the detailed multi-module brief.
-- Click **Save brief version**. Edits autosave on this device; saving a version shares it with the team. Once a brief has been accepted, saving a new version means it must be accepted again; the form warns you.
+- Click **Save brief version**. Edits autosave on this device; saving a version shares it with the team. Saving after the hand-off means the brief needs confirming again; the readiness card and the quick check both say so.
 
 ### 7.2 Hand off to production
-Start from **Today → Plan for {client} → Hand off to production**: each approved post is listed with its planned producer. Click **Set up production →** to open the post's **Production workflow** tab, then **Set up production** (the same button is on the post's **Production readiness** card). Fill in:
+Start from **Today → Plan for {client} → Hand off to production**. Each approved post is listed with its planned producer. Click **Set up production →** to open the post's **Production workflow** tab, then **Hand off to production**. The same button is on the post's **Production readiness** card.
 
-1. **What are we making?** Choose a route:
+The dialog opens with one line on what happens next: the producer makes it and uploads a draft, the reviewer gives it a quick check, then it goes to the client. It shows the planned post date. Fill in:
 
-   Each type comes with an **optional to-do list** the producer can use for their own tracking. Nothing waits on it.
+1. **Who and when**
+   - **Who makes it**: pre-filled with the planned producer.
+   - **Who checks it before {client}**: pre-filled with the reviewer.
+   - **Draft due**: defaults to two days before the post date.
+2. **What to make**
+   - **Type of creative**: *Designed image or carousel*, *Animated graphic*, *Edited video from real footage* or *AI-generated video*. A tip under the instructions says what to cover for that type.
+   - **Instructions for the producer**: pre-filled from the brief.
+   - **Files to use and where to find them** \*
+   - **Do we have permission to use them?** \*
+   - Real footage adds **People on camera** (releases and usage limits). AI video adds **AI use** (how it's used and disclosed).
+3. **More details (optional)**, collapsed: files to deliver, quick-check due date, final package due date, when permission expires, backup person, channel and placement, opening hook, anything else to deliver, and what "done" looks like.
 
-   | Route | Optional to-do steps |
-   |---|---|
-   | Designed static | Set layout and visual references → Design and adapt each placement → Check slide order, copy and export |
-   | Motion graphics | Prepare script and style frames → Approve style frames → Animate and add sound → Render and check captions |
-   | Real footage edit | Check footage, releases and sound → Assemble rough cut → Approve rough cut structure → Finish captions, audio and cover |
-   | AI-generated video | Approve AI use and references → Prepare shot prompts and start frames → Select takes and record AI use → Edit, caption and export |
+Click **Hand off to production**. In one step this:
+- creates the handoffs **Production → Luca** and **Internal QA → Asha**;
+- confirms the brief for production (the client already approved the post on the calendar, so there is no separate confirmation step);
+- removes the post from the Plan card's list.
 
-2. **Producer**, **Internal reviewer** and **Draft due** date.
-3. Route instructions, **Source assets or approved references** \*, **Permission or licence covering these assets** \*, and **Required output**.
-4. Real footage adds people and releases; AI video adds an AI-use and disclosure plan.
-5. Optional: review due date, permission expiry, backup owner, placement, opening hook, package and acceptance notes.
+The message says *Handed to Luca Vale (producer) and Asha Raman (reviewer). They'll see it on their Today.* Asha's QA row reads *Waiting for Luca's draft* until a version is uploaded.
 
-Saving it creates the handoffs straight away: **Production → Luca** and **Internal QA → Asha**. The message says so (*Handed to Luca Vale (producer) and Asha Raman (reviewer). They'll see it on their Today.*), and the post leaves the Plan card's list. Asha's QA row reads *Waiting for Luca's draft* until a version is uploaded.
+### 7.3 What the producer sees
+The post's **Production workflow** tab now opens with **What to make**:
+- the type and draft due date, then *Luca makes it → Asha checks it → Maya approves it*;
+- the instructions, files to use and permission;
+- everything else under **More details**.
 
-### 7.3 Confirm the brief is ready
-When every row on the readiness card is ticked, click **Confirm brief is ready**. This records that the brief revision Luca works from is complete. If the brief changes later, it needs confirming again.
+Luca gets an **Upload the draft** button there, and Asha gets **Edit the hand-off**. **Production readiness** appears below it only while something is still open, such as a missing call to action in the brief. The **Production to-do (optional)** list is for the producer's own tracking; nothing waits on it:
 
-**Done when:** readiness says *Ready for production* and the Handoffs stepper shows Production assigned.
+| Type | Optional to-do steps |
+|---|---|
+| Designed image or carousel | Set layout and visual references → Design and adapt each placement → Check slide order, copy and export |
+| Animated graphic | Prepare script and style frames → Approve style frames → Animate and add sound → Render and check captions |
+| Edited video from real footage | Check footage, releases and sound → Assemble rough cut → Approve rough cut structure → Finish captions, audio and cover |
+| AI-generated video | Approve AI use and references → Prepare shot prompts and start frames → Select takes and record AI use → Edit, caption and export |
+
+If the brief is edited after the handoff, the readiness card and Asha's quick check both say *The brief changed after it was confirmed* and offer **Confirm brief is ready**. They say this before Asha tries to send anything to the client.
+
+**Done when:** the Handoffs stepper shows Production and Internal QA assigned, and **What to make** is at the top of the Production workflow tab.
 
 ---
 
