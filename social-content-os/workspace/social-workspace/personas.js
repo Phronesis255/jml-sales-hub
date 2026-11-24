@@ -167,10 +167,11 @@
     let main='';
     if(item.kind==='creative') {
       main='<p>'+escape([item.platform,item.format,'V'+item.version,item.date?UX().day(item.date):''].filter(Boolean).join(' · '))+'</p>'+
-        (item.assets.length?'<div class="persona-media">'+item.assets.map((a,i)=>{
+        (item.assets.length?'<div class="persona-media'+(item.assets.length>1?' multi':'')+'">'+item.assets.map((a,i)=>{
           const url=escape(root.JMLStorage?.mediaURL(a.url)||a.url),alt=escape(a.alt||'Creative '+(i+1));
-          const media=a.type==='video'?'<video controls preload="metadata" src="'+url+'" aria-label="'+alt+'"></video>':'<img loading="lazy" src="'+url+'" alt="'+alt+'">';
-          return '<figure>'+media+(item.assets.length>1?'<figcaption>Asset '+(i+1)+' of '+item.assets.length+'</figcaption>':'')+'</figure>';
+          // No lazy loading: inside the scrolling dialog it can leave later slides blank.
+          const media=a.type==='video'?'<video controls preload="metadata" src="'+url+'" aria-label="'+alt+'"></video>':'<img src="'+url+'" alt="'+alt+'">';
+          return '<figure>'+media+(item.assets.length>1?'<figcaption>'+(item.format==='Carousel'?'Slide ':'File ')+(i+1)+' of '+item.assets.length+'</figcaption>':'')+'</figure>';
         }).join('')+'</div>':'')+para('Submitted caption',item.caption);
     } else if(item.kind==='foundation') {main='<dl class="persona-facts">'+foundationFields.map(([k,l])=>fact(l,item.body[k])).join('')+'</dl>';
     } else if(item.kind==='strategy') {

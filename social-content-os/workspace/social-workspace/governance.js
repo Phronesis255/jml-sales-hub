@@ -303,7 +303,7 @@
   function assignmentLink(ctx,a){
     if(!assignmentActive(ctx.state,a))return '';const p=ctx.state.posts.find(p=>p.id===a.contentId);if(!p)return '';
     if(!a.placementId&&(p.briefRevision!==a.briefRevision||a.versionId&&C.latest(p)?.id!==a.versionId))return '';
-    if(a.placementId)return '<button type="button" class="btn small" data-rl="placement" data-key="'+esc(a.placementId)+'">Open release handoff</button>';
+    if(a.placementId)return '<button type="button" class="btn small primary" data-rl="placement" data-key="'+esc(a.placementId)+'">'+(a.kind==='community'?'Watch the comments':'Publish it')+'</button>';
     if(a.kind==='client')return '<a class="btn small primary" href="#review/client">Review exact version</a>';
     if(ctx.ui.role!=='agency'||!can(ctx.state,ctx.ui,'read',p))return '';
     if(a.kind==='qa'&&!(C.latest(p)&&C.latest(p).briefRevision===p.briefRevision))return '<span class="ux-chip wait">Waiting for '+esc((p.production?.producer||'the producer').split(' ')[0])+'’s draft</span>';

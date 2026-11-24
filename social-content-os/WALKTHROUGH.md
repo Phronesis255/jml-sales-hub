@@ -324,7 +324,7 @@ Luca gets an **Upload the draft** button there, and Asha gets **Edit the hand-of
 | Edited video from real footage | Check footage, releases and sound → Assemble rough cut → Approve rough cut structure → Finish captions, audio and cover |
 | AI-generated video | Approve AI use and references → Prepare shot prompts and start frames → Select takes and record AI use → Edit, caption and export |
 
-If the brief is edited after the handoff, the readiness card and Asha's quick check both say *The brief changed after it was confirmed* and offer **Confirm brief is ready**. They say this before Asha tries to send anything to the client.
+If Asha (or anyone who can confirm briefs) edits the brief after the handoff, it stays confirmed: the message says *Brief saved. It stays confirmed for production.* If someone else edits it, such as Luca, the readiness card and Asha's quick check both say *The brief changed after it was confirmed* and offer **Confirm brief is ready**. They say this before Asha tries to send anything to the client.
 
 **Done when:** the Handoffs stepper shows Production and Internal QA assigned, and **What to make** is at the top of the Production workflow tab.
 
@@ -349,7 +349,9 @@ If the brief is edited after the handoff, the readiness card and Asha's quick ch
 ## Stage 9 — Quick check (internal QA)
 **Who:** Asha (the internal reviewer) · **Where:** Today → **Check and send**, or **Review → Internal QA** → **Check Vn**
 
-1. Look over the files (use the arrows under the preview) and the caption.
+While a draft waits here, the post's status pill reads **In quick check**, and **With the client** once it's sent.
+
+1. Look over the files (use the arrows under the preview) and the caption. If something still blocks sending (for example the brief changed after it was confirmed, or the call to action is missing), a yellow **Before this can go to {client}** box says so, with the button or link to fix it.
 2. Choose one:
    - **Looks good — send to {client}**: one click hands this exact version to the client approver.
    - **Fix the caption**: correct a typo yourself. Your fix is saved as a new version with the same files and goes straight to the client in the same step, with no round trip to the producer.
@@ -377,17 +379,17 @@ Every new version passes this quick check once before the client sees it, includ
 **Who:** Asha or Luca prepares the placement; Luca publishes · **Where:** **Publish → Publishing desk**
 
 ### 11.1 Prepare a placement
-1. Under **Ready to place**, click **Prepare placement**.
+1. As soon as the client approves, Asha's **Today** shows **Approved: ready to publish**, listing each approved post with who approved it and a **Prepare placement** button. The same list is under **Ready to place** on the Publishing desk.
 2. Check the preview of the approved creative, then set the three essentials: **Destination platform**, **Planned local date and time**, and **Publisher**. If the time differs from the brief, tick the timing-change approval.
 3. Everything else is pre-filled from the approved creative and sits under **More options**: destination account, delivery method (*Simulation* or *Manual handoff*), output format, time zone, community handoff owner, permission expiry, finishing instructions.
 4. Click **Save placement**. Saving is the release approval for this exact, client-approved version, so there's no checkbox to tick. The placement dialog opens straight away.
 5. To publish the same creative elsewhere, use **Add another destination** under *Approved creatives already placed*.
 
 ### 11.2 Publish it (Luca)
-The placement dialog shows a progress bar: **Prepared → Publisher accepts → Schedule → Verify**.
+Luca's Today shows **Publishing · {post} → Publish it**. The placement dialog shows a progress bar: **Client approved → Publisher accepts → Hand off / Schedule → Verify**.
 
 - **Simulation:** check the files and caption, then click **Publish now (simulated)**. That one click accepts the package, schedules it and verifies the publication.
-- **Manual handoff:** **Accept approved package**, then **Record handoff**, then **Verify publication** with the live post URL and time. No confirmation boxes to tick; clicking the button is the confirmation.
+- **Manual** (the default): post it on the platform yourself, then click **I've published it**. One short form asks for the **link to the live post** and the time it went out (now, by default). Saving accepts the package, records the handoff and verifies the publication in one step. The message says *Marked as published on Instagram. Asha Raman will watch the first comments.*
 - **Download approved files (ZIP)** and **Download manifest** are there if you need the exact files.
 - If a release is uncertain or failed, use **Reconcile attempt**. **Cancel placement** and **Pause placement** are also available. Coordinators can pause all releases under **Release controls**.
 

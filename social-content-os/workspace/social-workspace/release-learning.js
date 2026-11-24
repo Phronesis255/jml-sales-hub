@@ -110,7 +110,8 @@
     if(reset){approval.checked=false;}
     try{
       const schedule=D.placementSchedule(post,f);
-      note.textContent='Planned publication: '+f.scheduledLocal.replace('T',' at ')+' · '+f.timezone+' ('+utcDisplay(schedule.instant)+'). '+(schedule.changed?'Changed from creative brief: '+(schedule.approved.local.replace('T',' at ')||'no time set')+' · '+schedule.approved.timezone+'. Confirm approval for the new timing.':'Matches the creative brief timing.');
+      const friendly=local=>local?root.JMLWorkflowUI.day(local.slice(0,10))+' at '+local.slice(11,16):'no time set';
+      note.textContent='Goes out '+utcDisplay(schedule.instant)+'. '+(schedule.changed?'That’s different from the approved timing ('+friendly(schedule.approved.local)+'). Confirm the client is fine with the new time.':'Same time as the approved brief.');
       change.hidden=!schedule.changed;approval.required=schedule.changed;
     }catch(error){note.textContent=error.message;change.hidden=true;approval.required=false;}
   }
@@ -122,8 +123,11 @@
     let tools=action('manifest','Download manifest',id)+(h&&D.currentPackage(ctx.state,p)&&(editable||can('coordinate',p))?action('bundle','Download approved files (ZIP)',id):'');
     const quick=editable&&p.mode==='simulation'&&['ready','failed'].includes(p.state)&&!issues.length;
     if(quick)tools+=action('publish-now','Publish now (simulated)',id,'primary');
-    if(editable&&!quick&&!p.receipt&&!['cancelled','verified'].includes(p.state)&&!issues.length)tools+=action('receive-package','Accept approved package',id,'primary');
-    if(editable&&!quick&&['ready','failed'].includes(p.state)&&!issues.length&&(!h||p.receipt))tools+=action('release-step',p.mode==='manual'?'Record handoff':'Simulate schedule',id+'|schedule','primary');
+    // Manual destinations: post it on the platform, then record it here in one step (accept, hand-off and verification together).
+    const quickManual=editable&&p.mode==='manual'&&['ready','failed'].includes(p.state)&&!issues.length;
+    if(quickManual)tools+=action('mark-published','I’ve published it',id,'primary');
+    if(editable&&!quick&&!quickManual&&!p.receipt&&!['cancelled','verified'].includes(p.state)&&!issues.length)tools+=action('receive-package','Accept approved package',id,'primary');
+    if(editable&&!quick&&!quickManual&&['ready','failed'].includes(p.state)&&!issues.length&&(!h||p.receipt))tools+=action('release-step',p.mode==='manual'?'Record handoff':'Simulate schedule',id+'|schedule','primary');
     if(editable&&p.state==='uncertain')tools+=action('release-step','Reconcile attempt',id+'|reconcile','primary');
     if(editable&&['handed-off','scheduled'].includes(p.state)&&D.currentPackage(ctx.state,p))tools+=action('release-step','Verify publication',id+'|verify','primary');
     if(editable&&(!['verified','cancelled','cancel-pending'].includes(p.state)||p.state==='cancel-pending'&&p.mode==='simulation'))tools+=action('release-step','Cancel placement',id+'|cancel');
@@ -132,9 +136,9 @@
     if(p.state==='verified'&&communityOwner(p)&&!p.communityReceipt)tools+=action('receive-community','Accept community handoff',id,'primary');
     const assets=(h?.assets||v.assets).map((a,i)=>'<figure>'+(a.type==='video'?'<video controls preload="metadata" src="'+esc(root.JMLStorage.mediaURL(a.url))+'"></video>':'<img loading="lazy" src="'+esc(root.JMLStorage.mediaURL(a.url))+'" alt="'+esc(a.alt||a.name)+'">')+'<figcaption>'+esc((i+1)+'. '+a.name)+(h?.files?.[i]?'<small>SHA-256 '+esc(h.files[i].sha256)+'</small>':'')+'</figcaption></figure>').join('');
     const U=root.JMLWorkflowUI,stage=p.state==='verified'?4:['scheduled','handed-off'].includes(p.state)?3:p.receipt||!h?2:1,trouble=['failed','uncertain','cancel-pending'].includes(p.state);
-    const steps=[{label:'Prepared',state:'done',note:p.approval?.actor||''},{label:'Publisher accepts',state:stage>1?'done':'current',note:p.owner},{label:p.mode==='manual'?'Hand off':'Schedule',state:stage>2?'done':stage===2?(trouble?'blocked':'current'):'todo',note:trouble?stateName[p.state]:''},{label:'Verify',state:stage>3?'done':stage===3?'current':'todo',note:p.state==='verified'?'Published':''}];
+    const steps=[{label:'Client approved',state:'done',note:p.approval?.actor||''},{label:'Publisher accepts',state:stage>1?'done':'current',note:p.owner},{label:p.mode==='manual'?'Hand off':'Schedule',state:stage>2?'done':stage===2?(trouble?'blocked':'current'):'todo',note:trouble?stateName[p.state]:''},{label:'Verify',state:stage>3?'done':stage===3?'current':'todo',note:p.state==='verified'?'Published':''}];
     const detail=(p.state==='cancelled'?'':U.stepper(steps,'Release progress'))+'<div class="rl-controls">'+badge(stateName[p.state],p.state==='verified'?'ok':trouble?'warning':'')+badge(modeText(p))+'</div><h3>'+esc(U.clean(contentName(p.contentId)))+'</h3>'+
-      '<dl class="rl-grid">'+[['Destination',p.platform+' / '+p.account],['Planned',root.JMLWorkflowUI.when(p.scheduledAt,p.timezone)],['Package','Creative V'+v.number+' · brief r'+p.briefRevision],['Release approver',p.approval.actor],['Publisher',p.owner],['Community handoff',p.communityOwner]].map(([k,v])=>'<div><dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd></div>').join('')+'</dl>'+
+      '<dl class="rl-grid">'+[['Destination',p.platform+' / '+p.account],['Planned',root.JMLWorkflowUI.when(p.scheduledAt,p.timezone)],['Approved version','V'+v.number],['Approved by',p.approval.actor],['Publisher',p.owner],['Community handoff',p.communityOwner]].map(([k,v])=>'<div><dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd></div>').join('')+'</dl>'+
       (h?'<p class="rl-handoff" title="'+esc('Decision reference '+h.decisionId)+'">Approved by '+esc(h.sender)+' · '+esc(utcDisplay(h.decision.at))+'<br><small>Handed to '+esc(h.recipient)+' for publishing</small></p>':'')+
       '<h3>Exact approved caption</h3><pre class="rl-caption">'+esc(h?.caption||v.caption)+'</pre>'+(assets?'<h3>Approved files in release order</h3><div class="rl-assets">'+assets+'</div>':meta('Text-only release. The caption is the complete creative.'))+
       (p.receipt?meta('Publisher accepted · '+p.receipt.actor+' · '+utcDisplay(p.receipt.at)):publisher(p)?'<p class="rl-yourturn"><b>Your turn:</b> check the files and caption above, then '+(p.mode==='simulation'&&['ready','failed'].includes(p.state)?'publish.':'accept the package.')+'</p>':meta('Waiting for '+p.owner+' to accept this package.'))+
@@ -389,6 +393,9 @@
     if(cmd==='learn-tab'){learnTab=key;ctx.render();return;}
     if(cmd==='new-placement')return placementForm(key);
     if(cmd==='placement')return placementDetail(key);
+    if(cmd==='mark-published'){const p=record('placements',key);allow('publish',p);if(!publisher(p))throw Error('Only the assigned publisher can publish this placement.');
+      const local=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
+      return form('Mark as published','mark-published',input('Link to the live post','url','','url')+input('Published at (your local time)','actualAt',local,'datetime-local')+area('How you checked it (optional)','note','Checked the live post against the approved files and caption.',false),'Mark as published',key,'Post it on '+p.platform+' first, then paste the link here. This records the hand-off and the verification in one step.');}
     if(cmd==='publish-now'){const p=record('placements',key);allow('publish',p);if(!publisher(p))throw Error('Only the assigned publisher can publish this placement.');const needsReceipt=!!p.handoff&&!p.receipt;await emit((s,b,a)=>{if(needsReceipt)D.receiveHandoff(s,b,key,a,ctx.ui.personId);D.advance(s,b,key,'schedule',{scenario:'accept',checked:true},a);D.advance(s,b,key,'verify',{checked:true},a);},'Published (simulated) to '+p.platform+'.'+(p.communityOwner?' '+p.communityOwner+' will watch the first comments.':''));placementDetail(key);return;}
     if(cmd==='release-step'){const [pid,op]=key.split('|'),pl=record('placements',pid);if(pl.mode==='simulation'&&op==='verify'){allow('publish',pl);if(!publisher(pl))throw Error('Only the assigned publisher can operate this placement.');await emit((s,b,a)=>D.advance(s,b,pid,'verify',{checked:true},a),'Publication verified.');placementDetail(pid);return;}return stepForm(key);}
     if(cmd==='pause')return pauses();
@@ -502,6 +509,10 @@
       f.scopeApproved=true; // Saving the placement is the release approval for this exact, client-approved version.
       let created;await emit((s,b,a)=>{created=D.createPlacement(s,b,f,a);},'Placement prepared for '+(f.owner||'the publisher')+'.');if(created?.id)placementDetail(created.id);return;
     }
+    if(cmd==='mark-published'){f.checked=true;const p=record('placements',key);allow('publish',p);if(!publisher(p))throw Error('Only the assigned publisher can publish this placement.');
+      f.actualAt=new Date(f.actualAt).toISOString();if(!String(f.note||'').trim())f.note='Checked the live post against the approved files and caption.';
+      const needsReceipt=!!p.handoff&&!p.receipt;
+      await emit((s,b,a)=>{if(needsReceipt)D.receiveHandoff(s,b,key,a,ctx.ui.personId);D.advance(s,b,key,'schedule',{checked:true},a);D.advance(s,b,key,'verify',f,a);},'Marked as published on '+p.platform+'.'+(p.communityOwner?' '+p.communityOwner+' will watch the first comments.':''));placementDetail(key);return;}
     if(cmd==='release-step'){f.checked=true;const [id,step]=key.split('|'),p=record('placements',id);allow('publish',p);if(!publisher(p))throw Error('Only the assigned publisher can operate this placement.');if(f.actualAt)f.actualAt=utc(f.actualAt);await emit((s,b,a)=>D.advance(s,b,id,step,f,a),{schedule:p.mode==='manual'?'Handoff recorded.':f.scenario==='reject'?'The platform rejected the schedule (simulated). Check the details and try again.':f.scenario==='timeout'?'No response (simulated). Reconcile the attempt before retrying.':'Scheduled (simulated) for '+utcDisplay(p.scheduledAt)+'.',verify:'Publication verified.',cancel:'Cancellation recorded.','confirm-cancel':'Cancellation confirmed.',reconcile:'Delivery reconciled.'}[step]||'Release history updated.');placementDetail(id);return;}
     if(cmd==='calculate-kpi')return emit((s,b,a)=>D.calculate(s,b,f,a),'Measured outcome saved.');
     if(cmd==='propose-next'){if(!can('strategy'))allow('coordinate');if(f.ownerPersonId)f.owner=root.JMLGovernance.person(ctx.state,f.ownerPersonId)?.name;return emit((s,b,a)=>D.proposeNext(s,b,key,f,a),'Next-plan proposal saved.');}
