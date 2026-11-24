@@ -110,7 +110,8 @@
     if(reset){approval.checked=false;}
     try{
       const schedule=D.placementSchedule(post,f);
-      note.textContent='Planned publication: '+f.scheduledLocal.replace('T',' at ')+' · '+f.timezone+' ('+utcDisplay(schedule.instant)+'). '+(schedule.changed?'Changed from creative brief: '+(schedule.approved.local.replace('T',' at ')||'no time set')+' · '+schedule.approved.timezone+'. Confirm approval for the new timing.':'Matches the creative brief timing.');
+      const friendly=local=>local?root.JMLWorkflowUI.day(local.slice(0,10))+' at '+local.slice(11,16):'no time set';
+      note.textContent='Goes out '+utcDisplay(schedule.instant)+'. '+(schedule.changed?'That’s different from the approved timing ('+friendly(schedule.approved.local)+'). Confirm the client is fine with the new time.':'Same time as the approved brief.');
       change.hidden=!schedule.changed;approval.required=schedule.changed;
     }catch(error){note.textContent=error.message;change.hidden=true;approval.required=false;}
   }
@@ -122,8 +123,11 @@
     let tools=action('manifest','Download manifest',id)+(h&&D.currentPackage(ctx.state,p)&&(editable||can('coordinate',p))?action('bundle','Download approved files (ZIP)',id):'');
     const quick=editable&&p.mode==='simulation'&&['ready','failed'].includes(p.state)&&!issues.length;
     if(quick)tools+=action('publish-now','Publish now (simulated)',id,'primary');
-    if(editable&&!quick&&!p.receipt&&!['cancelled','verified'].includes(p.state)&&!issues.length)tools+=action('receive-package','Accept approved package',id,'primary');
-    if(editable&&!quick&&['ready','failed'].includes(p.state)&&!issues.length&&(!h||p.receipt))tools+=action('release-step',p.mode==='manual'?'Record handoff':'Simulate schedule',id+'|schedule','primary');
+    // Manual destinations: post it on the platform, then record it here in one step (accept, hand-off and verification together).
+    const quickManual=editable&&p.mode==='manual'&&['ready','failed'].includes(p.state)&&!issues.length;
+    if(quickManual)tools+=action('mark-published','I’ve published it',id,'primary');
+    if(editable&&!quick&&!quickManual&&!p.receipt&&!['cancelled','verified'].includes(p.state)&&!issues.length)tools+=action('receive-package','Accept approved package',id,'primary');
+    if(editable&&!quick&&!quickManual&&['ready','failed'].includes(p.state)&&!issues.length&&(!h||p.receipt))tools+=action('release-step',p.mode==='manual'?'Record handoff':'Simulate schedule',id+'|schedule','primary');
     if(editable&&p.state==='uncertain')tools+=action('release-step','Reconcile attempt',id+'|reconcile','primary');
     if(editable&&['handed-off','scheduled'].includes(p.state)&&D.currentPackage(ctx.state,p))tools+=action('release-step','Verify publication',id+'|verify','primary');
     if(editable&&(!['verified','cancelled','cancel-pending'].includes(p.state)||p.state==='cancel-pending'&&p.mode==='simulation'))tools+=action('release-step','Cancel placement',id+'|cancel');
@@ -132,9 +136,9 @@
     if(p.state==='verified'&&communityOwner(p)&&!p.communityReceipt)tools+=action('receive-community','Accept community handoff',id,'primary');
     const assets=(h?.assets||v.assets).map((a,i)=>'<figure>'+(a.type==='video'?'<video controls preload="metadata" src="'+esc(root.JMLStorage.mediaURL(a.url))+'"></video>':'<img loading="lazy" src="'+esc(root.JMLStorage.mediaURL(a.url))+'" alt="'+esc(a.alt||a.name)+'">')+'<figcaption>'+esc((i+1)+'. '+a.name)+(h?.files?.[i]?'<small>SHA-256 '+esc(h.files[i].sha256)+'</small>':'')+'</figcaption></figure>').join('');
     const U=root.JMLWorkflowUI,stage=p.state==='verified'?4:['scheduled','handed-off'].includes(p.state)?3:p.receipt||!h?2:1,trouble=['failed','uncertain','cancel-pending'].includes(p.state);
-    const steps=[{label:'Prepared',state:'done',note:p.approval?.actor||''},{label:'Publisher accepts',state:stage>1?'done':'current',note:p.owner},{label:p.mode==='manual'?'Hand off':'Schedule',state:stage>2?'done':stage===2?(trouble?'blocked':'current'):'todo',note:trouble?stateName[p.state]:''},{label:'Verify',state:stage>3?'done':stage===3?'current':'todo',note:p.state==='verified'?'Published':''}];
+    const steps=[{label:'Client approved',state:'done',note:p.approval?.actor||''},{label:'Publisher accepts',state:stage>1?'done':'current',note:p.owner},{label:p.mode==='manual'?'Hand off':'Schedule',state:stage>2?'done':stage===2?(trouble?'blocked':'current'):'todo',note:trouble?stateName[p.state]:''},{label:'Verify',state:stage>3?'done':stage===3?'current':'todo',note:p.state==='verified'?'Published':''}];
     const detail=(p.state==='cancelled'?'':U.stepper(steps,'Release progress'))+'<div class="rl-controls">'+badge(stateName[p.state],p.state==='verified'?'ok':trouble?'warning':'')+badge(modeText(p))+'</div><h3>'+esc(U.clean(contentName(p.contentId)))+'</h3>'+
-      '<dl class="rl-grid">'+[['Destination',p.platform+' / '+p.account],['Planned',root.JMLWorkflowUI.when(p.scheduledAt,p.timezone)],['Package','Creative V'+v.number+' · brief r'+p.briefRevision],['Release approver',p.approval.actor],['Publisher',p.owner],['Community handoff',p.communityOwner]].map(([k,v])=>'<div><dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd></div>').join('')+'</dl>'+
+      '<dl class="rl-grid">'+[['Destination',p.platform+' / '+p.account],['Planned',root.JMLWorkflowUI.when(p.scheduledAt,p.timezone)],['Approved version','V'+v.number],['Approved by',p.approval.actor],['Publisher',p.owner],['Community handoff',p.communityOwner]].map(([k,v])=>'<div><dt>'+esc(k)+'</dt><dd>'+esc(v)+'</dd></div>').join('')+'</dl>'+
       (h?'<p class="rl-handoff" title="'+esc('Decision reference '+h.decisionId)+'">Approved by '+esc(h.sender)+' · '+esc(utcDisplay(h.decision.at))+'<br><small>Handed to '+esc(h.recipient)+' for publishing</small></p>':'')+
       '<h3>Exact approved caption</h3><pre class="rl-caption">'+esc(h?.caption||v.caption)+'</pre>'+(assets?'<h3>Approved files in release order</h3><div class="rl-assets">'+assets+'</div>':meta('Text-only release. The caption is the complete creative.'))+
       (p.receipt?meta('Publisher accepted · '+p.receipt.actor+' · '+utcDisplay(p.receipt.at)):publisher(p)?'<p class="rl-yourturn"><b>Your turn:</b> check the files and caption above, then '+(p.mode==='simulation'&&['ready','failed'].includes(p.state)?'publish.':'accept the package.')+'</p>':meta('Waiting for '+p.owner+' to accept this package.'))+
@@ -272,15 +276,16 @@
     const placements=items('placements').filter(p=>p.state==='verified');
     if(!placements.length){ctx.toast('Verify a release first, or use Single measure for account-level evidence.');return;}
     const p=placements.find(p=>p.id===placementId)||placements.at(-1),post=ctx.scoped().find(x=>x.id===p.contentId),definition=currentBrand().operations?.kpis?.find(k=>k.id===post?.measurementDefinitionId);
-    const day=ctx.C.localDate(p.timezone,p.verification?.actualAt||p.scheduledAt),days=Number(definition?.window?.match(/^(\d+)[ -]?day/i)?.[1]||7),end=ctx.C.addDays(day,days-1),primary=[...new Set([definition?.numerator,definition?.denominator,'views','saves','clicks'].filter(Boolean))];
+    // The period can't end in the future: if the agreed window is still running, end it today and say when the full window closes.
+    const day=ctx.C.localDate(p.timezone,p.verification?.actualAt||p.scheduledAt),days=Number(definition?.window?.match(/^(\d+)[ -]?day/i)?.[1]||7),fullEnd=ctx.C.addDays(day,days-1),running=p.mode!=='simulation'&&fullEnd>today(),end=running?today():fullEnd,primary=[...new Set([definition?.numerator,definition?.denominator,'views','saves','clicks'].filter(Boolean))];
     const count=(key)=>input(D.rawMeasures[key].label,'value-'+key,'','number',false).replace('<input ','<input '+(key==='netfollowers'?'':'min="0" ')+'placeholder="Unknown" ');
     // Render the complete form once with the selected placement's inherited values.
     form('Record placement results','measure-batch',
       U.section('Placement and reporting period','One source covers the counts below.',select('Placement','placementId',placements.map(p=>[p.id,contentName(p.contentId)+' · '+p.account+' · '+modeText(p)]),p.id)+input('Period start','start',day,'date')+input('Period end','end',end,'date')+input('Source export or evidence reference','source',p.mode==='simulation'?'Local sample data':''))+
-      U.summary(p.mode==='simulation'?'Sample data':'Recorded performance',p.account+' · '+p.timezone+' · '+(definition?definition.title+' will be calculated from these counts.':'No agreed KPI is linked; the source counts will still be saved.'))+
+      U.summary(p.mode==='simulation'?'Sample data':'Recorded performance',p.account+' · '+String(p.timezone||'').split('/').pop().replace(/_/g,' ')+' time · '+(definition?definition.title+' will be calculated from these counts.':'No agreed KPI is linked; the source counts will still be saved.'))+
       U.section('Measured values','Blank means unknown. Enter 0 only when the measured value is zero.','<div class="measurement-values full">'+primary.map(count).join('')+'</div>')+
       U.optional('Other measures and collection details','<div class="measurement-values full">'+Object.keys(D.rawMeasures).filter(k=>!primary.includes(k)).map(count).join('')+'</div>'+input('Collected on','collectedAt',p.mode==='simulation'&&today()<end?end:today(),'date')+select('Distribution','segment',['organic','paid','mixed'],(definition?.distribution||'Organic').toLowerCase())+select('Aggregation','aggregation',['period','lifetime'],'period')+check('Save corrected values as a new evidence revision.','replace')),
-      'Save counts and calculate KPI','','The source observations and calculated result are saved together. Future reporting dates are not proof of measured results.');
+      'Save counts and calculate KPI','',running?'The agreed '+days+'-day window runs until '+U.day(fullEnd)+'. Record what the platform shows so far; you can add the full-window reading after that date.':'Copy the numbers from the platform’s export. The agreed measure is calculated for you, and the numbers are kept with their source.');
     document.querySelector('[data-rl-form="measure-batch"]').dataset.primary=JSON.stringify(primary);
   }
   function manualObservation(){
@@ -346,7 +351,7 @@
   function workDetail(id){
     const w=record('work',id);
     show(w.title,'<div class="rl-controls">'+badge(w.kind)+badge(w.status)+badge(kindText(w.origin))+'</div>'+
-      meta(w.owner+' · review '+w.due)+'<p>'+esc(w.detail)+'</p>'+meta(w.evidence)+
+      meta(w.owner+' · review by '+root.JMLWorkflowUI.day(w.due))+'<p>'+esc(w.detail)+'</p>'+meta(String(w.evidence||'').startsWith('report-')?'From the report “'+((ctx.state.releaseLearning?.reports||[]).find(r=>r.id===w.evidence)?.title||'')+'”':w.evidence)+
       (w.kind==='Experiment'?'<dl class="rl-grid">'+[['Variable',w.variable],['Success measure',w.metric],['Comparison',w.baseline],['Window',w.window]].map(([k,v])=>'<div><dt>'+k+'</dt><dd>'+esc(v)+'</dd></div>').join('')+'</dl>':'')+
       '<div class="rl-controls">'+action('work-decision','Record decision',id,'primary')+(w.kind==='Watchlist'?action('watch-run','Record collection',id):'')+'</div>'+
       (w.runs.length?'<h3>Collection runs</h3>'+w.runs.map(r=>summaryRow(r.signal,r.coverage+' · '+r.source+' · '+utcDisplay(r.at))).join(''):'')+
@@ -357,10 +362,10 @@
     const summary=c?c.definition.title+': '+resultText(c)+(c.baselineComparable&&c.delta!==null?'; baseline '+c.baselineValue+' '+c.definition.unit+', change '+(c.delta>=0?'+':'')+number(c.delta)+'.':'.'):'';
     const limits=c?[c.origin==='fixture'?'Sample data only; no real audience results.':'',c.unavailable,c.comparisonNote].filter(Boolean).join(' '):'';
     form('Draft a client report','report-create',
-      (resultId?'<input type="hidden" name="calculationId" value="'+esc(resultId)+'">':'')+U.summary('Included automatically',start+' – '+end+' · '+(c?c.definition.title+' and its saved evidence.':'Observations and saved outcomes in this period.'))+
+      (resultId?'<input type="hidden" name="calculationId" value="'+esc(resultId)+'">':'')+U.summary('Included automatically',root.JMLWorkflowUI.day(start)+' – '+root.JMLWorkflowUI.day(end)+' · '+(c?c.definition.title+' and its saved evidence.':'Observations and saved outcomes in this period.'))+
       U.section('The story and next decision','The measured results are included; add your interpretation.',area('What do the results tell us?','summary',summary)+area('What are the limits?','gaps',limits)+area('What should the client decide?','ask'))+
-      U.optional('Report settings and private notes',input('Report title','title',currentBrand().name+' · Results '+end)+input('Reviewer','reviewer',actor())+input('Period start','start',start,'date')+input('Period end','end',end,'date')+select('Evidence set','origin',evidenceOptions(),c?.origin||evidenceFilter||defaultEvidenceOrigin())+area('Internal notes — not shared','internal','',false)),
-      'Save report for review','',resultId?'Includes this saved result and its original source evidence. The report stays private until reviewed.':'Includes all matching results and observations in this reporting period. The report stays private until reviewed.');
+      U.optional('Report settings and private notes',input('Report title','title','Results · '+root.JMLWorkflowUI.day(start)+' – '+root.JMLWorkflowUI.day(end))+check('Have someone else review it before the client sees it','needsReview')+input('Reviewer (if someone else reviews it)','reviewer',actor())+input('Period start','start',start,'date')+input('Period end','end',end,'date')+select('Evidence set','origin',evidenceOptions(),c?.origin||evidenceFilter||defaultEvidenceOrigin())+area('Internal notes — not shared','internal','',false)),
+      'Share with '+(currentBrand().operations?.foundation?.finalApprover||'the client'),'','The agreed measure and the counts in this period are included for you. Sharing sends it to '+(currentBrand().operations?.foundation?.finalApprover||'the client')+' straight away; tick “Have someone else review it” under Report settings to keep it as a draft.');
   }
   function reportDetail(id,client=false){
     const r=record('reports',id);
@@ -389,6 +394,9 @@
     if(cmd==='learn-tab'){learnTab=key;ctx.render();return;}
     if(cmd==='new-placement')return placementForm(key);
     if(cmd==='placement')return placementDetail(key);
+    if(cmd==='mark-published'){const p=record('placements',key);allow('publish',p);if(!publisher(p))throw Error('Only the assigned publisher can publish this placement.');
+      const local=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
+      return form('Mark as published','mark-published',input('Link to the live post','url','','url')+input('Published at (your local time)','actualAt',local,'datetime-local')+area('How you checked it (optional)','note','Checked the live post against the approved files and caption.',false),'Mark as published',key,'Post it on '+p.platform+' first, then paste the link here. This records the hand-off and the verification in one step.');}
     if(cmd==='publish-now'){const p=record('placements',key);allow('publish',p);if(!publisher(p))throw Error('Only the assigned publisher can publish this placement.');const needsReceipt=!!p.handoff&&!p.receipt;await emit((s,b,a)=>{if(needsReceipt)D.receiveHandoff(s,b,key,a,ctx.ui.personId);D.advance(s,b,key,'schedule',{scenario:'accept',checked:true},a);D.advance(s,b,key,'verify',{checked:true},a);},'Published (simulated) to '+p.platform+'.'+(p.communityOwner?' '+p.communityOwner+' will watch the first comments.':''));placementDetail(key);return;}
     if(cmd==='release-step'){const [pid,op]=key.split('|'),pl=record('placements',pid);if(pl.mode==='simulation'&&op==='verify'){allow('publish',pl);if(!publisher(pl))throw Error('Only the assigned publisher can operate this placement.');await emit((s,b,a)=>D.advance(s,b,pid,'verify',{checked:true},a),'Publication verified.');placementDetail(pid);return;}return stepForm(key);}
     if(cmd==='pause')return pauses();
@@ -435,7 +443,7 @@
     }
     if(cmd==='proposal')return proposalDetail(key);
     if(cmd==='proposal-decision')return form('Review next-plan proposal','proposal-decision',select('Decision','action',[['accept','Accept for planning'],['return','Return with feedback']])+area('Decision rationale','note'),'Record decision',key);
-    if(cmd==='measure-batch')return measurementForm();
+    if(cmd==='measure-batch')return measurementForm(key);
     if(cmd==='report-from-result'){if(!can('coordinate'))allow('analyze');return reportForm(key);}
     if(cmd==='observe')return manualObservation();
     if(cmd==='import'){pending=null;return importForm();}
@@ -459,8 +467,9 @@
     if(cmd==='work-item')return workDetail(key);
     if(cmd==='work-decision'){
       const w=record('work',key);
-      form('Review '+w.kind.toLowerCase(),'decision',select('Decision','decision',w.kind==='Community case'?['Resolve','Escalate','Test again']:['Continue','Improve','Test again','Retire'])+
-        area('Observation, interpretation and next action','note')+check('Create a proposed content brief from this decision.','propose')+input('Proposed brief title','title',w.title,'text',false),'Save decision',key);return;
+      const fromReport=String(w.evidence||'').startsWith('report-');
+      form(fromReport?'Record the next step':'Review '+w.kind.toLowerCase(),'decision',(fromReport?'<p class="full rl-meta">'+esc(w.detail)+'</p>':'')+select(fromReport?'What happens next':'Decision','decision',w.kind==='Community case'?['Resolve','Escalate','Test again']:[['Continue','Continue: do more of this'],['Improve','Improve it and try again'],['Test again','Test it again'],['Retire','Stop doing this']])+
+        area(fromReport?'Why, and what the team will do':'Observation, interpretation and next action','note')+check('Add a new post idea for this (it appears on Today under “Ideas to schedule”)','propose')+input('Post idea title','title',fromReport?'':w.title,'text',false),'Save next step',key);return;
     }
     if(cmd==='watch-run'){
       form('Record collection run','run',input('Source or export','source')+input('Signal or recurring question','signal')+area('Coverage, exclusions and gaps','coverage')+check('Create an audience opportunity for this signal.','route'),'Save collection run',key);return;
@@ -502,6 +511,10 @@
       f.scopeApproved=true; // Saving the placement is the release approval for this exact, client-approved version.
       let created;await emit((s,b,a)=>{created=D.createPlacement(s,b,f,a);},'Placement prepared for '+(f.owner||'the publisher')+'.');if(created?.id)placementDetail(created.id);return;
     }
+    if(cmd==='mark-published'){f.checked=true;const p=record('placements',key);allow('publish',p);if(!publisher(p))throw Error('Only the assigned publisher can publish this placement.');
+      f.actualAt=new Date(f.actualAt).toISOString();if(!String(f.note||'').trim())f.note='Checked the live post against the approved files and caption.';
+      const needsReceipt=!!p.handoff&&!p.receipt;
+      await emit((s,b,a)=>{if(needsReceipt)D.receiveHandoff(s,b,key,a,ctx.ui.personId);D.advance(s,b,key,'schedule',{checked:true},a);D.advance(s,b,key,'verify',f,a);},'Marked as published on '+p.platform+'.'+(p.communityOwner?' '+p.communityOwner+' will watch the first comments.':''));placementDetail(key);return;}
     if(cmd==='release-step'){f.checked=true;const [id,step]=key.split('|'),p=record('placements',id);allow('publish',p);if(!publisher(p))throw Error('Only the assigned publisher can operate this placement.');if(f.actualAt)f.actualAt=utc(f.actualAt);await emit((s,b,a)=>D.advance(s,b,id,step,f,a),{schedule:p.mode==='manual'?'Handoff recorded.':f.scenario==='reject'?'The platform rejected the schedule (simulated). Check the details and try again.':f.scenario==='timeout'?'No response (simulated). Reconcile the attempt before retrying.':'Scheduled (simulated) for '+utcDisplay(p.scheduledAt)+'.',verify:'Publication verified.',cancel:'Cancellation recorded.','confirm-cancel':'Cancellation confirmed.',reconcile:'Delivery reconciled.'}[step]||'Release history updated.');placementDetail(id);return;}
     if(cmd==='calculate-kpi')return emit((s,b,a)=>D.calculate(s,b,f,a),'Measured outcome saved.');
     if(cmd==='propose-next'){if(!can('strategy'))allow('coordinate');if(f.ownerPersonId)f.owner=root.JMLGovernance.person(ctx.state,f.ownerPersonId)?.name;return emit((s,b,a)=>D.proposeNext(s,b,key,f,a),'Next-plan proposal saved.');}
@@ -514,7 +527,12 @@
       if(published&&f.end&&f.end<published)throw Error('This reporting period ends before the post was published ('+root.JMLWorkflowUI.day(published)+'). Choose a period that starts on or after that date.');
       let result;await emit((s,b,a)=>{result=D.recordMeasurements(s,b,f,values,a);},'Source counts saved.');
       const c=result?.result;
-      if(c&&c.result!==null)ctx.toast('Counts saved. '+c.definition.title+': '+resultText(c)+'.');else if(c)ctx.toast('Counts saved, but '+c.definition.title+' could not be calculated: '+(c.unavailable||'a required count is unknown')+'.');else ctx.toast('Counts saved. A KPI needs matching measures, period and distribution.');return;
+      if(c&&c.result!==null)ctx.toast('Counts saved. '+c.definition.title+': '+resultText(c)+'.');else if(c)ctx.toast('Counts saved, but '+c.definition.title+' could not be calculated: '+(c.unavailable||'a required count is unknown')+'.');else{
+        // Explain why there's no KPI yet: it's calculated on the agreed window only.
+        const post=ctx.scoped().find(x=>x.id===placement?.contentId),def=currentBrand().operations?.kpis?.find(k=>k.id===post?.measurementDefinitionId),days=Number(def?.window?.match(/^(\d+)[ -]?day/i)?.[1]||0),day=root.JMLWorkflowUI.day;
+        const pub=placement?ctx.C.localDate(placement.timezone,placement.verification?.actualAt||placement.scheduledAt):'',fullEnd=days&&pub?ctx.C.addDays(pub,days-1):'';
+        ctx.toast(def&&fullEnd?'Counts saved. '+def.title+' is calculated on the full '+days+'-day window ('+day(pub)+' – '+day(fullEnd)+'). Add that reading after '+day(fullEnd)+'; Today will remind you.':'Counts saved. No agreed measure is linked to this post, so nothing was calculated.');
+      }return;
     }
     if(cmd==='observe'){evidenceFilter=f.origin;return emit((s,b,a)=>D.ingest(s,b,[f],{name:f.source,format:'manual',replace:f.replace},a),'Observation saved.');}
     if(cmd==='input-file'){
@@ -548,9 +566,13 @@
       if(f.observationId){const o=record('observations',f.observationId);f.evidence=(f.evidence?f.evidence+' · ':'')+o.id+' · '+o.source;if(o.origin==='fixture')f.fixture=true;}
       return emit((s,b,a)=>D.addWork(s,b,{...f,kind:key},a),'Learning record saved.');
     }
-    if(cmd==='decision')return emit((s,b,a)=>D.decideWork(s,b,key,f,a),'Decision recorded.');
+    if(cmd==='decision')return emit((s,b,a)=>D.decideWork(s,b,key,f,a),f.propose?'Next step saved. “'+(f.title||'New idea')+'” is on Today under Ideas to schedule.':'Next step saved.');
     if(cmd==='run')return emit((s,b,a)=>D.watchRun(s,b,key,f,a),'Collection run recorded.');
-    if(cmd==='report-create')return emit((s,b,a)=>D.snapshot(s,b,f,a),'Report snapshot created.');
+    if(cmd==='report-create'){
+      // The author is usually the reviewer: share in one step unless someone else is asked to review first.
+      const client=currentBrand().operations?.foundation?.finalApprover||'the client',share=!f.needsReview&&(!f.reviewer||f.reviewer===actor());if(share)f.reviewer=actor();
+      return emit((s,b,a)=>{const r=D.snapshot(s,b,f,a);if(share)D.reportDecision(s,b,r.id,{action:'review'},a);},share?'Report shared with '+client+'.':'Report saved as a draft. '+f.reviewer+' reviews it before '+client+' sees it.');
+    }
     if(cmd==='approve-report')return emit((s,b,a)=>D.reportDecision(s,b,key,{action:'review'},a),'Report ready for client review.');
     if(cmd==='feedback')return emit((s,b,a)=>D.reportDecision(s,b,key,f,a),'Client decision and action recorded.');
     if(cmd==='calc-rate'||cmd==='calc-compare'){

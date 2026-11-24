@@ -21,13 +21,18 @@ The example team uses three roles. Use **Switch person** (top right) to act as e
 | **Workspace administrator** | Agency admin | Creates client accounts, adds people, manages backups. Cannot approve on the client's behalf. |
 | **Asha Raman** | Account manager, strategist, operations, creative QA, analyst | Runs the account: foundation, research, strategy, calendar, production set-up, internal QA, placements, results and reports. |
 | **Luca Vale** | Copywriter, designer/video, publisher | Produces the creative and publishes it. |
-| **Sam Rivera** | Client approver | Approves the foundation, strategy, calendar and each finished creative. Supplies requested inputs. |
+| **Sam Rivera** | Client approver | Approves the strategy & KPIs (once), the calendar, and each finished creative. Supplies requested inputs. Never sees the internal foundation brief. |
 | **Client stakeholder** | Client viewer | Read-only view of shared material and reports. |
+
+> **Demo branch:** every pop-up form has a **Fill with demo data** button next to the close button. It fills the empty fields with believable values (and placeholder artwork in upload dialogs) so you can run the whole workflow live in a meeting. It never submits: you still click the form's own button, so every rule and approval still applies.
 
 To try everything with fictional data first, open **Today → Start here → Load full demo workspace**, or use **Switch person → Try a sample handoff**.
 
 ### How the app tells you what's next
-- **Plan for {client}** on the planner's **Today** (Asha, or anyone who plans the account) lists the five planning stages: foundation, research, strategy, calendar and production handoff. Each stage shows *Done* (approved by whom and when), *With {client approver}* (nothing to do until they decide), a red *Changes requested* row with the client's note, or the next thing to do with its button. The heading always names the one next step. Once the calendar is approved, the last row lists each approved post waiting for a producer and reviewer. The card disappears when everything is done, and it isn't shown on the fictional demo accounts.
+- **Plan for {client}** on **Today** lists the five planning stages: foundation (internal, ticked as soon as it's saved), research (optional), strategy & KPIs (the client's sign-off), calendar and production handoff. Each stage shows *Done* (approved by whom and when), *With {client approver}* (nothing to do until they decide), a red *Changes requested* row with the client's note, or the next thing to do with its button. The heading always names the one next step, or who you are waiting on. It is built from the account's records each time Today opens; it is not a demo.
+  - **Who sees it:** people who plan the account (strategy or account coordination), for example Asha and the administrator. Producers like Luca and client contacts don't. Buttons appear only for steps that person can do. For example, someone with strategy access only sees the production handoff as *waiting for an account coordinator*.
+  - **Which accounts:** every client added with **Add client**, plus any older account once someone saves its foundation, strategy or calendar. The fictional demo accounts (Demo studio, Northstar Coffee) never show it.
+  - **When it appears and disappears:** it hides once every required step is done, and comes back by itself when something new needs doing: a post added or moved after the calendar was approved, a client asking for changes, or a newly approved post with no producer. The *Hand off to production* list only shows approved posts with no production set-up and no draft yet.
 - **Assigned to you** on **Today** lists your open assignments, with the primary action on each row. A QA assignment shows *Waiting for {producer}'s draft* until there is something to check.
 - When the client decides, their confirmation names who takes it from there, for example *Calendar approved. Asha Raman will hand these posts to production.*
 - A **Production readiness** card on each post lists every remaining step, who it's waiting on, and a button where you can act.
@@ -42,18 +47,18 @@ To try everything with fictional data first, open **Today → Start here → Loa
 |---|---|---|---|---|
 | 1 | Add the client account | Admin | — | Client accounts → Accounts |
 | 2 | People, access and stage owners | Admin | — | Client accounts → People & access |
-| 3 | Client foundation | Asha | Sam | Content Planner → Foundation |
+| 3 | Client foundation (internal) | Asha | — | Content Planner → Foundation |
 | 4 | Research | Asha | — | Content Planner → Research |
 | 5 | Strategy & KPIs | Asha | Sam | Content Planner → Strategy & KPIs |
 | 6 | Content calendar | Asha | Sam | Content Planner → Calendar / Research / Bulk import |
-| 7 | Brief and production set-up | Asha (+ Luca for copy) | Asha accepts the brief | Post → Brief & copy |
+| 7 | Hand off to production | Asha | — (the client already approved the calendar) | Post → Production workflow |
 | 8 | Create the content | Luca | — | Post → Production workflow / Creative versions |
 | 9 | Internal QA | Asha | — | Review → Internal QA |
 | 10 | Client creative approval | Sam | Sam | Review → Creative approvals |
 | 11 | Publish and verify | Asha prepares, Luca publishes | — | Publish → Publishing desk |
 | 12 | Measure results | Asha | — | Learn → Results |
-| 13 | Report to the client | Asha | Asha marks it client-ready | Learn → Reports |
-| 14 | Growth and the next cycle | Asha | Back to Sam via the plan | Learn → Growth |
+| 13 | Report to the client | Asha | Sam answers its yes/no question | Learn → Reports |
+| 14 | Growth and the next cycle | Asha | Back to Sam via the calendar | Today → Client replies, Learn → Growth |
 
 The **Content Planner** progress strip at the top of Foundation, Research and Strategy shows stages 3–6 at a glance: done (green), current, or waiting for the client (amber).
 
@@ -131,7 +136,7 @@ Optional. Open **Stage owners (optional)** and click **Assign** on each row to n
 ---
 
 ## Stage 3 — Client foundation
-**Who:** Asha · **Approved by:** Sam · **Where:** **Content Planner → Foundation**
+**Who:** Asha · **Approved by:** nobody: it's the team's internal brief · **Where:** **Content Planner → Foundation**
 
 ### 3.1 Write the foundation
 Click **Set up foundation** (later **Edit foundation**) and fill in:
@@ -147,14 +152,13 @@ Click **Set up foundation** (later **Edit foundation**) and fill in:
 - **Community owner** (optional, chosen from the people list)
 - Optional: content items per week, next input review date
 
-### 3.2 Get the client's confirmation
-1. **Save foundation** also sends it to the client approver (the message says *Foundation saved and sent to {name} to confirm*). It appears under **Client confirmation**.
-2. Switch to **Sam** → **Today → Awaiting your review → Client foundation** → **Review** → **Approve foundation V1** (or **Request changes** with a note). Sam sees the same questions Asha answered.
+### 3.2 Save it
+Click **Save foundation**. It is **not** sent to the client: the message says *Foundation saved. Next: set the strategy and KPIs for {name} to approve.* Earlier versions are kept under **Saved versions · internal, not sent to the client**. You can edit it any time without asking the client again.
 
 ### 3.3 Optional: campaigns
 Under **Campaigns (optional)**, add a campaign when it needs its own objective and dates.
 
-**Done when:** the progress strip shows **Foundation · Approved**.
+**Done when:** the progress strip shows **Foundation · Saved**, and the Plan card on Today ticks *Client foundation · Saved by Asha*.
 
 ---
 
@@ -185,7 +189,7 @@ Create a **listening watchlist** (a competitor, brand or recurring question) wit
 ---
 
 ## Stage 5 — Strategy & KPIs
-**Who:** Asha · **Approved by:** Sam · **Where:** **Content Planner → Strategy & KPIs**
+**Who:** Asha · **Approved by:** Sam (the client's one planning sign-off) · **Where:** **Content Planner → Strategy & KPIs**
 
 ### 5.1 Choose how success is measured
 1. Click **Choose a measure** / **Add measure**.
@@ -207,10 +211,14 @@ Click **Save strategy version** and fill in:
 - Reporting cadence
 - Discovery, growth experiments and community ownership
 
-### 5.3 Get the client's decision
-Switch to **Sam** → **Review → Plan approvals** → approve the strategy version, or request changes.
+Click **Send to {client approver} for approval**. The message says *Strategy and KPIs sent to Sam Rivera for approval.*
 
-**Done when:** **Current direction** shows the strategy as *approved*, and the strip shows **Strategy & KPIs · Approved**.
+### 5.3 The client approves the KPIs
+Switch to **Sam** → **Today → Awaiting your review → Strategy & KPIs** → **Review**. The review leads with **How success will be measured**: the main measure, how it's calculated, the measurement window, the baseline, the target and how often results are reported. **The plan behind these KPIs** (offer, objective, audience, channels, themes, scope) is collapsed underneath for context. Sam clicks **Approve KPIs**, or **Request changes** with a note. The message reads *KPIs approved. Asha Raman will plan the calendar against them next.*
+
+This is the client's only sign-off on planning before the calendar. Editing the internal foundation later doesn't undo it.
+
+**Done when:** the strip shows **Strategy & KPIs · KPIs approved**, and the Plan card on Today shows *Strategy & KPIs V1 · Approved by Sam*.
 
 ---
 
@@ -267,43 +275,60 @@ Switch to **Sam** → **Today → Awaiting your review → Calendar plan** (or R
 
 ---
 
-## Stage 7 — Brief and production set-up
-**Who:** Asha (copy fields may be Luca's) · **Where:** open the post → **Brief & copy**
+## Stage 7 — Hand off to production
+**Who:** Asha · **Where:** **Today → Plan for {client}**, or the post's **Production workflow** tab
 
 Every post has tabs: **Brief & copy · Production workflow · Creative versions · Review & feedback · Media requests · Version history**.
 
 ### 7.1 Complete the brief
 - **Content:** title, platform, format, working caption, visual direction, slide copy or script, call to action.
 - **Audience and objective** (inherited from the strategy).
-- **People and timing:** content owner, final approver, publication date, time and time zone.
+- **People and timing:** content owner and client approver. The date and time change with **Change date** (no new brief version).
 - Optional: **Open full Creative Brief Studio** for the detailed multi-module brief.
-- Click **Save brief version**. Edits autosave on this device; saving a version shares it with the team. Once a brief has been accepted, saving a new version means it must be accepted again; the form warns you.
+- Click **Save brief version**. Edits autosave on this device; saving a version shares it with the team. Saving after the hand-off means the brief needs confirming again; the readiness card and the quick check both say so.
 
 ### 7.2 Hand off to production
-Start from **Today → Plan for {client} → Hand off to production**: each approved post is listed with its planned producer. Click **Set up production →** to open the post's **Production workflow** tab, then **Set up production** (the same button is on the post's **Production readiness** card). Fill in:
+Start from **Today → Plan for {client} → Hand off to production**. Each approved post is listed with its planned producer. Click **Set up production →** to open the post's **Production workflow** tab, then **Hand off to production**. The same button is on the post's **Production readiness** card.
 
-1. **What are we making?** Choose a route:
+The dialog opens with one line on what happens next: the producer makes it and uploads a draft, the reviewer gives it a quick check, then it goes to the client. It shows the planned post date. Fill in:
 
-   Each type comes with an **optional to-do list** the producer can use for their own tracking. Nothing waits on it.
+1. **Who and when**
+   - **Who makes it**: pre-filled with the planned producer.
+   - **Who checks it before {client}**: pre-filled with the reviewer.
+   - **Draft due**: defaults to two days before the post date.
+2. **What to make**
+   - **Type of creative**: *Designed image or carousel*, *Animated graphic*, *Edited video from real footage* or *AI-generated video*. A tip under the instructions says what to cover for that type.
+   - **Instructions for the producer**: pre-filled from the brief.
+   - **Files to use and where to find them** \*
+   - **Do we have permission to use them?** \*
+   - Real footage adds **People on camera** (releases and usage limits). AI video adds **AI use** (how it's used and disclosed).
+3. **More details (optional)**, collapsed: files to deliver, quick-check due date, final package due date, when permission expires, backup person, channel and placement, opening hook, anything else to deliver, and what "done" looks like.
 
-   | Route | Optional to-do steps |
-   |---|---|
-   | Designed static | Set layout and visual references → Design and adapt each placement → Check slide order, copy and export |
-   | Motion graphics | Prepare script and style frames → Approve style frames → Animate and add sound → Render and check captions |
-   | Real footage edit | Check footage, releases and sound → Assemble rough cut → Approve rough cut structure → Finish captions, audio and cover |
-   | AI-generated video | Approve AI use and references → Prepare shot prompts and start frames → Select takes and record AI use → Edit, caption and export |
+Click **Hand off to production**. In one step this:
+- creates the handoffs **Production → Luca** and **Internal QA → Asha**;
+- confirms the brief for production (the client already approved the post on the calendar, so there is no separate confirmation step);
+- removes the post from the Plan card's list.
 
-2. **Producer**, **Internal reviewer** and **Draft due** date.
-3. Route instructions, **Source assets or approved references** \*, **Permission or licence covering these assets** \*, and **Required output**.
-4. Real footage adds people and releases; AI video adds an AI-use and disclosure plan.
-5. Optional: review due date, permission expiry, backup owner, placement, opening hook, package and acceptance notes.
+The message says *Handed to Luca Vale (producer) and Asha Raman (reviewer). They'll see it on their Today.* Asha's QA row reads *Waiting for Luca's draft* until a version is uploaded.
 
-Saving it creates the handoffs straight away: **Production → Luca** and **Internal QA → Asha**. The message says so (*Handed to Luca Vale (producer) and Asha Raman (reviewer). They'll see it on their Today.*), and the post leaves the Plan card's list. Asha's QA row reads *Waiting for Luca's draft* until a version is uploaded.
+### 7.3 What the producer sees
+The post's **Production workflow** tab now opens with **What to make**:
+- the type and draft due date, then *Luca makes it → Asha checks it → Maya approves it*;
+- the instructions, files to use and permission;
+- everything else under **More details**.
 
-### 7.3 Confirm the brief is ready
-When every row on the readiness card is ticked, click **Confirm brief is ready**. This records that the brief revision Luca works from is complete. If the brief changes later, it needs confirming again.
+Luca gets an **Upload the draft** button there, and Asha gets **Edit the hand-off**. **Production readiness** appears below it only while something is still open, such as a missing call to action in the brief. The **Production to-do (optional)** list is for the producer's own tracking; nothing waits on it:
 
-**Done when:** readiness says *Ready for production* and the Handoffs stepper shows Production assigned.
+| Type | Optional to-do steps |
+|---|---|
+| Designed image or carousel | Set layout and visual references → Design and adapt each placement → Check slide order, copy and export |
+| Animated graphic | Prepare script and style frames → Approve style frames → Animate and add sound → Render and check captions |
+| Edited video from real footage | Check footage, releases and sound → Assemble rough cut → Approve rough cut structure → Finish captions, audio and cover |
+| AI-generated video | Approve AI use and references → Prepare shot prompts and start frames → Select takes and record AI use → Edit, caption and export |
+
+If Asha (or anyone who can confirm briefs) edits the brief after the handoff, it stays confirmed: the message says *Brief saved. It stays confirmed for production.* If someone else edits it, such as Luca, the readiness card and Asha's quick check both say *The brief changed after it was confirmed* and offer **Confirm brief is ready**. They say this before Asha tries to send anything to the client.
+
+**Done when:** the Handoffs stepper shows Production and Internal QA assigned, and **What to make** is at the top of the Production workflow tab.
 
 ---
 
@@ -326,7 +351,9 @@ When every row on the readiness card is ticked, click **Confirm brief is ready**
 ## Stage 9 — Quick check (internal QA)
 **Who:** Asha (the internal reviewer) · **Where:** Today → **Check and send**, or **Review → Internal QA** → **Check Vn**
 
-1. Look over the files (use the arrows under the preview) and the caption.
+While a draft waits here, the post's status pill reads **In quick check**, and **With the client** once it's sent.
+
+1. Look over the files (use the arrows under the preview) and the caption. If something still blocks sending (for example the brief changed after it was confirmed, or the call to action is missing), a yellow **Before this can go to {client}** box says so, with the button or link to fix it.
 2. Choose one:
    - **Looks good — send to {client}**: one click hands this exact version to the client approver.
    - **Fix the caption**: correct a typo yourself. Your fix is saved as a new version with the same files and goes straight to the client in the same step, with no round trip to the producer.
@@ -354,17 +381,17 @@ Every new version passes this quick check once before the client sees it, includ
 **Who:** Asha or Luca prepares the placement; Luca publishes · **Where:** **Publish → Publishing desk**
 
 ### 11.1 Prepare a placement
-1. Under **Ready to place**, click **Prepare placement**.
+1. As soon as the client approves, Asha's **Today** shows **Approved: ready to publish**, listing each approved post with who approved it and a **Prepare placement** button. The same list is under **Ready to place** on the Publishing desk.
 2. Check the preview of the approved creative, then set the three essentials: **Destination platform**, **Planned local date and time**, and **Publisher**. If the time differs from the brief, tick the timing-change approval.
 3. Everything else is pre-filled from the approved creative and sits under **More options**: destination account, delivery method (*Simulation* or *Manual handoff*), output format, time zone, community handoff owner, permission expiry, finishing instructions.
 4. Click **Save placement**. Saving is the release approval for this exact, client-approved version, so there's no checkbox to tick. The placement dialog opens straight away.
 5. To publish the same creative elsewhere, use **Add another destination** under *Approved creatives already placed*.
 
 ### 11.2 Publish it (Luca)
-The placement dialog shows a progress bar: **Prepared → Publisher accepts → Schedule → Verify**.
+Luca's Today shows **Publishing · {post} → Publish it**. The placement dialog shows a progress bar: **Client approved → Publisher accepts → Hand off / Schedule → Verify**.
 
 - **Simulation:** check the files and caption, then click **Publish now (simulated)**. That one click accepts the package, schedules it and verifies the publication.
-- **Manual handoff:** **Accept approved package**, then **Record handoff**, then **Verify publication** with the live post URL and time. No confirmation boxes to tick; clicking the button is the confirmation.
+- **Manual** (the default): post it on the platform yourself, then click **I've published it**. One short form asks for the **link to the live post** and the time it went out (now, by default). Saving accepts the package, records the handoff and verifies the publication in one step. The message says *Marked as published on Instagram. Asha Raman will watch the first comments.*
 - **Download approved files (ZIP)** and **Download manifest** are there if you need the exact files.
 - If a release is uncertain or failed, use **Reconcile attempt**. **Cancel placement** and **Pause placement** are also available. Coordinators can pause all releases under **Release controls**.
 
@@ -376,13 +403,15 @@ After verification, the community owner gets **Accept community handoff** on Tod
 ---
 
 ## Stage 12 — Measure results
-**Who:** Asha (analyst) · **Where:** **Learn → Results**
+**Who:** Asha (analyst) · **Where:** **Learn → Results**, or **Today → Results to record**
 
-1. Click **Record results** and choose the published placement.
-2. Set the **reporting period**. It can't end before the publish date.
-3. Enter the counts the KPI needs (for example **Saves** and **Views**). Leave a field blank only when that value is unknown; enter 0 only when it was zero. At least one value is required.
+1. Click **Record results**. The published post is already selected. Once a post's agreed window has ended (for example 7 days after publication), Today shows it under **Results to record**, and the button there opens this form for that post.
+2. The **reporting period** is pre-filled. If the agreed window is still running, the period ends today and the form says so: *The agreed 7-day window runs until Nov 29. Record what the platform shows so far…*
+3. Enter the counts the KPI needs (for example **Saves** and **Views**), and where they came from. Leave a field blank only when that value is unknown; enter 0 only when it was zero. At least one value is required.
 4. Optional (**Other measures and collection details**): reach, impressions, likes, comments, shares, follows, leads; collection date; organic/paid; aggregation.
-5. Click **Save counts and calculate KPI**. The **Measured outcomes** card shows the result, a bar against the baseline, and the change versus baseline.
+5. Click **Save counts and calculate KPI**.
+   - **Full window:** the **Measured outcomes** card shows the result and the change versus the baseline.
+   - **Window still running:** the counts are saved, and the message says when the KPI will be calculated: *…is calculated on the full 7-day window (Nov 23 – Nov 29). Add that reading after Nov 29; Today will remind you.*
 
 Other ways to add evidence, under **Performance evidence**:
 - **Single measure**: one account-level observation.
@@ -390,29 +419,38 @@ Other ways to add evidence, under **Performance evidence**:
 - **Compare two periods**, **Calculate a rate**, **Export evidence (JSON)**.
 - **Calculate from existing evidence**: compute a KPI from saved observations.
 
-**Done when:** each published post's KPI result is saved.
+**Done when:** each published post's KPI result is saved for its full window.
 
 ---
 
 ## Stage 13 — Report to the client
-**Who:** Asha · **Read by:** Sam / client viewers · **Where:** **Learn → Reports**
+**Who:** Asha · **Answered by:** Sam · **Where:** **Learn → Reports**
 
-1. Click **Draft report** on a result card, or **Create report** on the Reports tab.
-2. Write the findings, limitations and the decision you're asking the client for, and attach the measured outcomes.
-3. The assigned reviewer opens the snapshot, ticks *I checked period, sources, definitions, calculations and limitations*, and clicks **Mark client ready**.
-4. The client sees it under **Today → Latest report** and **Learn → Shared reports**, and can **Send feedback**, which creates a follow-up for the team.
+1. Click **Draft report** on a result card, or **Create report** on the Reports tab. The title, period, agreed measure and counts are filled in for you.
+2. Answer three questions:
+   - **What do the results tell us?**
+   - **What are the limits?**
+   - **What should the client decide?** Ask a yes/no question.
+3. Click **Share with {client}**. That's it: the message says *Report shared with Sam Rivera.* If someone else should check it first, tick **Have someone else review it before the client sees it** under *Report settings*. It is then saved as a draft, and that reviewer marks it client-ready.
+4. The client's Today shows the report under **Awaiting your review** as *Your answer needed*. It opens with the agreed KPI:
+   - the **Result**, or an **Early reading** if the window is still running;
+   - the target, then what the results tell us and the limits;
+   - **Decision we need from you**, followed by the numbers behind it and the published posts.
 
-**Done when:** the report is *Client ready* and shared.
+   Sam clicks **Yes, go ahead** or **Not now**, with an optional note.
+5. The answer appears on the planner's Today under **Client replies**, with a **Record next step** button.
+
+**Done when:** the client has answered and the reply is on Today.
 
 ---
 
 ## Stage 14 — Growth and the next cycle
-**Who:** Asha · **Where:** **Learn → Growth**
+**Who:** Asha · **Where:** **Today → Client replies**, or **Learn → Growth**
 
-1. **Record growth work** with **Add record**: finding, audience opportunity, experiment, watchlist, collaboration or community case. Each has an owner and a review date. Records are grouped by type.
-2. **Propose the next step** from a measured outcome (**Propose the next test**). The proposal can be a new research question, a strategy revision, a calendar item or a brief.
-3. **Review the proposal** and accept or decline it. Accepted proposals create the draft or planning request and keep a link to the result they came from.
-4. Accepted changes flow back into **Stage 4–6**. A changed strategy or calendar goes back to the client for approval, and the cycle repeats.
+1. From a client reply, click **Record next step**. Choose what happens next: *Continue: do more of this*, *Improve it and try again*, *Test it again* or *Stop doing this*. Say why.
+2. Tick **Add a new post idea for this** and give it a title. The idea is a normal planned draft: it's linked to the current strategy and KPI, and it has the client approver and a producer. The message says *Next step saved. "…" is on Today under Ideas to schedule.*
+3. On Today, **Plan for {client}** now shows **Ideas to schedule** with a **Set a date →** link for each idea. Giving it a date puts it on the calendar, and the calendar bar then asks you to send Sam an update. From there the cycle repeats: calendar approval, hand-off, quick check, client approval, publishing.
+4. Other growth work lives under **Learn → Growth**, via **Add record**: findings, audience opportunities, experiments, watchlists, collaborations and community cases, each with an owner and a review date. **Propose the next test** from a measured outcome creates a proposal that can become a research question, a strategy revision, a calendar item or a brief.
 
 ---
 
