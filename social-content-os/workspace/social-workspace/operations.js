@@ -37,8 +37,7 @@
     if(!actor?.trim() || (outcome==='changes-requested' && !note?.trim()))throw Error('Name the decision owner and describe any requested changes.');
     if(ops.foundation.finalApprover && actor.trim()!==ops.foundation.finalApprover)throw Error('This decision is assigned to '+ops.foundation.finalApprover+'.');
     if(ops.decisions.some(d=>d.targetId===versionId))throw Error('This version already has a decision. Save a revised version first.');
-    if(kind==='strategy'&&outcome==='approved'&&ops.foundationVersions?.length&&!approved(ops,ops.foundationVersions.at(-1)))throw Error('Confirm the current client foundation before approving the strategy.');
-    if(kind==='strategy'&&outcome==='approved'&&version.foundationVersionId&&version.foundationVersionId!==ops.foundationVersions?.at(-1)?.id)throw Error('The client foundation changed. Save a strategy version against the current foundation.');
+    // The foundation is the team's internal brief: the client's one planning sign-off is the strategy and its KPIs.
     ops.decisions.push({id:C.id('decision'),kind,targetId:versionId,decision:outcome,actor:actor.trim(),note,at:C.now()});
     record(ops,actor,kind+' V'+version.number+' · '+outcome,note);
   }
@@ -70,41 +69,53 @@
   /* The planner's view of this account on Today: each planning stage, who has it, and the one next step. */
   function planChecklist(ctx){
     const G=root.JMLGovernance,U=root.JMLWorkflowUI,state=ctx.state,brandId=ctx.ui.brand,brand=state.brands.find(b=>b.id===brandId);
+    // Who sees it: people who plan this account (coordinate or strategy), never the client, never the fictional demo accounts.
     if(!brand||brand.example||brandId==='demo'||(G&&!['coordinate','strategy'].some(cap=>G.can(state,ctx.ui,cap,{brandId}))))return '';
-    const ops=account(state,brandId),s=calendarStatus(state,brandId),who=s.approver,first=ops.foundation?.finalApprover?who.split(' ')[0]:'the client',go=(label,href)=>({label,href});
+    const ops=account(state,brandId);
+    // Which accounts: clients added in this workspace, and any account that has started the planning flow.
+    // Older imported accounts that run without a foundation are left alone until someone saves one.
+    if(!brand.guidedSetup&&!ops.foundationVersions?.length&&!ops.strategies?.length&&!ops.calendars?.length)return '';
+    const s=calendarStatus(state,brandId),who=s.approver,first=ops.foundation?.finalApprover?who.split(' ')[0]:'the client',go=(label,href)=>({label,href});
+    const canCoordinate=!G||G.can(state,ctx.ui,'coordinate',{brandId}),today=todayDate();
     const decisionOf=v=>v&&ops.decisions.find(d=>d.targetId===v.id);
     const stage=(v,name,href,start,startText,revise)=>{
       if(!v)return {tone:'todo',title:name,text:startText,action:go(start,href)};
       const d=decisionOf(v);
-      if(!d)return {tone:'wait',title:name+' V'+v.number,text:'With '+who+' since '+U.day(v.at)+'. Nothing to do until they decide.'};
+      if(!d)return {tone:'wait',client:true,title:name+' V'+v.number,text:'With '+who+' since '+U.day(v.at)+'. Nothing to do until they decide.'};
       if(d.decision==='changes-requested')return {tone:'urgent',title:name+' V'+v.number+': '+d.actor+' asked for changes',text:'“'+(d.note||'No note')+'”',action:go(revise,href)};
       return {tone:'done',title:name+' V'+v.number,text:'Approved by '+d.actor+' · '+U.day(d.at)};
     };
-    const rows=[stage(ops.foundationVersions?.at(-1),'Client foundation','#plan/foundation','Set up foundation','Answer four questions about the business and name the client approver.','Revise foundation')];
+    const fv=ops.foundationVersions?.at(-1);
+    const rows=[fv?{tone:'done',title:'Client foundation',text:'Saved by '+fv.actor+' · '+U.day(fv.at)+'. Internal: the client doesn’t review it.'}:{tone:'todo',title:'Client foundation',text:'Answer four questions about the business and name the client approver. Only your team sees it.',action:go('Set up foundation','#plan/foundation')}];
     const sources=(ops.sources||[]).filter(x=>!x.mergedInto).length;
     rows.push(sources?{tone:'done',title:'Research',text:sources+' source'+(sources===1?'':'s')+' captured'}:{tone:'optional',title:'Research (optional)',text:'Capture what you already know about the audience. The strategy can cite it.',action:go('Capture evidence','#plan/research')});
-    rows.push(ops.foundationVersions?.length?stage(ops.strategies?.at(-1),'Strategy','#plan/strategy','Set the strategy','Choose how success is measured, then set the direction.','Revise strategy'):{tone:'todo',title:'Strategy',text:'Comes after the foundation.',later:true});
+    rows.push(fv?stage(ops.strategies?.at(-1),'Strategy & KPIs','#plan/strategy','Set the KPIs','Choose how success is measured and set the direction, then send it to '+first+'. This is the client’s one sign-off before the calendar.','Revise strategy'):{tone:'todo',title:'Strategy & KPIs',text:'Comes after the foundation.',later:true});
     const n=s.uncovered.length,items=k=>k+' post'+(k===1?'':'s');
-    rows.push(!s.strategyApproved&&!s.version?{tone:'todo',title:'Calendar',text:'Opens once '+first+' approves the strategy.',later:true}
-      :s.rejected?{tone:'urgent',title:'Calendar V'+s.version.number+': '+s.decision.actor+' asked for changes',text:'“'+(s.decision.note||'No note')+'”',action:go('Revise the calendar','#plan/calendar')}
-      :s.pending?{tone:'wait',title:'Calendar V'+s.version.number,text:'With '+who+' since '+U.day(s.version.at)+' · '+items(s.version.body.entries.length)+'.'}
+    rows.push(!s.strategyApproved&&!s.version?{tone:'todo',title:'Calendar',text:'Opens once '+first+' approves the KPIs.',later:true}
+      :s.rejected?{tone:'urgent',title:'Calendar V'+s.version.number+': '+s.decision.actor+' asked for changes',text:'“'+(s.decision.note||'No note')+'”',action:canCoordinate?go('Revise the calendar','#plan/calendar'):null}
+      :s.pending?{tone:'wait',client:true,title:'Calendar V'+s.version.number,text:'With '+who+' since '+U.day(s.version.at)+' · '+items(s.version.body.entries.length)+'.'}
       :s.approved&&!n?{tone:'done',title:'Calendar V'+s.version.number,text:'Approved by '+s.decision.actor+' · '+U.day(s.decision.at)}
+      :n&&!canCoordinate?{tone:'wait',title:'Calendar',text:items(n)+' planned. An account coordinator sends the calendar to '+first+'.'}
       :{tone:'todo',title:'Calendar',text:n?(s.approved?items(n)+' added or moved since V'+s.version.number+' was approved. Send '+first+' an update.':items(n)+' planned. Send them to '+first+' for approval.'):'Plan dated posts, then send them to '+first+' for approval.',action:go(n?'Review and send':'Plan posts','#plan/calendar')});
-    const covered=state.posts.filter(p=>p.brandId===brandId&&calendarCoverage(state,p)),waiting=covered.filter(p=>!(p.production&&p.brief.productionSpec));
+    // Approved on the calendar, but nobody is producing it yet: no production set-up, no creative uploaded, not already approved or published.
+    const covered=state.posts.filter(p=>p.brandId===brandId&&calendarCoverage(state,p));
+    const waiting=covered.filter(p=>!(p.production&&p.brief.productionSpec)&&!C.latest(p)&&!['approved','published'].includes(C.status(p))).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
     rows.push(!covered.length?{tone:'todo',title:'Production',text:'Starts when '+first+' approves the calendar.',later:true}
-      :waiting.length?{tone:'todo',title:'Hand off to production',text:items(waiting.length)+' approved and waiting for a producer and reviewer. Each producer sees the post on their Today once it’s set up.',list:waiting.slice(0,6)}
+      :waiting.length&&!canCoordinate?{tone:'wait',title:'Hand off to production',text:items(waiting.length)+' approved and waiting for an account coordinator to name a producer and reviewer.'}
+      :waiting.length?{tone:'todo',title:'Hand off to production',text:items(waiting.length)+' approved and waiting for a producer and reviewer. Each producer sees the post on their Today once it’s set up.',list:waiting.slice(0,6),more:waiting.length-6}
       :{tone:'done',title:'Production',text:'Every approved post has a producer and a reviewer.'});
+    // The card disappears once every required step is done (research is optional), and comes back when something new needs doing.
     if(rows.every(r=>['done','optional'].includes(r.tone)))return '';
     const next=rows.find(r=>['urgent','todo'].includes(r.tone)&&!r.later&&(r.action||r.list));
-    const done=rows.filter(r=>r.tone==='done').length,mark={done:'✓',wait:'',urgent:'!',todo:'',optional:''},said={done:'Done',wait:'Waiting',urgent:'Needs your action',todo:'To do',optional:'Optional'};
-    const heading=next?(next.tone==='urgent'?'Changes requested':'Next: '+(next.action?.label||next.title)):'Waiting on '+who;
-    return '<section class="plan-check" aria-labelledby="plan-check-title"><header><div><span class="eyebrow">Plan for '+esc(brand.name)+'</span><h2 id="plan-check-title">'+esc(heading)+'</h2></div><span class="count-note">'+done+' of '+rows.length+' done</span></header><ol>'+rows.map(r=>'<li class="'+r.tone+(r===next?' next':'')+(r.later?' later':'')+'"><span class="plan-mark" aria-hidden="true">'+mark[r.tone]+'</span><div class="plan-body"><strong>'+esc(r.title)+'</strong><span class="hidden"> · '+said[r.tone]+'</span><p>'+esc(r.text)+'</p>'+(r.list?'<div class="plan-posts">'+r.list.map(p=>'<a href="#content/'+encodeURIComponent(p.id)+'/workflow"><span><b>'+esc(U.clean(p.title))+'</b><small>'+esc(U.day(p.date))+' · '+esc(p.brief.owner?'Planned producer: '+p.brief.owner:'No producer yet')+'</small></span><em>Set up production →</em></a>').join('')+'</div>':'')+'</div>'+(r.action?'<a class="btn small'+(r===next?' primary':'')+'" href="'+r.action.href+'">'+esc(r.action.label)+'</a>':'')+'</li>').join('')+'</ol></section>';
+    const required=rows.filter(r=>r.tone!=='optional'),done=required.filter(r=>r.tone==='done').length,mark={done:'✓',wait:'',urgent:'!',todo:'',optional:''},said={done:'Done',wait:'Waiting',urgent:'Needs your action',todo:'To do',optional:'Optional'};
+    const heading=rows.some(r=>r.tone==='urgent')?'Changes requested':next?'Next: '+(next.action?.label||next.title):rows.some(r=>r.client)?'Waiting on '+who:'Waiting on the account coordinator';
+    return '<section class="plan-check" aria-labelledby="plan-check-title"><header><div><span class="eyebrow">Plan for '+esc(brand.name)+'</span><h2 id="plan-check-title">'+esc(heading)+'</h2></div><span class="count-note">'+done+' of '+required.length+' done</span></header><ol>'+rows.map(r=>'<li class="'+r.tone+(r===next?' next':'')+(r.later?' later':'')+'"><span class="plan-mark" aria-hidden="true">'+mark[r.tone]+'</span><div class="plan-body"><strong>'+esc(r.title)+'</strong><span class="hidden"> · '+said[r.tone]+'</span><p>'+esc(r.text)+'</p>'+(r.list?'<div class="plan-posts">'+r.list.map(p=>'<a href="#content/'+encodeURIComponent(p.id)+'/workflow"><span><b>'+esc(U.clean(p.title))+'</b><small>'+esc(U.day(p.date))+(p.date&&p.date<today?' (date passed)':'')+' · '+esc(p.brief.owner?'Planned producer: '+p.brief.owner:'No producer yet')+'</small></span><em>Set up production →</em></a>').join('')+(r.more>0?'<p class="muted">and '+r.more+' more on the <a href="#studio/board">production board</a>.</p>':'')+'</div>':'')+'</div>'+(r.action?'<a class="btn small'+(r===next?' primary':'')+'" href="'+r.action.href+'">'+esc(r.action.label)+'</a>':'')+'</li>').join('')+'</ol></section>';
   }
   function calendarBar(ctx){
     const U=root.JMLWorkflowUI,G=root.JMLGovernance,s=calendarStatus(ctx.state,ctx.ui.brand),v=s.version,n=s.uncovered.length;
     const canPlan=!G||G.can(ctx.state,ctx.ui,'coordinate',{brandId:ctx.ui.brand}),items=k=>k+' planned item'+(k===1?'':'s');
     let tone='',title='',text='',action='';
-    if(!s.strategyApproved){title='Agree the strategy first';text='The calendar is approved against an agreed strategy. Once '+s.approver+' approves the strategy, you can send the calendar.';action='<a class="btn small" href="#plan/strategy">Go to Strategy &amp; KPIs</a>';}
+    if(!s.strategyApproved){title='Agree the strategy first';text='The calendar is approved against an agreed strategy. Once '+s.approver+' approves the strategy and KPIs, you can send the calendar.';action='<a class="btn small" href="#plan/strategy">Go to Strategy &amp; KPIs</a>';}
     else if(s.rejected){tone='urgent';title=s.decision.actor+' asked for changes to Calendar V'+v.number;text='“'+(s.decision.note||'No note')+'”';action=canPlan?button('Send revised calendar','calendar','','primary'):'';}
     else if(s.pending){tone='wait';title='Calendar V'+v.number+' is with '+s.approver;text='Sent '+U.day(v.at)+' · '+items(v.body.entries.length)+' from '+U.day(v.body.start)+' to '+U.day(v.body.end)+'. Waiting for a decision.';action=small('See what was sent','inspect-calendar',v.id);}
     else if(s.approved){tone=n?'wait':'ok';title='Calendar V'+v.number+' approved by '+s.decision.actor;text=n?items(n)+' added or changed since then still '+(n===1?'needs':'need')+' approval.':'Everything planned from '+U.day(v.body.start)+' to '+U.day(v.body.end)+' is approved.';action=n&&canPlan?button('Send update for approval','calendar','','primary'):small('See what was approved','inspect-calendar',v.id);}
@@ -118,7 +129,7 @@
     if(!range.start || !range.end || range.end<range.start)throw Error('Choose a valid calendar period.');
     const ops=account(state,brandId),strategy=ops.strategies.at(-1);
     if(!approved(ops,strategy))throw Error('Approve the current strategy before submitting a calendar.');
-    if(strategy.foundationVersionId&&strategy.foundationVersionId!==ops.foundationVersions?.at(-1)?.id)throw Error('The client foundation changed. Review strategy before submitting the calendar.');
+
     const entries=state.posts.filter(p=>p.brandId===brandId && p.date>=range.start && p.date<=range.end)
       .map(calendarScope)
       .sort((a,b)=>a.date.localeCompare(b.date)||a.contentId.localeCompare(b.contentId));
@@ -244,6 +255,7 @@
   function versionList(ops,kind){
     const versions=ops[PLAN_TYPES[kind]]||[];
     return lines(versions.slice().reverse(),'No versions saved.',v=>{
+      if(kind==='foundation')return row('Client foundation V'+v.number+' · Saved by '+v.actor+' · '+(root.JMLWorkflowUI?.day?.(v.at)||v.at),v.body.business,'<div class="actions">'+small('Inspect','inspect-foundation',v.id)+'</div>');
       const review=ops.decisions.find(d=>d.targetId===v.id);
       return row(({foundation:'Client foundation',strategy:'Strategy',calendar:'Calendar'})[kind]+' V'+v.number+' · '+labelFor(review),kind==='foundation'?v.body.business:kind==='strategy'?v.body.objective:v.body.start+' – '+v.body.end+' · '+v.body.entries.length+' items',
         '<div class="actions">'+small('Inspect','inspect-'+kind,v.id)+(!review && v===versions.at(-1)?(!root.JMLGovernance||root.JMLGovernance.can(context.state,context.ui,'approve',{brandId:context.ui.brand})?small('Review','decision-'+kind,v.id):'<span class="ux-chip wait">With '+esc(ops.foundation?.finalApprover||'the client')+'</span>'):'')+'</div>');
@@ -258,9 +270,9 @@
     if(activePlanSection==='foundation'){
       const f=ops.foundation,core=[['Offer',f.business],['Audience',f.audience],['Scope',f.scope],['Client approver',f.finalApprover]];
       const facts=rows=>'<dl class="ops-facts full">'+rows.filter(([,v])=>v).map(([label,v])=>'<div><dt>'+esc(label)+'</dt><dd>'+esc(v)+'</dd></div>').join('')+'</dl>';
-      body=U.lead(f.business?'The account brief':'Start with the essentials',f.priorities||'Agree on the offer, audience, goal, scope and client approver.',button(f.business?'Edit foundation':'Set up foundation','foundation','','primary'))+
+      body=U.lead(f.business?'The account brief':'Start with the essentials',f.priorities||'Write down the offer, audience, goal, scope and client approver. This stays with your team: the client approves the strategy and KPIs, not this brief.',button(f.business?'Edit foundation':'Set up foundation','foundation','','primary'))+
         facts(core)+U.optional('Brand materials and delivery details',facts([['Brand references',f.brandBook],['Available media',f.media],['Access and missing inputs',f.access],['Team',f.team],['Community owner',f.communityOwner],['Weekly capacity',f.weeklyCapacity]]))+
-        card('Client confirmation','Approve the saved brief before strategy work.',versionList(ops,'foundation'))+
+        (ops.foundationVersions?.length?U.optional('Saved versions · internal, not sent to the client',versionList(ops,'foundation')):'')+
         U.optional('Campaigns (optional)',lines(ops.campaigns,'Add a campaign when you need a separate objective and delivery window.',v=>row(v.title,v.objective+' · '+v.start+' – '+v.end))+small('Add campaign','campaign'));
     }else if(activePlanSection==='research'){
       body=options.watchlistsOnly?'':card('Research evidence','Keep observations and their source together.',lines(ops.sources.slice().reverse(),'No sources collected for this account.',s=>row(s.title,s.type+' · '+s.observed+' · '+s.observation,'<div class="actions">'+small('Inspect source','source-details',s.id)+small('Use as idea','source-idea',s.id)+'</div>')),button('Add evidence','source','','primary'));
@@ -681,7 +693,7 @@
         if(!ex){ex={key,taskId:task.id,events:[]};ops.exceptions.push(ex);}
         Object.assign(ex,f);ex.events.push({...f,at:C.now(),actor});record(ops,actor,'Delivery exception '+f.status,task.title+' · '+f.note);
       }
-    },sourceIdea?'Draft created.':({calendar:'Calendar sent to '+(account(context.state,brandId).foundation?.finalApprover||'the client approver')+' for approval.',route:'Handed to '+(f.producer||'the producer')+' (producer) and '+(f.qcReviewer||'the reviewer')+' (reviewer). They’ll see it on their Today.',strategy:'Strategy version saved. Send it to the client for a decision.',foundation:'Foundation saved and sent to '+(String(f.newApprover||'').trim()||f.finalApprover||'the client approver')+' to confirm.','qc-failure':'Returned to the producer with your note.',tasks:'Checklist progress saved.',campaign:'Campaign saved.',slot:'Slot reserved.',watchlist:'Watchlist saved.',source:'Evidence saved.'})[kind]||'Saved.');
+    },sourceIdea?'Draft created.':({calendar:'Calendar sent to '+(account(context.state,brandId).foundation?.finalApprover||'the client approver')+' for approval.',route:'Handed to '+(f.producer||'the producer')+' (producer) and '+(f.qcReviewer||'the reviewer')+' (reviewer). They’ll see it on their Today.',strategy:'Strategy version saved. Send it to the client for a decision.',foundation:'Foundation saved. Next: set the strategy and KPIs for '+(String(f.newApprover||'').trim()||f.finalApprover||'the client approver')+' to approve.','qc-failure':'Returned to the producer with your note.',tasks:'Checklist progress saved.',campaign:'Campaign saved.',slot:'Slot reserved.',watchlist:'Watchlist saved.',source:'Evidence saved.'})[kind]||'Saved.');
     if(opened)context.navigate(urlFor({id:opened},'brief'));
   }
   function mount(ctx) {

@@ -181,9 +181,9 @@
     const f=ops.foundationVersions?.at(-1),s=ops.strategies?.at(-1),c=ops.calendars?.at(-1),sources=(ops.sources||[]).filter(x=>!x.mergedInto).length;
     const state=(done,key,v)=>done?'done':key===active?'current':waiting(v)?'blocked':'todo';
     return U.stepper([
-      {label:'Foundation',state:state(decided(f),'foundation',f),note:decided(f)?'Approved':waiting(f)?'Waiting for client':'Not agreed yet',href:'#plan/foundation'},
+      {label:'Foundation',state:f?(active==='foundation'?'current':'done'):active==='foundation'?'current':'todo',note:f?'Saved':'Not written yet',href:'#plan/foundation'},
       {label:'Research',state:sources?(active==='research'?'current':'done'):active==='research'?'current':'todo',note:sources+' source'+(sources===1?'':'s'),href:'#plan/research'},
-      {label:'Strategy & KPIs',state:state(decided(s),'strategy',s),note:decided(s)?'Strategy V'+s.number+' approved':waiting(s)?'Waiting for client':'Not agreed yet',href:'#plan/strategy'},
+      {label:'Strategy & KPIs',state:state(decided(s),'strategy',s),note:decided(s)?'KPIs approved':waiting(s)?'With the client':'Not agreed yet',href:'#plan/strategy'},
       {label:'Calendar',state:state(decided(c),'calendar',c),note:decided(c)?'Calendar V'+c.number+' approved':waiting(c)?'V'+c.number+' waiting for client':'Not sent yet',href:'#plan/calendar'}
     ],'Planning progress');
   }
@@ -250,7 +250,7 @@
       form(ctx,'Save strategy version','strategy','',
         U.section('Direction for the next plan','The goal and audience carry over from the account brief.',area('objective','Business objective',last?.body.objective||ops.foundation.priorities||ops.foundation.business,true)+area('audience','Audience and value proposition',last?.body.audience||ops.foundation.audience,true)+area('channelRoles','Channel roles and cadence',last?.body.channelRoles,true)+area('pillars','Content themes',last?.body.pillars,true))+
         U.section('How we will judge it','Choose the agreed measure; its definition stays attached to this strategy.',select('kpiDefinitionId','Main measure',ops.kpis.map(k=>[k.id,k.title+' · V'+k.version]),last?.body.kpiDefinitionId||ops.kpis.at(-1).id)+input('cadence','How often we report results',last?.body.cadence||'Monthly','text',true))+
-        U.optional('Target, evidence and growth tests (optional)',input('target','Target, if agreed',last?.body.target)+area('growth','Growth tests and community ownership',last?.body.growth)+checks('sourceIds','Evidence informing this version',ops.sources.filter(s=>!s.mergedInto),last?.sourceIds||[])), 'Save for client review');
+        U.optional('Target, evidence and growth tests (optional)',input('target','Target, if agreed',last?.body.target)+area('growth','Growth tests and community ownership',last?.body.growth)+checks('sourceIds','Evidence informing this version',ops.sources.filter(s=>!s.mergedInto),last?.sourceIds||[])), 'Send to '+(ops.foundation.finalApprover||'the client')+' for approval');
     }
     else if(actionName==='angle'||actionName==='idea-draft'){
       if(!ops.strategies.length)throw Error('Save a strategy and its KPI first, then create a content draft from this source.');
@@ -302,7 +302,7 @@
       else throw Error('Unknown research action.');
       for(const event of store(next,brandId).events.slice(eventStart))if(ctx.ui.personId)event.actorId=ctx.ui.personId;
       root.JMLGovernance?.log?.(next,ctx.ui,'Research '+kind,{brandId,contentId:openId||undefined,recordId:id,capability:['promote','adapt'].includes(kind)?'coordinate':'strategy'});
-    },kind==='plan-post'?'Added to the calendar for '+U.day(data.date)+'.':kind==='idea-draft'?(data.date?'Draft created and added to the calendar for '+U.day(data.date)+'.':'Draft created. Give it a date to put it on the calendar.'):kind==='strategy'?'Strategy V'+(store(ctx.state,brandId).strategies.length+1)+' sent to '+(store(ctx.state,brandId).foundation.finalApprover||'the client approver')+' for approval.':({evidence:'Evidence saved to the inbox.',promote:'Calendar draft created in Studio.',adapt:'Adaptation created in Studio.',strategy:'Strategy version saved. Send it to the client from Strategy & KPIs.',kpi:'Measure saved.',theme:'Theme saved.',angle:'Angle saved.','angle-decision':'Decision recorded.',review:'Evidence review recorded.',merge:'Evidence merged.',link:'Sources linked to the brief.','proposal-calendar':'Proposal added to the calendar.'})[kind]||'Saved.');
+    },kind==='plan-post'?'Added to the calendar for '+U.day(data.date)+'.':kind==='idea-draft'?(data.date?'Draft created and added to the calendar for '+U.day(data.date)+'.':'Draft created. Give it a date to put it on the calendar.'):kind==='strategy'?'Strategy and KPIs sent to '+(store(ctx.state,brandId).foundation.finalApprover||'the client approver')+' for approval.':({evidence:'Evidence saved to the inbox.',promote:'Calendar draft created in Studio.',adapt:'Adaptation created in Studio.',strategy:'Strategy version saved. Send it to the client from Strategy & KPIs.',kpi:'Measure saved.',theme:'Theme saved.',angle:'Angle saved.','angle-decision':'Decision recorded.',review:'Evidence review recorded.',merge:'Evidence merged.',link:'Sources linked to the brief.','proposal-calendar':'Proposal added to the calendar.'})[kind]||'Saved.');
     if(result===false)return true;ctx.closeModal();if(openId)ctx.navigate('#content/'+encodeURIComponent(openId)+'/brief');return true;
   }
   function updateKpiForm(form){

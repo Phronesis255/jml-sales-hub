@@ -226,7 +226,7 @@
     {
       "path": "content-planner.html",
       "bytes": 498597,
-      "sha256": "104a7b44e9045057d07ef5b65239b61e0f42f3de658449c5f577e1750152fb6a"
+      "sha256": "4ab7f3749b20b27310b5c2219fac17b78f01735f703f0e0d331bde43cc40adca"
     },
     {
       "path": "creative-brief/index.html",
@@ -1445,8 +1445,8 @@
     },
     {
       "path": "social-workspace/agency.js",
-      "bytes": 9928,
-      "sha256": "8764811115e1b9bea3e08930b821f4857826294ff7aab5bc00039a88c4b2acea"
+      "bytes": 9945,
+      "sha256": "08af1f32cb6765dda51db1b49d8acfe72d09a9668c6a231d5543fb8acc11a50d"
     },
     {
       "path": "social-workspace/app.js",
@@ -1585,8 +1585,8 @@
     },
     {
       "path": "social-workspace/operations.js",
-      "bytes": 88778,
-      "sha256": "b022770583db8ad53a2fc61bb54d286bd0a0f72d1fa530b77f6de2233436dca2"
+      "bytes": 90510,
+      "sha256": "1fb32a355430b57cc6e369721761437b4431429598c580e0b08297c9eddaf669"
     },
     {
       "path": "social-workspace/personas.css",
@@ -1595,8 +1595,8 @@
     },
     {
       "path": "social-workspace/personas.js",
-      "bytes": 25455,
-      "sha256": "97e04555b9805b4ea4786fa2550b7a46b63c1728eb50219a9c3432ba6fe0b5a9"
+      "bytes": 26620,
+      "sha256": "e75688ce396b404e28ab9a501aa21470bbb3a67d8d67ab026654d4f347db32df"
     },
     {
       "path": "social-workspace/planner-frame.js",
@@ -1660,8 +1660,8 @@
     },
     {
       "path": "social-workspace/research.js",
-      "bytes": 58925,
-      "sha256": "65f5ad20dda7a38cafad2e82ef1a00629e666ccf6ec495791ad8832a2b0d8745"
+      "bytes": 58914,
+      "sha256": "1ee7bcf64b3afdfa6cd5a7f4e4ad942ecf68e4006394e07555c836d89250ba81"
     },
     {
       "path": "social-workspace/scenarios.js",
@@ -1701,7 +1701,7 @@
     {
       "path": "social-workspace.html",
       "bytes": 3640,
-      "sha256": "da022e96fbf671ce0bb6853f8cfe757975eb71ed8f5bbf768e5402003f2480e8"
+      "sha256": "9bcb33c7e104dd44266f6c9c1d0791bbc3f2e6d385737b80c3e14dcf9f78e345"
     }
   ]
 }

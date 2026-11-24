@@ -21,13 +21,16 @@ The example team uses three roles. Use **Switch person** (top right) to act as e
 | **Workspace administrator** | Agency admin | Creates client accounts, adds people, manages backups. Cannot approve on the client's behalf. |
 | **Asha Raman** | Account manager, strategist, operations, creative QA, analyst | Runs the account: foundation, research, strategy, calendar, production set-up, internal QA, placements, results and reports. |
 | **Luca Vale** | Copywriter, designer/video, publisher | Produces the creative and publishes it. |
-| **Sam Rivera** | Client approver | Approves the foundation, strategy, calendar and each finished creative. Supplies requested inputs. |
+| **Sam Rivera** | Client approver | Approves the strategy & KPIs (once), the calendar, and each finished creative. Supplies requested inputs. Never sees the internal foundation brief. |
 | **Client stakeholder** | Client viewer | Read-only view of shared material and reports. |
 
 To try everything with fictional data first, open **Today → Start here → Load full demo workspace**, or use **Switch person → Try a sample handoff**.
 
 ### How the app tells you what's next
-- **Plan for {client}** on the planner's **Today** (Asha, or anyone who plans the account) lists the five planning stages: foundation, research, strategy, calendar and production handoff. Each stage shows *Done* (approved by whom and when), *With {client approver}* (nothing to do until they decide), a red *Changes requested* row with the client's note, or the next thing to do with its button. The heading always names the one next step. Once the calendar is approved, the last row lists each approved post waiting for a producer and reviewer. The card disappears when everything is done, and it isn't shown on the fictional demo accounts.
+- **Plan for {client}** on **Today** lists the five planning stages: foundation (internal, ticked as soon as it's saved), research (optional), strategy & KPIs (the client's sign-off), calendar and production handoff. Each stage shows *Done* (approved by whom and when), *With {client approver}* (nothing to do until they decide), a red *Changes requested* row with the client's note, or the next thing to do with its button. The heading always names the one next step, or who you are waiting on. It is built from the account's records each time Today opens; it is not a demo.
+  - **Who sees it:** people who plan the account (strategy or account coordination), for example Asha and the administrator. Producers like Luca and client contacts don't. Buttons appear only for steps that person can do. For example, someone with strategy access only sees the production handoff as *waiting for an account coordinator*.
+  - **Which accounts:** every client added with **Add client**, plus any older account once someone saves its foundation, strategy or calendar. The fictional demo accounts (Demo studio, Northstar Coffee) never show it.
+  - **When it appears and disappears:** it hides once every required step is done, and comes back by itself when something new needs doing: a post added or moved after the calendar was approved, a client asking for changes, or a newly approved post with no producer. The *Hand off to production* list only shows approved posts with no production set-up and no draft yet.
 - **Assigned to you** on **Today** lists your open assignments, with the primary action on each row. A QA assignment shows *Waiting for {producer}'s draft* until there is something to check.
 - When the client decides, their confirmation names who takes it from there, for example *Calendar approved. Asha Raman will hand these posts to production.*
 - A **Production readiness** card on each post lists every remaining step, who it's waiting on, and a button where you can act.
@@ -42,7 +45,7 @@ To try everything with fictional data first, open **Today → Start here → Loa
 |---|---|---|---|---|
 | 1 | Add the client account | Admin | — | Client accounts → Accounts |
 | 2 | People, access and stage owners | Admin | — | Client accounts → People & access |
-| 3 | Client foundation | Asha | Sam | Content Planner → Foundation |
+| 3 | Client foundation (internal) | Asha | — | Content Planner → Foundation |
 | 4 | Research | Asha | — | Content Planner → Research |
 | 5 | Strategy & KPIs | Asha | Sam | Content Planner → Strategy & KPIs |
 | 6 | Content calendar | Asha | Sam | Content Planner → Calendar / Research / Bulk import |
@@ -131,7 +134,7 @@ Optional. Open **Stage owners (optional)** and click **Assign** on each row to n
 ---
 
 ## Stage 3 — Client foundation
-**Who:** Asha · **Approved by:** Sam · **Where:** **Content Planner → Foundation**
+**Who:** Asha · **Approved by:** nobody: it's the team's internal brief · **Where:** **Content Planner → Foundation**
 
 ### 3.1 Write the foundation
 Click **Set up foundation** (later **Edit foundation**) and fill in:
@@ -147,14 +150,13 @@ Click **Set up foundation** (later **Edit foundation**) and fill in:
 - **Community owner** (optional, chosen from the people list)
 - Optional: content items per week, next input review date
 
-### 3.2 Get the client's confirmation
-1. **Save foundation** also sends it to the client approver (the message says *Foundation saved and sent to {name} to confirm*). It appears under **Client confirmation**.
-2. Switch to **Sam** → **Today → Awaiting your review → Client foundation** → **Review** → **Approve foundation V1** (or **Request changes** with a note). Sam sees the same questions Asha answered.
+### 3.2 Save it
+Click **Save foundation**. It is **not** sent to the client: the message says *Foundation saved. Next: set the strategy and KPIs for {name} to approve.* Earlier versions are kept under **Saved versions · internal, not sent to the client**. You can edit it any time without asking the client again.
 
 ### 3.3 Optional: campaigns
 Under **Campaigns (optional)**, add a campaign when it needs its own objective and dates.
 
-**Done when:** the progress strip shows **Foundation · Approved**.
+**Done when:** the progress strip shows **Foundation · Saved**, and the Plan card on Today ticks *Client foundation · Saved by Asha*.
 
 ---
 
@@ -185,7 +187,7 @@ Create a **listening watchlist** (a competitor, brand or recurring question) wit
 ---
 
 ## Stage 5 — Strategy & KPIs
-**Who:** Asha · **Approved by:** Sam · **Where:** **Content Planner → Strategy & KPIs**
+**Who:** Asha · **Approved by:** Sam (the client's one planning sign-off) · **Where:** **Content Planner → Strategy & KPIs**
 
 ### 5.1 Choose how success is measured
 1. Click **Choose a measure** / **Add measure**.
@@ -207,10 +209,14 @@ Click **Save strategy version** and fill in:
 - Reporting cadence
 - Discovery, growth experiments and community ownership
 
-### 5.3 Get the client's decision
-Switch to **Sam** → **Review → Plan approvals** → approve the strategy version, or request changes.
+Click **Send to {client approver} for approval**. The message says *Strategy and KPIs sent to Sam Rivera for approval.*
 
-**Done when:** **Current direction** shows the strategy as *approved*, and the strip shows **Strategy & KPIs · Approved**.
+### 5.3 The client approves the KPIs
+Switch to **Sam** → **Today → Awaiting your review → Strategy & KPIs** → **Review**. The review leads with **How success will be measured**: the main measure, how it's calculated, the measurement window, the baseline, the target and how often results are reported. **The plan behind these KPIs** (offer, objective, audience, channels, themes, scope) is collapsed underneath for context. Sam clicks **Approve KPIs**, or **Request changes** with a note. The message reads *KPIs approved. Asha Raman will plan the calendar against them next.*
+
+This is the client's only sign-off on planning before the calendar. Editing the internal foundation later doesn't undo it.
+
+**Done when:** the strip shows **Strategy & KPIs · KPIs approved**, and the Plan card on Today shows *Strategy & KPIs V1 · Approved by Sam*.
 
 ---
 

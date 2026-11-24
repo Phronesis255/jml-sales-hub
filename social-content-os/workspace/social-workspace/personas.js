@@ -8,7 +8,7 @@
   const G = common ? require('./governance.js') : root.JMLGovernance;
   const escape = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const roleAllowed = role => role === 'client' || role === 'viewer';
-  const planLabels = {foundation:'Client foundation',strategy:'Strategy',calendar:'Calendar plan'};
+  const planLabels = {foundation:'Client foundation',strategy:'Strategy & KPIs',calendar:'Calendar plan'};
   const statusLabels = {'in-review':'Awaiting review',approved:'Approved','changes-requested':'Changes requested',requested:'Input requested',received:'Response received',accepted:'Accepted'};
   const sameName = (a,b) => !!a?.trim() && a.trim() === b?.trim();
   const fail = message => { throw Error(message); };
@@ -35,13 +35,15 @@
         decisions:v.decisions.map(d=>({state:d.action,actor:d.actor,at:d.at,note:d.comment}))});
     }
     if(sharedReading||sameName(ops.foundation.finalApprover,ui.actor)) {
-      for(const [kind,key] of [['foundation','foundationVersions'],['strategy','strategies'],['calendar','calendars']]) {
+      // The foundation is internal to the team; the client signs off the strategy and KPIs, then the calendar.
+      for(const [kind,key] of [['strategy','strategies'],['calendar','calendars']]) {
         const v=ops[key]?.at(-1);
         if(!v)continue;
         const d=ops.decisions.find(d=>d.kind===kind && d.targetId===v.id);
         const body={};
         if(kind==='foundation') {for(const [field] of foundationFields)body[field]=v.body[field]||'';} else if(kind==='strategy') {
           for(const [field] of strategyFields)body[field]=v.body[field]||'';
+          body.offer=v.foundation?.business||ops.foundation?.business||'';body.scope=v.foundation?.scope||ops.foundation?.scope||'';
         } else {
           body.start=v.body.start;body.end=v.body.end;
           body.entries=(v.body.entries||[]).map(x=>({title:x.title,date:x.date,time:x.time,timezone:x.timezone,platform:x.platform,format:x.format||'',objective:x.objective||'',angle:(ops.angles||[]).find(a=>a.id===x.angleId)?.title||'',kpi:(ops.kpis||[]).find(k=>k.id===x.measurementDefinitionId)?.title||x.measurementDefinitionId||''}));
@@ -172,7 +174,9 @@
         }).join('')+'</div>':'')+para('Submitted caption',item.caption);
     } else if(item.kind==='foundation') {main='<dl class="persona-facts">'+foundationFields.map(([k,l])=>fact(l,item.body[k])).join('')+'</dl>';
     } else if(item.kind==='strategy') {
-      main='<dl class="persona-facts">'+strategyFields.map(([k,l])=>fact(l,item.body[k])).join('')+'</dl>';
+      const b=item.body;
+      main='<section class="kpi-focus"><span class="eyebrow">How success will be measured</span><h3>'+escape(b.kpi||'Main measure')+'</h3><dl class="persona-facts">'+[['How it’s calculated',b.definition],['Measurement window',b.window],['Starting point (baseline)',b.baseline],['Target',b.target||'Not set yet'],['How often we report results',b.cadence]].map(([l,v])=>fact(l,v)).join('')+'</dl></section>'+
+        '<details class="persona-context"><summary>The plan behind these KPIs</summary><dl class="persona-facts">'+[['What the business offers',b.offer],['Business objective',b.objective],['Audience and value proposition',b.audience],['Channel roles and cadence',b.channelRoles],['Content themes',b.pillars],['What’s included and out of scope',b.scope],['Growth tests',b.growth]].map(([l,v])=>fact(l,v)).join('')+'</dl></details>';
     } else {
       const b=item.body;
       const U=UX(),counts=b.entries.reduce((m,x)=>(m[x.platform]=(m[x.platform]||0)+1,m),{});
@@ -188,8 +192,8 @@
     const decision=item.state==='in-review',input=item.kind==='input' && item.state==='requested',report=item.kind==='report';
     if(!decision && !input && !report)return '';
     const prompt=decision?'Feedback (needed if you request changes)':input?'Your response':'Feedback for the team';
-    const what={calendar:'calendar V'+item.version,strategy:'strategy V'+item.version,foundation:'foundation V'+item.version,creative:'V'+item.version}[item.kind]||'V'+item.version;
-    const summary=!decision?'':item.kind==='calendar'?'You’re approving '+(item.body?.entries?.length||0)+' planned items from '+UX().day(item.body?.start)+' to '+UX().day(item.body?.end)+'. The team can then start production; you’ll still approve each finished creative.':item.kind==='creative'?'You’re approving version '+item.version+' exactly as shown — these files and this caption.':'You’re approving this '+item.kind+' version as written.';
+    const what={calendar:'calendar V'+item.version,strategy:'KPIs',foundation:'foundation V'+item.version,creative:'V'+item.version}[item.kind]||'V'+item.version;
+    const summary=!decision?'':item.kind==='calendar'?'You’re approving '+(item.body?.entries?.length||0)+' planned items from '+UX().day(item.body?.start)+' to '+UX().day(item.body?.end)+'. The team can then start production; you’ll still approve each finished creative.':item.kind==='creative'?'You’re approving version '+item.version+' exactly as shown — these files and this caption.':item.kind==='strategy'?'You’re approving how success is measured and reported. The team plans the calendar against these KPIs; you’ll approve the calendar and each finished post separately.':'You’re approving this '+item.kind+' version as written.';
     const buttons=decision?'<button type="submit" class="btn primary" name="outcome" value="approved">Approve '+escape(what)+'</button><button type="submit" class="btn" name="outcome" value="changes-requested">Request changes</button>':
       '<button type="submit" class="btn primary" name="outcome" value="'+(input?'respond':'feedback')+'">'+(input?'Send response':'Send feedback')+'</button>';
     return '<form data-persona-form="'+escape(item.kind)+'" data-id="'+escape(item.id)+'" data-parent="'+escape(item.parent||'')+'" data-brand="'+escape(ui.brand)+'" data-actor="'+escape(ui.actor)+'" class="persona-form">'+
@@ -228,10 +232,10 @@
       try {
         const file=f.elements.file?.files?.[0];
         if(file){if(file.size>30*1024*1024)throw Error(file.name+' is larger than 30 MB.');command.attachment={name:file.name,type:file.type,size:file.size,url:await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('Could not read '+file.name));reader.readAsDataURL(file);})};}
-        const what={calendar:'Calendar',strategy:'Strategy',foundation:'Foundation',creative:'Creative'}[command.kind]||'Response';
+        const what={calendar:'Calendar',strategy:'KPIs',foundation:'Foundation',creative:'Creative'}[command.kind]||'Response';
         const planKey={foundation:'foundationVersions',strategy:'strategies',calendar:'calendars'}[command.kind];
         const sender=(planKey&&O?.account?.(ctx.state,command.brand)?.[planKey]?.find(v=>v.id===command.id)?.actor)||'The team';
-        const next={foundation:sender+' can now set the strategy with you.',strategy:sender+' will plan the calendar next.',calendar:sender+' will hand these posts to production. You’ll still approve each finished post.',creative:'The team will schedule it for publishing.'}[command.kind]||'';
+        const next={foundation:sender+' can now set the strategy with you.',strategy:sender+' will plan the calendar against them next.',calendar:sender+' will hand these posts to production. You’ll still approve each finished post.',creative:'The team will schedule it for publishing.'}[command.kind]||'';
         const message=command.kind==='input'?'Response sent to the team.':command.kind==='report'?'Feedback sent to the team.':command.outcome==='approved'?what+' approved. '+next:sender+' has your note and will send a new version.';
         await ctx.commit(next=>perform(next,ctx.ui,command),message);
       }
