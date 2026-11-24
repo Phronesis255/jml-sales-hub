@@ -38,7 +38,7 @@ window.JMLAgency = (() => {
       const [primary,accent]=palette(brand);
       const posts=state.posts.filter(p=>p.brandId===brand.id);
       const review=posts.filter(p=>C.status(p)==='in-review').length;
-      return '<article class="client-card" style="--client-primary:'+primary+';--client-accent:'+accent+'"><div class="client-strip"></div><div class="panel-body"><p class="client-meta">'+e(brand.initials)+' · '+e(brand.timezone)+'</p><h2>'+e(brand.name)+'</h2><p>'+e(brand.description||'Client workspace')+'</p><dl><div><dt>Content items</dt><dd>'+posts.length+'</dd></div><div><dt>Awaiting review</dt><dd>'+review+'</dd></div></dl>'+btn(ui.brand===brand.id?'Open active account':'Open account','client-open','small','data-brand="'+e(brand.id)+'"')+'</div></article>';
+      return '<article class="client-card" style="--client-primary:'+primary+';--client-accent:'+accent+'"><div class="client-strip"></div><div class="panel-body"><p class="client-meta">'+e(brand.initials)+' · '+e(String(brand.timezone||'').split('/').pop().replace(/_/g,' '))+' time</p><h2>'+e(brand.name)+'</h2><p>'+e(brand.description||'Client workspace')+'</p><dl><div><dt>Content items</dt><dd>'+posts.length+'</dd></div><div><dt>Awaiting review</dt><dd>'+review+'</dd></div></dl>'+btn(ui.brand===brand.id?'Open active account':'Open account','client-open','small','data-brand="'+e(brand.id)+'"')+'</div></article>';
     });
     return heading('Agency','Client accounts','Choose an account to open its work queue.',btn('Add client','client-new','primary'))+'<div class="client-grid">'+cards.join('')+'</div>';
   }
@@ -60,7 +60,9 @@ window.JMLAgency = (() => {
     const {formModal,input,textArea,selectField,e,state,ui}=ctx;
     if(a==='client-open'){ctx.setBrand(button.dataset.brand);ctx.navigate('#today');return;}
     if(a==='client-new'){
-      formModal('Add a client account','account-form','<div class="form-grid">'+input('Client name','name','','text',true)+input('Account description','description','','text',true)+input('Time zone','timezone','America/Los_Angeles')+input('Primary color','primary','#21405d','color')+input('Accent color','accent','#f0b442','color')+'</div>','Create account');return;
+      const zones=[['America/Los_Angeles','Pacific (Los Angeles)'],['America/Denver','Mountain (Denver)'],['America/Chicago','Central (Chicago)'],['America/New_York','Eastern (New York)'],['America/Toronto','Toronto'],['Europe/London','London'],['Europe/Paris','Paris'],['Europe/Berlin','Berlin'],['Asia/Dubai','Dubai'],['Asia/Tehran','Tehran'],['Asia/Kolkata','India (Kolkata)'],['Asia/Singapore','Singapore'],['Australia/Sydney','Sydney'],['UTC','UTC']];
+      formModal('Add a client account','account-form','<div class="form-grid">'+input('Client name','name','','text',true)+input('What they do, in a few words','description','','text',true)+'<label class="full">Time zone <small class="muted">Dates and publishing times for this client use it.</small><select name="timezone" data-no-presets>'+zones.map(([v,l])=>'<option value="'+v+'">'+l+'</option>').join('')+'</select></label>'+input('Main brand color','primary','#21405d','color')+input('Highlight color','accent','#f0b442','color')+'<p class="task-note full">The workspace takes on these colors whenever this client is selected. Contrast is adjusted for readability.</p></div>','Create account');
+      ['name','description'].forEach(n=>{const el=document.querySelector('#account-form [name='+n+']');if(el)el.required=true;});return;
     }
     const record=(state.resources||[]).find(x=>x.id===button.dataset.id&&x.brandId===ui.brand);
     const v=record?.versions.at(-1)||{};
@@ -74,7 +76,7 @@ window.JMLAgency = (() => {
     if(form.id==='account-form'){
       try{Intl.DateTimeFormat('en',{timeZone:data.timezone});}catch{throw Error('Enter a valid time zone, such as America/Los_Angeles.');}
       const brand={...data,id:C.id('client'),name:data.name.trim(),initials:data.name.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase()};
-      await commit(next=>{if(next.brands.some(b=>b.name.toLowerCase()===brand.name.toLowerCase()))throw Error('An account with this name already exists.');next.brands.push(brand);},'Client account created.');
+      await commit(next=>{if(next.brands.some(b=>b.name.toLowerCase()===brand.name.toLowerCase()))throw Error('An account with this name already exists.');next.brands.push(brand);},'Client account created. Next: fill in the foundation and name the client approver.');
       ctx.setBrand(brand.id);ctx.navigate('#plan/foundation');return;
     }
     if(data.url&&!safeLink(data.url))throw Error('Use an HTTP or HTTPS reference URL.');

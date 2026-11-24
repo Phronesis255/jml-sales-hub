@@ -366,6 +366,15 @@
       remembered=null; context.setBrand(id);
     }
   }
+  /* Calendar buttons inside the embedded planner open the workspace's own dialogs. */
+  async function newPost(win){
+    await queue;if(!sourceWindow(win))return;
+    try{root.JMLResearch?.action(context,'plan-post',{dataset:{}});}catch(error){context.toast(error.message,'error');}
+  }
+  async function moveDate(win,id){
+    await queue;
+    if(sourceWindow(win)&&current().posts.some(p=>p.id===id&&p.brandId===context.ui.brand))context.moveDate?.(id);
+  }
   async function studio(win,id) {
     await queue;
     if (sourceWindow(win) && current().posts.some(p=>p.id===id && p.brandId===context.ui.brand)) context.navigate('#content/'+encodeURIComponent(id)+'/brief');
@@ -421,7 +430,7 @@
     frame=createFrame(false);
     host.replaceChildren(frame);
   }
-  const api={sections,sectionFor,prepareNavigation,navigateSection,markup,mount,accept,reportError,write,setBrand,studio,remember,resize,validate,collectLegacy,applyChanges,projection,previewTransfer,applyTransfer};
+  const api={sections,sectionFor,prepareNavigation,navigateSection,markup,mount,accept,reportError,write,setBrand,studio,newPost,moveDate,remember,resize,validate,collectLegacy,applyChanges,projection,previewTransfer,applyTransfer};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
   else root.JMLPlanner=api;
 })(typeof window==='undefined'?globalThis:window);

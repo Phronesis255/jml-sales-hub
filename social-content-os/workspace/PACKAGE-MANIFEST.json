@@ -225,8 +225,8 @@
     },
     {
       "path": "content-planner.html",
-      "bytes": 497741,
-      "sha256": "ef8e5a8b52877a4cbe48a435f65f28483e813cf008c61c9e7451dc64771aa167"
+      "bytes": 498597,
+      "sha256": "104a7b44e9045057d07ef5b65239b61e0f42f3de658449c5f577e1750152fb6a"
     },
     {
       "path": "creative-brief/index.html",
@@ -1445,18 +1445,18 @@
     },
     {
       "path": "social-workspace/agency.js",
-      "bytes": 8890,
-      "sha256": "4d305b5ecf83b36408efd52cba8608af2265db3ce71f6199a5f7c8949cde233c"
+      "bytes": 9928,
+      "sha256": "8764811115e1b9bea3e08930b821f4857826294ff7aab5bc00039a88c4b2acea"
     },
     {
       "path": "social-workspace/app.js",
-      "bytes": 79342,
-      "sha256": "bbb4d3d4146aca36baad8a1318c523915c45a9c59ba3ecf7e50483d8fb1e33fb"
+      "bytes": 97577,
+      "sha256": "594bde079d098923ab082692c86173ecf39b2f3d2b988f98ef870923f3d13d7f"
     },
     {
       "path": "social-workspace/attention.js",
-      "bytes": 3330,
-      "sha256": "b7007a95555571b25878d69d147d62c415e775e257730e8db3a95dca55e7f4a3"
+      "bytes": 3783,
+      "sha256": "7f3cbcf0a825865a6af6b9916b58bee1681e440e8e0154a14fe91cfd8d0798ab"
     },
     {
       "path": "social-workspace/brief-studio.js",
@@ -1485,13 +1485,13 @@
     },
     {
       "path": "social-workspace/core.js",
-      "bytes": 21645,
-      "sha256": "56241c8b57f437df692b7ad78a14f42aa50933d660fdd06f1c3c6267a8aaee69"
+      "bytes": 21942,
+      "sha256": "16f1d63b3a44b80cb4a794d7a388fd3a7f09a6a9fe34bcc2cffbd76221eeab0f"
     },
     {
       "path": "social-workspace/demo-data.js",
-      "bytes": 35504,
-      "sha256": "4dfb6955664caf0ee538839378880b72d38856aaf2ec7a871067c5becd4632a9"
+      "bytes": 36885,
+      "sha256": "e154de70d88ffec94b6f450b2af1b65048d2948d777a8fe6d4d487985b50d0ff"
     },
     {
       "path": "social-workspace/examples/Northstar-Coffee-90-Day-Content-Calendar.csv",
@@ -1555,8 +1555,8 @@
     },
     {
       "path": "social-workspace/governance.js",
-      "bytes": 68940,
-      "sha256": "439ad33a76acf8a47f8b84496658a95e5f0455386437e3b42bd2290600aa2eec"
+      "bytes": 80429,
+      "sha256": "6b92d725f5279e69da20c03120b8b42882857d015cdc64ee3283240a442f2b90"
     },
     {
       "path": "social-workspace/jml-mark.svg",
@@ -1575,8 +1575,8 @@
     },
     {
       "path": "social-workspace/navigation.js",
-      "bytes": 5952,
-      "sha256": "ab43cf8ab9a03ed629ba230208d847b2241b329aabecdceab9d64fc1f6fedd26"
+      "bytes": 5773,
+      "sha256": "2ac4f71953b31bbcba7040179465cf48052dd4115aa1501e9058a8959fd1ad46"
     },
     {
       "path": "social-workspace/operations.css",
@@ -1585,8 +1585,8 @@
     },
     {
       "path": "social-workspace/operations.js",
-      "bytes": 62269,
-      "sha256": "113152c94277fc401b231137776a2c0c6c04cec013adbd21407e56e9274e2bdb"
+      "bytes": 88778,
+      "sha256": "b022770583db8ad53a2fc61bb54d286bd0a0f72d1fa530b77f6de2233436dca2"
     },
     {
       "path": "social-workspace/personas.css",
@@ -1595,13 +1595,13 @@
     },
     {
       "path": "social-workspace/personas.js",
-      "bytes": 18736,
-      "sha256": "e424371096e99c544426af257204aa9f6b3949c2b6f255823d415a2afd4cc612"
+      "bytes": 25455,
+      "sha256": "97e04555b9805b4ea4786fa2550b7a46b63c1728eb50219a9c3432ba6fe0b5a9"
     },
     {
       "path": "social-workspace/planner-frame.js",
-      "bytes": 22445,
-      "sha256": "a1a9e634332cfb9164fb7ae23fbace8ffd88dd7069fce4b1a64fffea37b7de99"
+      "bytes": 24623,
+      "sha256": "9a5ba9b59fc5ad66c4d703e54bdb1f9c2324180454a600cc5b79e99684748ade"
     },
     {
       "path": "social-workspace/planner-insights.js",
@@ -1620,8 +1620,8 @@
     },
     {
       "path": "social-workspace/planner.js",
-      "bytes": 29636,
-      "sha256": "a7c23e82be8585b3e707e3f2ece5d0adafb9cef1430dbe0848dd6c7eb384aae0"
+      "bytes": 30121,
+      "sha256": "23e196571a1107720d8574e0a23d26ff9c0ac9ec4a4956acaf5123c0c37f0648"
     },
     {
       "path": "social-workspace/prompt-jobs.js",
@@ -1635,8 +1635,8 @@
     },
     {
       "path": "social-workspace/release-domain.js",
-      "bytes": 48677,
-      "sha256": "e3427587f4d7851f4c9240475472de421d9ba48377278007e8868d2186cff56d"
+      "bytes": 57768,
+      "sha256": "5fc23c6ea5a944469847e8ad399355e19b67c33fa2f86284828ea9f2bccaf14f"
     },
     {
       "path": "social-workspace/release-files.js",
@@ -1650,8 +1650,8 @@
     },
     {
       "path": "social-workspace/release-learning.js",
-      "bytes": 57889,
-      "sha256": "ca86cb39ebd4a6bb7aadeb3bed5e8f5ab5c764739d88d1a02f7574b232680220"
+      "bytes": 76499,
+      "sha256": "3fe93d22c82b41891af64e418ff097c93cefbf1abb86ca4d19da98fc18c9af5f"
     },
     {
       "path": "social-workspace/research.css",
@@ -1660,8 +1660,8 @@
     },
     {
       "path": "social-workspace/research.js",
-      "bytes": 43963,
-      "sha256": "ba08a2b1fbf384f609ebacc268930d4d7d44b229b2c990c2ecc2aa5c4bfc2422"
+      "bytes": 58925,
+      "sha256": "65f5ad20dda7a38cafad2e82ef1a00629e666ccf6ec495791ad8832a2b0d8745"
     },
     {
       "path": "social-workspace/scenarios.js",
@@ -1700,8 +1700,8 @@
     },
     {
       "path": "social-workspace.html",
-      "bytes": 3257,
-      "sha256": "66f6bfb669fd82964c5497eb2d9ca9707a3c47b84640e617a416aa9d4b9a0ec4"
+      "bytes": 3640,
+      "sha256": "da022e96fbf671ce0bb6853f8cfe757975eb71ed8f5bbf768e5402003f2480e8"
     }
   ]
 }

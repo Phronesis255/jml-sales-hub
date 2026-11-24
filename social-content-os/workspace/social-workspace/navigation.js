@@ -46,7 +46,7 @@
       children+=native.filter(s=>!s.group||s.group==='core').map(s=>leaf(ctx,'plan',s.key,s.label,active&&selected===s.key)).join('');
     }
     if(route==='studio'&&ui.route==='content'){
-      const p=ctx.state.posts.find(p=>p.id===ui.post);if(p)children+='<div class="nav-record"><span class="nav-record-caption">Current content</span><strong title="'+e(p.title)+'">'+e(p.externalId||p.title)+'</strong>'+detail.map(([id,text])=>leaf(ctx,'content',encodeURIComponent(p.id)+'/'+id,text,ui.tab===id)).join('')+'</div>';
+      const p=ctx.state.posts.find(p=>p.id===ui.post);// Content sections are shown as tabs on the content page itself.
     }
     if(!children)return '<a class="nav-link '+(active?'active':'')+'" href="#'+route+'" '+(active?'aria-current="page"':'')+'>'+ctx.icon(icon)+'<span>'+label+'</span></a>';
     const destination='#'+route+'/'+(route==='plan'?'calendar':list[0]?.[0]||'');
