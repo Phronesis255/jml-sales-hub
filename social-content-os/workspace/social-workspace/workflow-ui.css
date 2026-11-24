@@ -277,6 +277,41 @@ dialog.wide {width:min(1040px,calc(100vw - 32px))}
 .request-card .actions {gap:8px;align-items:center}
 .rl-place-preview[hidden] {display:none!important}
 /* Calendar approval bar and rejection alert */
+.member-group {font:600 15px/1.3 var(--sans);margin:22px 0 10px}
+.member-head {display:flex;align-items:center;gap:10px}
+.member-head h2 {margin:0}
+.member-head p {margin:0;font-size:13px;color:var(--muted)}
+.member-can {font-size:13px;margin:10px 0}
+.member-card.inactive {opacity:.6}
+.function-picks {border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:0;display:grid;gap:6px}
+.function-picks legend {font-weight:600;padding:0 4px}
+.plan-check {background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px 22px;margin:0 0 18px}
+.plan-check header {display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:10px}
+.plan-check h2 {font:600 19px/1.3 var(--sans);margin:2px 0 0}
+.plan-check ol {list-style:none;margin:0;padding:0;display:grid}
+.plan-check li {display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.plan-check li:first-child {border-top:0}
+.plan-check .plan-body {flex:1;min-width:0}
+.plan-check .plan-body p {margin:2px 0 0;font-size:13px;color:var(--muted);line-height:1.45}
+.plan-check .plan-mark {flex:0 0 22px;height:22px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font:700 12px/1 var(--sans);margin-top:1px}
+.plan-check li.done .plan-mark {background:var(--green);border-color:var(--green);color:#fff}
+.plan-check li.done strong {color:var(--muted);font-weight:500}
+.plan-check li.wait .plan-mark {border-color:var(--warn);border-style:dashed}
+.plan-check li.urgent {background:#fff4f4;margin:0 -12px;padding:12px;border-radius:8px;border-top-color:transparent}
+.plan-check li.urgent .plan-mark {background:var(--error);border-color:var(--error);color:#fff}
+.plan-check li.urgent strong {color:var(--error)}
+.plan-check li.urgent p {color:var(--ink);font-size:14px}
+.plan-check li.next:not(.urgent) .plan-mark {border-color:var(--ink)}
+.plan-check li.later {opacity:.6}
+.plan-check li.optional .plan-mark {border-style:dotted}
+.plan-posts {display:grid;gap:6px;margin-top:10px}
+.plan-posts a {display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;text-decoration:none;color:var(--ink)}
+.plan-posts a:hover {border-color:var(--ink)}
+.plan-posts small {display:block;color:var(--muted);font-size:12px}
+.plan-posts em {font-style:normal;font-size:13px;font-weight:600;white-space:nowrap}
+.change-list {margin:6px 0 0;padding-left:18px;font-size:13px}
+.change-list li {margin:2px 0}
+@media (max-width:640px){.plan-check li{flex-wrap:wrap}.plan-check li>.btn{margin-left:34px}}
 .cal-bar {display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 22px;margin:0 0 12px;background:var(--paper);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:8px}
 .cal-bar h2 {font:600 17px/1.35 var(--sans);margin:2px 0 4px}
 .cal-bar p {font-size:13px;margin:0;max-width:75ch}

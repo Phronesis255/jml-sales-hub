@@ -59,6 +59,47 @@
     return {version,decision,approver:ops.foundation?.finalApprover||'the client approver',strategyApproved:approved(ops,ops.strategies?.at(-1)),
       pending:!!version&&!decision,rejected:decision?.decision==='changes-requested',approved:decision?.decision==='approved',uncovered};
   }
+  /* What changed between two calendar snapshots, by post. */
+  function calendarChanges(before,after){
+    const was=new Map((before||[]).map(x=>[x.contentId,x])),now=new Map((after||[]).map(x=>[x.contentId,x])),out=[];
+    for(const [id,x] of now){const o=was.get(id);if(!o)out.push({type:'added',title:x.title,to:x.date});else if(o.date!==x.date||o.time!==x.time)out.push({type:'moved',title:x.title,from:o.date,to:x.date});else if(o.title!==x.title||o.platform!==x.platform||o.format!==x.format)out.push({type:'changed',title:x.title});}
+    for(const [id,o] of was)if(!now.has(id))out.push({type:'removed',title:o.title,from:o.date});
+    return out;
+  }
+  function changeText(c){const day=root.JMLWorkflowUI?.day||(x=>x);return c.type==='added'?'Added: '+c.title+' ('+day(c.to)+')':c.type==='moved'?'Moved: '+c.title+' · '+day(c.from)+' → '+day(c.to):c.type==='removed'?'Removed: '+c.title:'Updated: '+c.title;}
+  /* The planner's view of this account on Today: each planning stage, who has it, and the one next step. */
+  function planChecklist(ctx){
+    const G=root.JMLGovernance,U=root.JMLWorkflowUI,state=ctx.state,brandId=ctx.ui.brand,brand=state.brands.find(b=>b.id===brandId);
+    if(!brand||brand.example||brandId==='demo'||(G&&!['coordinate','strategy'].some(cap=>G.can(state,ctx.ui,cap,{brandId}))))return '';
+    const ops=account(state,brandId),s=calendarStatus(state,brandId),who=s.approver,first=ops.foundation?.finalApprover?who.split(' ')[0]:'the client',go=(label,href)=>({label,href});
+    const decisionOf=v=>v&&ops.decisions.find(d=>d.targetId===v.id);
+    const stage=(v,name,href,start,startText,revise)=>{
+      if(!v)return {tone:'todo',title:name,text:startText,action:go(start,href)};
+      const d=decisionOf(v);
+      if(!d)return {tone:'wait',title:name+' V'+v.number,text:'With '+who+' since '+U.day(v.at)+'. Nothing to do until they decide.'};
+      if(d.decision==='changes-requested')return {tone:'urgent',title:name+' V'+v.number+': '+d.actor+' asked for changes',text:'“'+(d.note||'No note')+'”',action:go(revise,href)};
+      return {tone:'done',title:name+' V'+v.number,text:'Approved by '+d.actor+' · '+U.day(d.at)};
+    };
+    const rows=[stage(ops.foundationVersions?.at(-1),'Client foundation','#plan/foundation','Set up foundation','Answer four questions about the business and name the client approver.','Revise foundation')];
+    const sources=(ops.sources||[]).filter(x=>!x.mergedInto).length;
+    rows.push(sources?{tone:'done',title:'Research',text:sources+' source'+(sources===1?'':'s')+' captured'}:{tone:'optional',title:'Research (optional)',text:'Capture what you already know about the audience. The strategy can cite it.',action:go('Capture evidence','#plan/research')});
+    rows.push(ops.foundationVersions?.length?stage(ops.strategies?.at(-1),'Strategy','#plan/strategy','Set the strategy','Choose how success is measured, then set the direction.','Revise strategy'):{tone:'todo',title:'Strategy',text:'Comes after the foundation.',later:true});
+    const n=s.uncovered.length,items=k=>k+' post'+(k===1?'':'s');
+    rows.push(!s.strategyApproved&&!s.version?{tone:'todo',title:'Calendar',text:'Opens once '+first+' approves the strategy.',later:true}
+      :s.rejected?{tone:'urgent',title:'Calendar V'+s.version.number+': '+s.decision.actor+' asked for changes',text:'“'+(s.decision.note||'No note')+'”',action:go('Revise the calendar','#plan/calendar')}
+      :s.pending?{tone:'wait',title:'Calendar V'+s.version.number,text:'With '+who+' since '+U.day(s.version.at)+' · '+items(s.version.body.entries.length)+'.'}
+      :s.approved&&!n?{tone:'done',title:'Calendar V'+s.version.number,text:'Approved by '+s.decision.actor+' · '+U.day(s.decision.at)}
+      :{tone:'todo',title:'Calendar',text:n?(s.approved?items(n)+' added or moved since V'+s.version.number+' was approved. Send '+first+' an update.':items(n)+' planned. Send them to '+first+' for approval.'):'Plan dated posts, then send them to '+first+' for approval.',action:go(n?'Review and send':'Plan posts','#plan/calendar')});
+    const covered=state.posts.filter(p=>p.brandId===brandId&&calendarCoverage(state,p)),waiting=covered.filter(p=>!(p.production&&p.brief.productionSpec));
+    rows.push(!covered.length?{tone:'todo',title:'Production',text:'Starts when '+first+' approves the calendar.',later:true}
+      :waiting.length?{tone:'todo',title:'Hand off to production',text:items(waiting.length)+' approved and waiting for a producer and reviewer. Each producer sees the post on their Today once it’s set up.',list:waiting.slice(0,6)}
+      :{tone:'done',title:'Production',text:'Every approved post has a producer and a reviewer.'});
+    if(rows.every(r=>['done','optional'].includes(r.tone)))return '';
+    const next=rows.find(r=>['urgent','todo'].includes(r.tone)&&!r.later&&(r.action||r.list));
+    const done=rows.filter(r=>r.tone==='done').length,mark={done:'✓',wait:'',urgent:'!',todo:'',optional:''},said={done:'Done',wait:'Waiting',urgent:'Needs your action',todo:'To do',optional:'Optional'};
+    const heading=next?(next.tone==='urgent'?'Changes requested':'Next: '+(next.action?.label||next.title)):'Waiting on '+who;
+    return '<section class="plan-check" aria-labelledby="plan-check-title"><header><div><span class="eyebrow">Plan for '+esc(brand.name)+'</span><h2 id="plan-check-title">'+esc(heading)+'</h2></div><span class="count-note">'+done+' of '+rows.length+' done</span></header><ol>'+rows.map(r=>'<li class="'+r.tone+(r===next?' next':'')+(r.later?' later':'')+'"><span class="plan-mark" aria-hidden="true">'+mark[r.tone]+'</span><div class="plan-body"><strong>'+esc(r.title)+'</strong><span class="hidden"> · '+said[r.tone]+'</span><p>'+esc(r.text)+'</p>'+(r.list?'<div class="plan-posts">'+r.list.map(p=>'<a href="#content/'+encodeURIComponent(p.id)+'/workflow"><span><b>'+esc(U.clean(p.title))+'</b><small>'+esc(U.day(p.date))+' · '+esc(p.brief.owner?'Planned producer: '+p.brief.owner:'No producer yet')+'</small></span><em>Set up production →</em></a>').join('')+'</div>':'')+'</div>'+(r.action?'<a class="btn small'+(r===next?' primary':'')+'" href="'+r.action.href+'">'+esc(r.action.label)+'</a>':'')+'</li>').join('')+'</ol></section>';
+  }
   function calendarBar(ctx){
     const U=root.JMLWorkflowUI,G=root.JMLGovernance,s=calendarStatus(ctx.state,ctx.ui.brand),v=s.version,n=s.uncovered.length;
     const canPlan=!G||G.can(ctx.state,ctx.ui,'coordinate',{brandId:ctx.ui.brand}),items=k=>k+' planned item'+(k===1?'':'s');
@@ -70,7 +111,7 @@
     else{title='Not sent for approval yet';text=n?items(n)+' waiting. Sending asks '+s.approver+' to approve the plan for a period.':'Add posts with a proposed date, then send them to '+s.approver+' for approval.';action=canPlan&&n?button('Send calendar for approval','calendar','','primary'):'';}
     const add=canPlan&&account(ctx.state,ctx.ui.brand).strategies?.length?'<button type="button" class="btn small" data-research-action="plan-post">+ Add a post</button>':'';
     action+=add;
-    const how=U.optional('How posts get onto the calendar · and what approval means','<div class="full"><ol class="cal-how"><li><b>From research:</b> <a href="#plan/research">Research</a> → <i>Create draft from evidence</i>.</li><li><b>One post:</b> <i>+ Add a post</i> here, or <i>+ New idea</i> in the calendar below. Both use the agreed strategy.</li><li><b>A whole month:</b> <a href="#plan/import">Bulk import</a> a calendar CSV.</li></ol><p class="task-note">Every post with a proposed date appears on the calendar. <b>Sending the calendar</b> asks '+esc(s.approver)+' to approve what is planned in a period: topic, channel, format, date and goal. Production can start once it is approved. '+esc(s.approver.split(' ')[0])+' still approves each finished post later.</p></div>');
+    const how=U.optional('How posts get onto the calendar · and what approval means','<div class="full"><ol class="cal-how"><li><b>From research:</b> <a href="#plan/research">Research</a> → <i>Create draft from evidence</i>.</li><li><b>One post:</b> <i>+ Add a post</i> here, or <i>+ New idea</i> in the calendar below. Both use the agreed strategy.</li><li><b>A whole month:</b> <a href="#plan/import">Bulk import</a> a calendar CSV.</li></ol><p class="task-note">Every post with a proposed date appears on the calendar. <b>Sending the calendar</b> asks '+esc(s.approver)+' to approve what is planned in a period: topic, channel, format, date and goal. Production can start once it is approved. '+esc(account(ctx.state,ctx.ui.brand).foundation?.finalApprover?s.approver.split(' ')[0]:'The client')+' still approves each finished post later.</p></div>');
     return '<section class="cal-bar '+tone+'"><div class="cal-bar-main"><span class="eyebrow">Calendar approval</span><h2>'+esc(title)+'</h2><p>'+esc(text)+'</p></div><div class="actions">'+action+'</div></section>'+how;
   }
   function calendarPackage(state,brandId,range) {
@@ -205,7 +246,7 @@
     return lines(versions.slice().reverse(),'No versions saved.',v=>{
       const review=ops.decisions.find(d=>d.targetId===v.id);
       return row(({foundation:'Client foundation',strategy:'Strategy',calendar:'Calendar'})[kind]+' V'+v.number+' · '+labelFor(review),kind==='foundation'?v.body.business:kind==='strategy'?v.body.objective:v.body.start+' – '+v.body.end+' · '+v.body.entries.length+' items',
-        '<div class="actions">'+small('Inspect','inspect-'+kind,v.id)+(!review && v===versions.at(-1)?small('Review','decision-'+kind,v.id):'')+'</div>');
+        '<div class="actions">'+small('Inspect','inspect-'+kind,v.id)+(!review && v===versions.at(-1)?(!root.JMLGovernance||root.JMLGovernance.can(context.state,context.ui,'approve',{brandId:context.ui.brand})?small('Review','decision-'+kind,v.id):'<span class="ux-chip wait">With '+esc(ops.foundation?.finalApprover||'the client')+'</span>'):'')+'</div>');
     });
   }
   let activePlanSection='foundation',boardFilter='all',mineOnly=false;
@@ -261,12 +302,12 @@
     const calDecision=calVersion&&ops.decisions.find(d=>d.targetId===calVersion.id),calRejected=calDecision?.decision==='changes-requested';
     const canPlan=!G||G.can(ctx.state,ctx.ui,'coordinate',{brandId:p.brandId});
     const rows=[];
-    if(p.strategyVersionId)rows.push(s.coverage?{done:true,text:'Calendar approved (V'+s.coverage.number+')',owner:s.coverage.decision?.actor}:calPending?{text:'Calendar V'+calVersion.number+' includes this item and is waiting for a decision',owner:approver}:calRejected?{text:calDecision.actor+' asked for changes to Calendar V'+calVersion.number+': “'+(calDecision.note||'')+'”',owner:canPlan?ctx.ui.actor:'the account planner',action:canPlan?button('Send revised calendar','calendar','','primary small'):''}:{text:'Send a calendar version that includes this item for client approval',owner:canPlan?'you, then '+approver:approver,action:canPlan?button('Send calendar for approval','calendar','','primary small'):''});
-    rows.push(s.configured?{done:true,text:'Production set up — '+(p.production?.producer||'producer')+' produces, '+(p.production?.qcReviewer||'reviewer')+' checks'}:{text:'Set up production: route, producer and internal reviewer',owner:s.coordinator,action:s.canConfigure?button('Set up production','route',p.id,'primary small'):''});
+    if(p.strategyVersionId)rows.push(s.coverage?{done:true,text:'Calendar approved (V'+s.coverage.number+')',owner:s.coverage.decision?.actor}:calPending?{text:'In Calendar V'+calVersion.number+', waiting for '+approver+'’s decision',owner:approver}:calRejected?{text:calDecision.actor+' asked for changes to Calendar V'+calVersion.number+': “'+(calDecision.note||'')+'”',owner:canPlan?ctx.ui.actor:'the account planner',action:canPlan?button('Send revised calendar','calendar','','primary small'):''}:{text:'Get this post approved on the calendar',owner:canPlan?'you, then '+approver:approver,action:canPlan?button('Send calendar for approval','calendar','','primary small'):''});
+    rows.push(s.configured?{done:true,text:'Handed to production: '+(p.production?.producer||'producer')+' makes it, '+(p.production?.qcReviewer||'reviewer')+' checks it'}:{text:'Hand off to production: confirm the producer, reviewer and instructions',owner:s.coordinator,action:s.canConfigure?button('Set up production','route',p.id,'primary small'):''});
     const briefGaps=[...(pending?['Save the current brief version']:[]),...s.gaps.filter(g=>!/calendar scope|Configure the production route/.test(g))];
     for(const g of briefGaps)rows.push({text:U.sentence(g),owner:p.brief.owner||s.coordinator,action:/media request|input/i.test(g)?link(p,'requests','Open media requests'):ctx.ui.tab!=='brief'?link(p,'brief','Edit brief'):''});
     const ready=s.configured&&(!p.strategyVersionId||s.coverage)&&!briefGaps.length;
-    rows.push(s.accepted?{done:true,text:'Production brief revision '+p.briefRevision+' accepted',owner:p.planApproval.actor}:{text:'Accept production brief revision '+p.briefRevision,owner:s.acceptor,action:ready&&s.canAccept?button('Accept production brief','brief-ready',p.id,'primary small'):''});
+    rows.push(s.accepted?{done:true,text:'Brief confirmed ready to produce (revision '+p.briefRevision+')',owner:p.planApproval.actor}:{text:'Confirm the brief is ready to produce',owner:s.acceptor,action:ready&&s.canAccept?button('Confirm brief is ready','brief-ready',p.id,'primary small'):''});
     rows.forEach(r=>{if(r.owner===ctx.ui.actor)r.owner='you';});
     const open=rows.filter(r=>!r.done).length;
     const text=!open?'Ready for production.':open+' open item'+(open===1?'':'s')+(s.accepted?'.':' before production can start.');
@@ -403,9 +444,9 @@
     if(G.can(context.state,context.ui,'admin'))return field('newApprover','Client approver’s full name','','text',true)+'<p class="task-note full">No one at the client has access yet. Saving adds this person to People &amp; access as the account’s client approver. They confirm plans and approve creative.</p>';
     return '<div class="notice warning full"><div><strong>No client approver yet</strong><p>Ask a workspace admin to add the client contact in <a href="#accounts/people">People &amp; access</a>.</p></div></div>';
   }
-  function personField(name,label,value,functions){
+  function personField(name,label,value,functions,teamOnly=false){
     const G=root.JMLGovernance;if(!G)return field(name,label,value,'text',true);
-    const people=G.eligiblePeople(context.state,context.ui.brand).filter(p=>!functions||functions.some(fn=>G.eligiblePeople(context.state,context.ui.brand,fn).some(x=>x.id===p.id)));
+    const people=G.eligiblePeople(context.state,context.ui.brand).filter(p=>!(teamOnly&&p.agencyAdmin)).filter(p=>!functions||functions.some(fn=>G.eligiblePeople(context.state,context.ui.brand,fn).some(x=>x.id===p.id)));
     return select(name,label,[['','Choose an assigned person'],...people.map(p=>[p.name,p.name])],value||'');
   }
   function showAction(action,id) {
@@ -422,7 +463,7 @@
       const f=ops.foundation;
       openForm('Client foundation',action,id,
         U.section('The essentials','These answers carry into strategy and production.',fullText('business','What does the business offer?',f.business,true)+fullText('audience','Who are we trying to reach?',f.audience,true)+fullText('priorities','What should social content achieve?',f.priorities,true)+fullText('scope','What is included, and what is out of scope?',f.scope,true)+approverField(f.finalApprover))+
-        U.optional('Brand materials and delivery details (optional)',fullText('brandBook','Brand guide or reference links',f.brandBook)+fullText('media','Available media and permissions',f.media)+fullText('access','Account access or missing inputs',f.access)+personField('communityOwner','Community owner',f.communityOwner)+field('weeklyCapacity','Content items per week, if agreed',f.weeklyCapacity??'','number')+field('responseDue','Next input review, if needed',f.responseDue||'','date'))+
+        U.optional('Brand materials and delivery details (optional)',fullText('brandBook','Brand guide or reference links',f.brandBook)+fullText('media','Available media and permissions',f.media)+fullText('access','Account access or missing inputs',f.access)+personField('communityOwner','Community owner',f.communityOwner,['account','operations','strategy'],true)+field('weeklyCapacity','Content items per week, if agreed',f.weeklyCapacity??'','number')+field('responseDue','Next input review, if needed',f.responseDue||'','date'))+
         U.summary('Team comes from People & access','Account memberships supply the team. You can add backup owners or escalation details when a handoff needs them.'),'Save foundation');
     }else if(action==='strategy'){
       const last=ops.strategies.at(-1)?.body||{};
@@ -433,7 +474,9 @@
       const start=reuse?prevCal.body.start:(ui.anchor||todayDate());
       const ops=account(state,ui.brand),approver=ops.foundation?.finalApprover||'the client approver',end=reuse?prevCal.body.end:C.addDays(start,29),inRange=(a,b)=>context.scoped().filter(p=>p.date&&p.date>=a&&p.date<=b);
       const revising=prevDecision?.decision==='changes-requested';
-      openForm(revising?'Send revised calendar':'Send calendar for approval',action,id,(revising?'<div class="notice warning full"><div><strong>'+esc(prevDecision.actor)+' asked for changes to V'+prevCal.number+':</strong><p>“'+esc(prevDecision.note||'')+'”</p><small>Make the changes in the calendar first, then send the revised version.</small></div></div>':'')+'<p class="task-note full">'+esc(approver)+' will see every item planned in this period and approve or request changes. Production briefs and final creative are approved separately.</p>'+field('start','Period starts',start,'date',true)+field('end','Period ends',end,'date',true)+'<div class="task-summary full" id="calendar-scope-preview"><strong>'+inRange(start,end).length+' planned items in this period</strong><p>'+esc(inRange(start,end).slice(0,6).map(p=>p.title).join(' · '))+(inRange(start,end).length>6?' …':'')+'</p></div>','Send to '+approver);
+      let changed=[];if(prevCal){try{changed=calendarChanges(prevCal.body.entries,calendarPackage(state,ui.brand,{start,end}).entries);}catch{}}
+      const changeList=prevCal?'<div class="task-summary full"><strong>'+(changed.length?'Changed since V'+prevCal.number:'No changes since V'+prevCal.number)+'</strong>'+(changed.length?'<ul class="change-list">'+changed.map(c=>'<li class="'+c.type+'">'+esc(changeText(c))+'</li>').join('')+'</ul>':'<p>'+(revising?'Make the requested changes in the calendar first.':'The same posts and dates as last time.')+'</p>')+'</div>':'';
+      openForm(revising?'Send revised calendar':prevCal?'Send calendar update':'Send calendar for approval',action,id,(revising?'<div class="notice warning full"><div><strong>'+esc(prevDecision.actor)+' asked for changes to V'+prevCal.number+':</strong><p>“'+esc(prevDecision.note||'')+'”</p></div></div>':'')+changeList+'<p class="task-note full">'+esc(approver)+' will see every item planned in this period and approve or request changes. Production briefs and final creative are approved separately.</p>'+field('start','Period starts',start,'date',true)+field('end','Period ends',end,'date',true)+'<div class="task-summary full" id="calendar-scope-preview"><strong>'+inRange(start,end).length+' planned items in this period</strong><p>'+esc(inRange(start,end).slice(0,6).map(p=>p.title).join(' · '))+(inRange(start,end).length>6?' …':'')+'</p></div>','Send to '+approver);
     }else if(action.startsWith('decision-')){
       const kind=action.slice(9),v=ops[PLAN_TYPES[kind]].find(v=>v.id===id);
       if(!v)throw Error('Version is unavailable.');
@@ -493,7 +536,7 @@
       return context.commit(next=>startProduction(scopedPost(next,id,ui.brand),ui.actor,next),'Production started.');
     }else if(action==='brief-ready'){
       if(context.hasPendingBrief?.())throw Error('Save your brief version before accepting it for production.');
-      return context.commit(next=>acceptBriefReadiness(next,scopedPost(next,id,ui.brand),ui.actor),'Production brief accepted.');
+      return context.commit(next=>acceptBriefReadiness(next,scopedPost(next,id,ui.brand),ui.actor),'Brief confirmed. '+(post?.production?.producer||'The producer')+' can start.');
     }else if(action==='qc-failure'){
       openForm('Request internal correction',action,id,field('reviewer','Internal reviewer',post.production?.qcReviewer||ui.actor,'text',true)+fullText('note','What must change before client review?','',true),'Return for correction');
     }else if(action==='annotate'){
@@ -638,7 +681,7 @@
         if(!ex){ex={key,taskId:task.id,events:[]};ops.exceptions.push(ex);}
         Object.assign(ex,f);ex.events.push({...f,at:C.now(),actor});record(ops,actor,'Delivery exception '+f.status,task.title+' · '+f.note);
       }
-    },sourceIdea?'Draft created.':({calendar:'Calendar sent to '+(account(context.state,brandId).foundation?.finalApprover||'the client approver')+' for approval.',route:'Production set up. The producer can start when the brief is accepted.',strategy:'Strategy version saved. Send it to the client for a decision.',foundation:'Foundation saved and sent to '+(String(f.newApprover||'').trim()||f.finalApprover||'the client approver')+' to confirm.','qc-failure':'Returned to the producer with your note.',tasks:'Checklist progress saved.',campaign:'Campaign saved.',slot:'Slot reserved.',watchlist:'Watchlist saved.',source:'Evidence saved.'})[kind]||'Saved.');
+    },sourceIdea?'Draft created.':({calendar:'Calendar sent to '+(account(context.state,brandId).foundation?.finalApprover||'the client approver')+' for approval.',route:'Handed to '+(f.producer||'the producer')+' (producer) and '+(f.qcReviewer||'the reviewer')+' (reviewer). They’ll see it on their Today.',strategy:'Strategy version saved. Send it to the client for a decision.',foundation:'Foundation saved and sent to '+(String(f.newApprover||'').trim()||f.finalApprover||'the client approver')+' to confirm.','qc-failure':'Returned to the producer with your note.',tasks:'Checklist progress saved.',campaign:'Campaign saved.',slot:'Slot reserved.',watchlist:'Watchlist saved.',source:'Evidence saved.'})[kind]||'Saved.');
     if(opened)context.navigate(urlFor({id:opened},'brief'));
   }
   function mount(ctx) {
@@ -741,7 +784,7 @@
     }
     return state;
   }
-  const api={calendarStatus,calendarBar,completeRoutineTasks,saveFoundation,productionStatus,briefGuidance,view,mount,validate,account,snapshot,decision,calendarPackage,calendarScope,calendarCoverage,readiness,configureProduction,startProduction,acceptBriefReadiness,recordQcFailure,finishTask,queueFor,ROUTES};
+  const api={calendarStatus,calendarBar,planChecklist,calendarChanges,changeText,completeRoutineTasks,saveFoundation,productionStatus,briefGuidance,view,mount,validate,account,snapshot,decision,calendarPackage,calendarScope,calendarCoverage,readiness,configureProduction,startProduction,acceptBriefReadiness,recordQcFailure,finishTask,queueFor,ROUTES};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
   else root.JMLOps=api;
 })(typeof window!=='undefined'?window:globalThis);

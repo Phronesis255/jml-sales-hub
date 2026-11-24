@@ -27,7 +27,9 @@ The example team uses three roles. Use **Switch person** (top right) to act as e
 To try everything with fictional data first, open **Today → Start here → Load full demo workspace**, or use **Switch person → Try a sample handoff**.
 
 ### How the app tells you what's next
-- **Today** lists your open assignments first, with the primary action on each row.
+- **Plan for {client}** on the planner's **Today** (Asha, or anyone who plans the account) lists the five planning stages: foundation, research, strategy, calendar and production handoff. Each stage shows *Done* (approved by whom and when), *With {client approver}* (nothing to do until they decide), a red *Changes requested* row with the client's note, or the next thing to do with its button. The heading always names the one next step. Once the calendar is approved, the last row lists each approved post waiting for a producer and reviewer. The card disappears when everything is done, and it isn't shown on the fictional demo accounts.
+- **Assigned to you** on **Today** lists your open assignments, with the primary action on each row. A QA assignment shows *Waiting for {producer}'s draft* until there is something to check.
+- When the client decides, their confirmation names who takes it from there, for example *Calendar approved. Asha Raman will hand these posts to production.*
 - A **Production readiness** card on each post lists every remaining step, who it's waiting on, and a button where you can act.
 - **Handoffs** on each post shows the four stages: Production → Internal QA → Client decision → Publishing.
 - Fields marked `*` are required. If something is missing, a red message appears under the field or at the bottom of the form.
@@ -80,13 +82,13 @@ The **Content Planner** progress strip at the top of Foundation, Research and St
 1. Click **Add person** and enter a display name for each team member and each client contact.
 
 ### 2.2 Give each person a membership on this client
-1. Click **Add membership** (or **Edit access** on an existing card).
-2. Choose the **Person** and an **Access preset**. The person list leaves out other clients' contacts.
+1. Click **Give someone access** (or **Edit access** on a card). The page groups people into **Your team** and **Client contacts**; stage owners, optional steps and backups sit in collapsed sections below.
+2. Choose the **Person** and a **Role**. The person list leaves out other clients' contacts.
    - **Workspace Admin**: runs the account.
    - **Team Member**: works on assigned items.
    - **Client Approver**: makes client decisions.
    - **Client Viewer**: read-only.
-3. The preset ticks its usual **Workflow functions** (Workspace Admin: account, strategy, operations, creative QA, analytics; Team Member: copy, design, publishing; Client Approver: client approval). Adjust them if needed. Functions decide which steps a person may do:
+3. The role ticks its usual functions under **What they can do** (Workspace Admin: account, strategy, operations, creative QA, analytics; Team Member: copy, design, publishing; Client Approver: client approval). Adjust them if needed. Functions decide which steps a person may do:
 
    | Function | Can do |
    |---|---|
@@ -103,7 +105,7 @@ The **Content Planner** progress strip at the top of Foundation, Research and St
 4. For client contacts, tick **Share submitted client material and reports** if they should see them.
 
 ### 2.3 Name the stage owners
-In the **Stage ownership** table, click **Assign** on each row to name a **delivery owner** (does the work) and a **decision owner** (accepts it). The 13 stages are:
+Optional. Open **Stage owners (optional)** and click **Assign** on each row to name a **delivery owner** (does the work) and a **decision owner** (accepts it). The 13 stages are:
 
 1. Onboard & align
 2. Audit & research
@@ -147,7 +149,7 @@ Click **Set up foundation** (later **Edit foundation**) and fill in:
 
 ### 3.2 Get the client's confirmation
 1. **Save foundation** also sends it to the client approver (the message says *Foundation saved and sent to {name} to confirm*). It appears under **Client confirmation**.
-2. Switch to **Sam** → **Review → Plan approvals** → **Review** → **Approve** (or **Request changes** with a note).
+2. Switch to **Sam** → **Today → Awaiting your review → Client foundation** → **Review** → **Approve foundation V1** (or **Request changes** with a note). Sam sees the same questions Asha answered.
 
 ### 3.3 Optional: campaigns
 Under **Campaigns (optional)**, add a campaign when it needs its own objective and dates.
@@ -254,14 +256,14 @@ Optional: **Reserved trend slots** (on Strategy & KPIs → *Calendar approvals a
 3. Click **Send to {client approver}**. The bar turns amber: *Calendar Vn is with Sam*.
 
 ### 6.4 The client decides
-Switch to **Sam** → **Today → Awaiting your review → Calendar plan** (or Review → Plan approvals). The review shows every planned item with its channel, format, purpose, KPI and date. Sam clicks **Approve calendar Vn**, or **Request changes** (a note is required).
+Switch to **Sam** → **Today → Awaiting your review → Calendar plan** (or Review → Plan approvals). The review shows every planned item with its channel, format, purpose, KPI and date. Sam clicks **Approve calendar Vn**, or **Request changes** (a note is required). From V2 on, the review starts with **Changed since V{n-1}** (for example *Moved: Meet our route setters · Dec 4 → Dec 5*) and repeats Sam's earlier request.
 
 ### 6.5 If the client asks for changes
-- Asha's **Today** shows a red alert at the top: *Sam asked for changes to Calendar Vn*, with Sam's note and **Revise the calendar**. It also counts in **Needs attention**.
+- On Asha's **Today**, the **Plan for {client}** card turns the calendar row red: *Calendar Vn: Sam asked for changes*, with Sam's note and **Revise the calendar**. It also counts in **Needs attention**.
 - The Calendar bar turns red, and the readiness card on each affected post shows the request.
-- Fix the posts in the calendar (for a date: click the post → **Change date**), then click **Send revised calendar**. The dialog repeats Sam's note and reuses the same period.
+- Fix the posts in the calendar (for a date: click the post → **Change date**), then click **Send revised calendar**. The dialog repeats Sam's note, lists **Changed since Vn**, and reuses the same period.
 
-**Done when:** each draft's readiness card shows **✓ Calendar approved**. This approves the *plan* only; each finished creative is still approved separately.
+**Done when:** the Plan card shows **Calendar Vn · Approved by Sam**, and the next row reads **Hand off to production**. This approves the *plan* only; each finished creative is still approved separately.
 
 ---
 
@@ -277,8 +279,8 @@ Every post has tabs: **Brief & copy · Production workflow · Creative versions 
 - Optional: **Open full Creative Brief Studio** for the detailed multi-module brief.
 - Click **Save brief version**. Edits autosave on this device; saving a version shares it with the team. Once a brief has been accepted, saving a new version means it must be accepted again; the form warns you.
 
-### 7.2 Set up production
-On the **Production readiness** card, click **Set up production** and fill in:
+### 7.2 Hand off to production
+Start from **Today → Plan for {client} → Hand off to production**: each approved post is listed with its planned producer. Click **Set up production →** to open the post's **Production workflow** tab, then **Set up production** (the same button is on the post's **Production readiness** card). Fill in:
 
 1. **What are we making?** Choose a route:
 
@@ -296,8 +298,10 @@ On the **Production readiness** card, click **Set up production** and fill in:
 4. Real footage adds people and releases; AI video adds an AI-use and disclosure plan.
 5. Optional: review due date, permission expiry, backup owner, placement, opening hook, package and acceptance notes.
 
-### 7.3 Accept the brief
-When every row on the readiness card is ticked, click **Accept production brief**. This creates the handoffs: **Production → Luca** and **Internal QA → Asha**.
+Saving it creates the handoffs straight away: **Production → Luca** and **Internal QA → Asha**. The message says so (*Handed to Luca Vale (producer) and Asha Raman (reviewer). They'll see it on their Today.*), and the post leaves the Plan card's list. Asha's QA row reads *Waiting for Luca's draft* until a version is uploaded.
+
+### 7.3 Confirm the brief is ready
+When every row on the readiness card is ticked, click **Confirm brief is ready**. This records that the brief revision Luca works from is complete. If the brief changes later, it needs confirming again.
 
 **Done when:** readiness says *Ready for production* and the Handoffs stepper shows Production assigned.
 

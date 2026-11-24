@@ -8,7 +8,7 @@
   const G = common ? require('./governance.js') : root.JMLGovernance;
   const escape = value => String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const roleAllowed = role => role === 'client' || role === 'viewer';
-  const planLabels = {foundation:'Onboarding',strategy:'Strategy',calendar:'Calendar'};
+  const planLabels = {foundation:'Client foundation',strategy:'Strategy',calendar:'Calendar plan'};
   const statusLabels = {'in-review':'Awaiting review',approved:'Approved','changes-requested':'Changes requested',requested:'Input requested',received:'Response received',accepted:'Accepted'};
   const sameName = (a,b) => !!a?.trim() && a.trim() === b?.trim();
   const fail = message => { throw Error(message); };
@@ -46,8 +46,10 @@
           body.start=v.body.start;body.end=v.body.end;
           body.entries=(v.body.entries||[]).map(x=>({title:x.title,date:x.date,time:x.time,timezone:x.timezone,platform:x.platform,format:x.format||'',objective:x.objective||'',angle:(ops.angles||[]).find(a=>a.id===x.angleId)?.title||'',kpi:(ops.kpis||[]).find(k=>k.id===x.measurementDefinitionId)?.title||x.measurementDefinitionId||''}));
           body.slots=(v.body.slots||[]).map(x=>({title:x.title,date:x.date}));
+          const prev=ops[key].at(-2),prevDecision=prev&&ops.decisions.find(d=>d.targetId===prev.id);
+          body.previous=prev?{number:prev.number,note:prevDecision?.decision==='changes-requested'?prevDecision.note||'':'',changes:(O.calendarChanges?.(prev.body.entries,v.body.entries)||[]).map(c=>O.changeText(c))}:null;
         }
-        plans.push({kind,canAct:sameName(ops.foundation.finalApprover,ui.actor)&&(!state.governance||G.can(state,ui,'approve',{brandId:brand.id,id:brand.id})),id:v.id,title:planLabels[kind]+' plan',version:v.number,state:d?.decision||'in-review',body,
+        plans.push({kind,canAct:sameName(ops.foundation.finalApprover,ui.actor)&&(!state.governance||G.can(state,ui,'approve',{brandId:brand.id,id:brand.id})),id:v.id,title:planLabels[kind],version:v.number,state:d?.decision||'in-review',body,
           decisions:d?[{state:d.decision,at:d.at,actor:d.actor,note:d.note}]:[]});
       }
     }
@@ -62,8 +64,8 @@
     return {inputs,creatives,plans,reports};
   }
 
-  const foundationFields=[['business','Business goals and offer'],['audience','Audience'],['scope','Scope'],['priorities','Priorities'],['brandBook','Brand guidance'],['media','Media readiness'],['access','Access readiness'],['communityOwner','Community owner'],['weeklyCapacity','Weekly capacity'],['responseDue','Response deadline'],['finalApprover','Named client approver']];
-  const strategyFields=[['objective','Objective'],['audience','Audience and value proposition'],['channelRoles','Channel roles'],['pillars','Content pillars'],['growth','Growth approach'],['kpi','Agreed KPI'],['definition','Measurement definition'],['baseline','Baseline'],['target','Target'],['window','Measurement window'],['cadence','Review cadence']];
+  const foundationFields=[['business','What the business offers'],['audience','Who we’re trying to reach'],['priorities','What social content should achieve'],['scope','What’s included and out of scope'],['brandBook','Brand guide or references'],['media','Available media and permissions'],['access','Account access or missing inputs'],['communityOwner','Community owner'],['weeklyCapacity','Posts per week'],['responseDue','Next input review'],['finalApprover','Client approver']];
+  const strategyFields=[['objective','Business objective'],['audience','Audience and value proposition'],['channelRoles','Channel roles and cadence'],['pillars','Content themes'],['growth','Growth tests'],['kpi','Main measure'],['definition','How it’s calculated'],['baseline','Starting point (baseline)'],['target','Target'],['window','Measurement window'],['cadence','How often we report results']];
   function findItem(data,kind,id,parent='') {
     const collection={input:data.inputs,creative:data.creatives,foundation:data.plans,strategy:data.plans,calendar:data.plans,report:data.reports}[kind]||[];
     return collection.find(x=>x.kind===kind && x.id===id && (x.parent||'')===parent) || fail('This item is no longer shared with this profile.');
@@ -174,8 +176,9 @@
     } else {
       const b=item.body;
       const U=UX(),counts=b.entries.reduce((m,x)=>(m[x.platform]=(m[x.platform]||0)+1,m),{});
-      main='<div class="task-summary"><strong>'+b.entries.length+' planned item'+(b.entries.length===1?'':'s')+(b.slots.length?' and '+b.slots.length+' reserved slot'+(b.slots.length===1?'':'s'):'')+' · '+escape(U.day(b.start))+' – '+escape(U.day(b.end))+'</strong><p>'+escape(Object.entries(counts).map(([k,n])=>k+' '+n).join(' · '))+'</p></div><div class="persona-table"><table><caption>Planned content and reserved slots</caption><thead><tr><th>Content</th><th>Channel / format</th><th>Purpose / KPI</th><th>Planned date</th></tr></thead><tbody>'+
-        [...b.entries,...b.slots.map(s=>({...s,platform:'Reserved slot'}))].sort((a,b)=>a.date.localeCompare(b.date)).map(s=>'<tr><th scope="row">'+escape(s.title)+'</th><td>'+escape(s.platform)+(s.format?'<small>'+escape(s.format)+'</small>':'')+'</td><td>'+escape(s.objective||'')+'<small>'+escape(s.kpi||'')+'</small>'+(s.angle?'<small>'+escape(s.angle)+'</small>':'')+'</td><td>'+escape(UX().day(s.date))+(s.time?'<small>'+escape(s.time)+'</small>':'')+'</td></tr>').join('')+'</tbody></table></div>';
+      const p=b.previous;
+      main=(p?'<div class="task-summary"><strong>'+(p.changes.length?'Changed since V'+p.number:'No changes since V'+p.number)+'</strong>'+(p.note?'<p>You asked: “'+escape(p.note)+'”</p>':'')+(p.changes.length?'<ul class="change-list">'+p.changes.map(c=>'<li>'+escape(c)+'</li>').join('')+'</ul>':'')+'</div>':'')+'<div class="task-summary"><strong>'+b.entries.length+' planned item'+(b.entries.length===1?'':'s')+(b.slots.length?' and '+b.slots.length+' reserved slot'+(b.slots.length===1?'':'s'):'')+' · '+escape(U.day(b.start))+' – '+escape(U.day(b.end))+'</strong><p>'+escape(Object.entries(counts).map(([k,n])=>k+' '+n).join(' · '))+'</p></div><div class="persona-table"><table><caption>Planned content and reserved slots</caption><thead><tr><th>Content</th><th>Channel / format</th><th>Purpose / KPI</th><th>Planned date</th></tr></thead><tbody>'+
+        [...b.entries,...b.slots.map(s=>({...s,platform:'Reserved slot'}))].sort((a,b)=>a.date.localeCompare(b.date)).map(s=>'<tr><th scope="row">'+escape(s.title)+'</th><td>'+escape(s.platform)+(s.format?'<small>'+escape(s.format)+'</small>':'')+'</td><td>'+escape(s.objective||'Not linked to the strategy')+(s.kpi?'<small>Measured by '+escape(s.kpi)+'</small>':'')+'</td><td>'+escape(UX().day(s.date))+(s.time?'<small>'+escape(s.time)+'</small>':'')+'</td></tr>').join('')+'</tbody></table></div>';
     }
     return main+item.decisions.map(d=>para(statusLabels[d.state]+' · '+d.actor+' · '+dateText(d.at),d.note||'Decision recorded.')).join('');
   }
@@ -226,7 +229,10 @@
         const file=f.elements.file?.files?.[0];
         if(file){if(file.size>30*1024*1024)throw Error(file.name+' is larger than 30 MB.');command.attachment={name:file.name,type:file.type,size:file.size,url:await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('Could not read '+file.name));reader.readAsDataURL(file);})};}
         const what={calendar:'Calendar',strategy:'Strategy',foundation:'Foundation',creative:'Creative'}[command.kind]||'Response';
-        const message=command.kind==='input'?'Response sent to the team.':command.kind==='report'?'Feedback sent to the team.':command.outcome==='approved'?what+' approved. The team has been handed the next step.':'Changes requested. The team will send a new version.';
+        const planKey={foundation:'foundationVersions',strategy:'strategies',calendar:'calendars'}[command.kind];
+        const sender=(planKey&&O?.account?.(ctx.state,command.brand)?.[planKey]?.find(v=>v.id===command.id)?.actor)||'The team';
+        const next={foundation:sender+' can now set the strategy with you.',strategy:sender+' will plan the calendar next.',calendar:sender+' will hand these posts to production. You’ll still approve each finished post.',creative:'The team will schedule it for publishing.'}[command.kind]||'';
+        const message=command.kind==='input'?'Response sent to the team.':command.kind==='report'?'Feedback sent to the team.':command.outcome==='approved'?what+' approved. '+next:sender+' has your note and will send a new version.';
         await ctx.commit(next=>perform(next,ctx.ui,command),message);
       }
       catch(err){const el=f.querySelector('[role="alert"]');el.textContent=err.message;el.tabIndex=-1;el.focus();}

@@ -319,9 +319,13 @@
         const allowed=new Set(data.brands.map(b=>b.id));document.querySelectorAll('[data-brand]').forEach(b=>{if(!allowed.has(b.dataset.brand))b.hidden=true;});
       }
       activeBrandId=data.brandId;
-      const anchor=posts.filter(r=>r.brand_id===activeBrandId && r.date).sort((a,b)=>a.date.localeCompare(b.date))[0]?.date;
+      // Open on the week of the next planned post (or this week), never on a past week.
+      const todayIso=new Date().toLocaleDateString('sv-SE'),dated=posts.filter(r=>r.brand_id===activeBrandId && r.date).sort((a,b)=>a.date.localeCompare(b.date));
+      const anchor=(dated.find(r=>r.date>=todayIso)||dated.at(-1))?.date||todayIso;
+      const monday=d=>{const x=new Date(d+'T12:00:00');x.setDate(x.getDate()-((x.getDay()+6)%7));return x.toLocaleDateString('sv-SE');};
       if(view?.week)activeWeekStart=view.week;
-      else if(!Object.hasOwn(planAccounts,activeBrandId) && activeBrandId!=='brand_zees' && anchor)activeWeekStart=anchor;
+      else if(!Object.hasOwn(planAccounts,activeBrandId) && activeBrandId!=='brand_zees')activeWeekStart=monday(anchor);
+      const rangeNote=el('calendarRangeNote');if(rangeNote&&!rangeNote.dataset.watched){rangeNote.dataset.watched='1';new MutationObserver(()=>{if(rangeNote.textContent.includes('realistic sample plan'))rangeNote.textContent=rangeNote.textContent.replace(' · realistic sample plan · not published',' · proposed dates, nothing is scheduled');}).observe(rangeNote,{childList:true,characterData:true,subtree:true});}
       el('artworkFilter').value=view?.artwork || 'all';
       installHooks();renderAll();applyRoleUI();
       if(view?.search)el('searchInput').value=view.search;
