@@ -249,10 +249,23 @@
     const originalOpen=openDrawer;
     openDrawer=function(id) {
       originalOpen(id);
-      const button=document.createElement('button');button.type='button';button.className='open-studio';button.textContent='Open in Studio';
-      button.onclick=()=>submitChain.then(()=>{if(!failure)host.studio(window,id);});
-      el('drawerBody').prepend(button);
+      // Workspace posts: show the planning facts, and actions that use the workspace (no planner-only approval).
+      const p=posts.find(x=>x.id===id),stale=document.getElementById('newAssetLink');if(stale)stale.remove();
+      if(p){
+        const row=(label,value,full)=>value&&!/^(To be defined|General|Editorial calendar)$/i.test(value)?'<div class="field'+(full?' full':'')+'"><small>'+label+'</small>'+(full?'<p>':'<strong>')+escapeHtml(value)+(full?'</p>':'</strong>')+'</div>':'';
+        el('drawerBody').innerHTML='<div class="drawer-grid">'+row('Date',[p.date,p.time].filter(Boolean).join(' at '))+row('Channel',[p.platform,p.format].filter(Boolean).join(' · '))+row('Producer',p.owner)+row('Theme',p.pillar)+row('Caption direction',/^Draft direction/.test(p.copy||'')?'':p.copy,true)+row('Objective',p.objective,true)+row('Audience',p.audience,true)+'</div>';
+      }
+      const actions=el('drawer').querySelector('.drawer-actions');
+      actions.querySelectorAll('#requestChanges,#approvePost').forEach(b=>{b.style.display='none';});
+      actions.querySelectorAll('[data-ws]').forEach(b=>b.remove());
+      const make=(label,cls,run)=>{const b=document.createElement('button');b.type='button';b.dataset.ws='1';b.className=cls;b.textContent=label;b.onclick=()=>submitChain.then(()=>{if(!failure)run();});return b;};
+      actions.append(make('Open in Studio','changes',()=>host.studio(window,id)),make(p?.date?'Change date':'Set a date','approve',()=>host.moveDate(window,id)));
     };
+    document.addEventListener('click',event=>{
+      if(!event.target.closest('#quickAdd'))return;
+      event.preventDefault();event.stopImmediatePropagation();
+      submitChain.then(()=>{if(!failure)host.newPost(window);});
+    },true);
     for(const name of ['click','input','change'])document.addEventListener(name,event=>{
       if(name==='input'||name==='change'){const form=event.target.closest('#ideaForm,#settingsForm,[data-planner-draft-key]');if(form)captureDraft(form);}
       queueMicrotask(rememberView);

@@ -65,9 +65,11 @@ The **Content Planner** progress strip at the top of Foundation, Research and St
    - **Client name** and a short **Account description**.
    - **Time zone** (for example `America/Los_Angeles`). All dates and release times for this client use it.
    - **Primary** and **Accent** colors. The whole interface takes on these colors when this account is selected; contrast is adjusted automatically.
-3. Click **Create account**. The new client appears in the **Client account** switcher at the top of every page.
+3. Click **Create account**. The new client appears in the **Client account** switcher at the top of every page, and the app opens its **Foundation** page.
 
 **Done when:** the client is selectable in the account switcher.
+
+> The client approver doesn't have to exist yet. If no one at the client has access, the Foundation form asks for the approver's name and adds them for you (Stage 3). You still need Stage 2 to give your own team access.
 
 ---
 
@@ -79,12 +81,12 @@ The **Content Planner** progress strip at the top of Foundation, Research and St
 
 ### 2.2 Give each person a membership on this client
 1. Click **Add membership** (or **Edit access** on an existing card).
-2. Choose the **Person** and an **Access preset**:
+2. Choose the **Person** and an **Access preset**. The person list leaves out other clients' contacts.
    - **Workspace Admin**: runs the account.
    - **Team Member**: works on assigned items.
    - **Client Approver**: makes client decisions.
    - **Client Viewer**: read-only.
-3. Tick the person's **Workflow functions**. These decide which steps they may do:
+3. The preset ticks its usual **Workflow functions** (Workspace Admin: account, strategy, operations, creative QA, analytics; Team Member: copy, design, publishing; Client Approver: client approval). Adjust them if needed. Functions decide which steps a person may do:
 
    | Function | Can do |
    |---|---|
@@ -139,11 +141,12 @@ Click **Set up foundation** (later **Edit foundation**) and fill in:
 - Available media and permissions
 - Accounts, evidence access and missing inputs
 - Delivery roles, backup owners and escalation contacts
-- **Client approver** and **Community owner** (chosen from the people list)
+- **Client approver**: chosen from the client contacts with access. On a new client with no contacts yet, type the approver's **full name** instead. Saving adds them to People & access as this account's Client Approver.
+- **Community owner** (optional, chosen from the people list)
 - Optional: content items per week, next input review date
 
 ### 3.2 Get the client's confirmation
-1. Save the foundation as a version. It appears under **Client confirmation**.
+1. **Save foundation** also sends it to the client approver (the message says *Foundation saved and sent to {name} to confirm*). It appears under **Client confirmation**.
 2. Switch to **Sam** → **Review → Plan approvals** → **Review** → **Approve** (or **Request changes** with a note).
 
 ### 3.3 Optional: campaigns
@@ -232,14 +235,16 @@ There are four ways to create drafts:
 | Way | Where | Best for |
 |---|---|---|
 | **Create draft from evidence** | Research → evidence card | One idea tied to its source. The **opening message** becomes the first line of the caption. |
-| **New content** | Today (top right) | A one-off post |
+| **+ Add a post** (or **+ New idea** inside the calendar) | Content Planner → Calendar | Planning posts one by one. Both open the same dialog: topic, opening message, call to action, channel, format, **content theme** (from the strategy), **proposed date**, time and **producer**. You stay on the calendar. |
 | **Bulk import** | Content Planner → Bulk import | A whole calendar (CSV) plus detailed briefs (XLSX). Preview, map columns, choose a default assignee, confirm. Invalid rows can be excluded; duplicates are detected. |
-| **+ New idea** | Content Planner → Calendar | Planning ideas directly in the calendar |
+| **New content** | Today (top right) | A one-off post outside the planning flow |
 
-Each draft gets a channel, format, producer and **proposed date**. A date is needed before production.
+Drafts made from research or from the calendar inherit the latest strategy: its audience, objective and measure, plus the client approver. The client sees that goal and measure on every row of the calendar review. A date is needed before production.
 
 ### 6.2 Arrange the calendar
 **Content Planner → Calendar** has List / Week / Month / 90-day views, filters, notes per day and a status chip on each card. **Schedule list** shows the same posts as a table.
+
+**Change a date:** click a post in the calendar → **Change date**, or use **Change date** under *People and timing* on the post's Studio page. The calendar updates straight away, and no new brief revision is created. If the post was on an approved or pending calendar, the dialog says so and the bar asks you to send an update.
 
 Optional: **Reserved trend slots** (on Strategy & KPIs → *Calendar approvals and reserved slots*) hold capacity for topical posts, each with an evergreen fallback.
 
@@ -254,7 +259,7 @@ Switch to **Sam** → **Today → Awaiting your review → Calendar plan** (or R
 ### 6.5 If the client asks for changes
 - Asha's **Today** shows a red alert at the top: *Sam asked for changes to Calendar Vn*, with Sam's note and **Revise the calendar**. It also counts in **Needs attention**.
 - The Calendar bar turns red, and the readiness card on each affected post shows the request.
-- Fix the posts in the calendar, then click **Send revised calendar**. The dialog repeats Sam's note and reuses the same period.
+- Fix the posts in the calendar (for a date: click the post → **Change date**), then click **Send revised calendar**. The dialog repeats Sam's note and reuses the same period.
 
 **Done when:** each draft's readiness card shows **✓ Calendar approved**. This approves the *plan* only; each finished creative is still approved separately.
 

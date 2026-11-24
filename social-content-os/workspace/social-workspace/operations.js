@@ -55,7 +55,7 @@
   /* One place that answers: what is the state of this account's calendar approval? */
   function calendarStatus(state,brandId){
     const ops=account(state,brandId),version=ops.calendars?.at(-1)||null,decision=version?ops.decisions.find(d=>d.targetId===version.id)||null:null;
-    const uncovered=state.posts.filter(p=>p.brandId===brandId&&p.date&&p.strategyVersionId&&!C.isApproved(p)&&!calendarCoverage(state,p));
+    const uncovered=state.posts.filter(p=>p.brandId===brandId&&p.date&&p.date>=todayDate()&&!C.isApproved(p)&&!calendarCoverage(state,p));
     return {version,decision,approver:ops.foundation?.finalApprover||'the client approver',strategyApproved:approved(ops,ops.strategies?.at(-1)),
       pending:!!version&&!decision,rejected:decision?.decision==='changes-requested',approved:decision?.decision==='approved',uncovered};
   }
@@ -68,7 +68,9 @@
     else if(s.pending){tone='wait';title='Calendar V'+v.number+' is with '+s.approver;text='Sent '+U.day(v.at)+' · '+items(v.body.entries.length)+' from '+U.day(v.body.start)+' to '+U.day(v.body.end)+'. Waiting for a decision.';action=small('See what was sent','inspect-calendar',v.id);}
     else if(s.approved){tone=n?'wait':'ok';title='Calendar V'+v.number+' approved by '+s.decision.actor;text=n?items(n)+' added or changed since then still '+(n===1?'needs':'need')+' approval.':'Everything planned from '+U.day(v.body.start)+' to '+U.day(v.body.end)+' is approved.';action=n&&canPlan?button('Send update for approval','calendar','','primary'):small('See what was approved','inspect-calendar',v.id);}
     else{title='Not sent for approval yet';text=n?items(n)+' waiting. Sending asks '+s.approver+' to approve the plan for a period.':'Add posts with a proposed date, then send them to '+s.approver+' for approval.';action=canPlan&&n?button('Send calendar for approval','calendar','','primary'):'';}
-    const how=U.optional('How posts get onto the calendar · and what approval means','<div class="full"><ol class="cal-how"><li><b>From research:</b> <a href="#plan/research">Research</a> → <i>Create draft from evidence</i>.</li><li><b>One post:</b> <i>New content</i> on Today, or <i>+ New idea</i> in the calendar below.</li><li><b>A whole month:</b> <a href="#plan/import">Bulk import</a> a calendar CSV.</li></ol><p class="task-note">Every post with a proposed date appears on the calendar. <b>Sending the calendar</b> asks '+esc(s.approver)+' to approve what is planned in a period: topic, channel, format, date and goal. Production can start once it is approved. '+esc(s.approver.split(' ')[0])+' still approves each finished post later.</p></div>');
+    const add=canPlan&&account(ctx.state,ctx.ui.brand).strategies?.length?'<button type="button" class="btn small" data-research-action="plan-post">+ Add a post</button>':'';
+    action+=add;
+    const how=U.optional('How posts get onto the calendar · and what approval means','<div class="full"><ol class="cal-how"><li><b>From research:</b> <a href="#plan/research">Research</a> → <i>Create draft from evidence</i>.</li><li><b>One post:</b> <i>+ Add a post</i> here, or <i>+ New idea</i> in the calendar below. Both use the agreed strategy.</li><li><b>A whole month:</b> <a href="#plan/import">Bulk import</a> a calendar CSV.</li></ol><p class="task-note">Every post with a proposed date appears on the calendar. <b>Sending the calendar</b> asks '+esc(s.approver)+' to approve what is planned in a period: topic, channel, format, date and goal. Production can start once it is approved. '+esc(s.approver.split(' ')[0])+' still approves each finished post later.</p></div>');
     return '<section class="cal-bar '+tone+'"><div class="cal-bar-main"><span class="eyebrow">Calendar approval</span><h2>'+esc(title)+'</h2><p>'+esc(text)+'</p></div><div class="actions">'+action+'</div></section>'+how;
   }
   function calendarPackage(state,brandId,range) {
@@ -393,6 +395,14 @@
     const target=action.startsWith('decision-')?{brandId:ui.brand}:record;
     if(!caps.some(cap=>G.can(state,ui,cap,target))){const names=(G.eligiblePeople(state,ui.brand)||[]).filter(x=>!x.agencyAdmin&&caps.some(cap=>G.can(state,{brand:ui.brand,personId:x.id},cap,target))).map(x=>x.name);throw Error(names.length?'Only '+names.join(' or ')+' can do this. Switch person to continue.':'Your role can’t do this. Ask the account coordinator.');}
   }
+  /* The client approver: pick an existing client contact, or (for an admin on a new account) name one here. */
+  function approverField(value){
+    const G=root.JMLGovernance;if(!G)return field('finalApprover','Client approver',value,'text',true);
+    const people=G.eligiblePeople(context.state,context.ui.brand,'client');
+    if(people.length)return select('finalApprover','Client approver',[['','Choose the client approver'],...people.map(p=>[p.name,p.name])],value||'')+'<p class="task-note full">Someone else? Add them in <a href="#accounts/people">People &amp; access</a>.</p>';
+    if(G.can(context.state,context.ui,'admin'))return field('newApprover','Client approver’s full name','','text',true)+'<p class="task-note full">No one at the client has access yet. Saving adds this person to People &amp; access as the account’s client approver. They confirm plans and approve creative.</p>';
+    return '<div class="notice warning full"><div><strong>No client approver yet</strong><p>Ask a workspace admin to add the client contact in <a href="#accounts/people">People &amp; access</a>.</p></div></div>';
+  }
   function personField(name,label,value,functions){
     const G=root.JMLGovernance;if(!G)return field(name,label,value,'text',true);
     const people=G.eligiblePeople(context.state,context.ui.brand).filter(p=>!functions||functions.some(fn=>G.eligiblePeople(context.state,context.ui.brand,fn).some(x=>x.id===p.id)));
@@ -411,7 +421,7 @@
     if(action==='foundation'){
       const f=ops.foundation;
       openForm('Client foundation',action,id,
-        U.section('The essentials','These five answers carry into strategy and production.',fullText('business','What does the business offer?',f.business,true)+fullText('audience','Who are we trying to reach?',f.audience,true)+fullText('priorities','What should social content achieve?',f.priorities,true)+fullText('scope','What is included, and what is out of scope?',f.scope,true)+personField('finalApprover','Client approver',f.finalApprover,['client']))+
+        U.section('The essentials','These answers carry into strategy and production.',fullText('business','What does the business offer?',f.business,true)+fullText('audience','Who are we trying to reach?',f.audience,true)+fullText('priorities','What should social content achieve?',f.priorities,true)+fullText('scope','What is included, and what is out of scope?',f.scope,true)+approverField(f.finalApprover))+
         U.optional('Brand materials and delivery details (optional)',fullText('brandBook','Brand guide or reference links',f.brandBook)+fullText('media','Available media and permissions',f.media)+fullText('access','Account access or missing inputs',f.access)+personField('communityOwner','Community owner',f.communityOwner)+field('weeklyCapacity','Content items per week, if agreed',f.weeklyCapacity??'','number')+field('responseDue','Next input review, if needed',f.responseDue||'','date'))+
         U.summary('Team comes from People & access','Account memberships supply the team. You can add backup owners or escalation details when a handoff needs them.'),'Save foundation');
     }else if(action==='strategy'){
@@ -547,8 +557,10 @@
       const ops=account(next,brandId,true), p=postId?scopedPost(next,postId,brandId):null;
       assertAction(kind,id,next);
       if(kind==='foundation'){
-        if(root.JMLGovernance&&!root.JMLGovernance.eligiblePeople(next,brandId,'client').some(p=>p.name===f.finalApprover))throw Error('Choose an active named client approver for this account.');
-        saveFoundation(next,brandId,f,actor);
+        const {newApprover,...answers}=f,newName=String(newApprover||'').trim();
+        if(newName&&root.JMLGovernance)answers.finalApprover=root.JMLGovernance.addClientContact(next,ui,brandId,newName).name;
+        if(root.JMLGovernance&&!root.JMLGovernance.eligiblePeople(next,brandId,'client').some(p=>p.name===answers.finalApprover))throw Error('Choose the client approver for this account.');
+        saveFoundation(next,brandId,answers,actor);
       }else if(kind==='strategy'){
         const version=snapshot(ops,kind,f,actor,{foundation:C.clone(ops.foundation),sourceIds:ops.sources.map(s=>s.id)});
         if(!version.body.kpi || !version.body.definition)throw Error('Define the KPI and its measurement method.');
@@ -626,7 +638,7 @@
         if(!ex){ex={key,taskId:task.id,events:[]};ops.exceptions.push(ex);}
         Object.assign(ex,f);ex.events.push({...f,at:C.now(),actor});record(ops,actor,'Delivery exception '+f.status,task.title+' · '+f.note);
       }
-    },sourceIdea?'Draft created.':({calendar:'Calendar sent to '+(account(context.state,brandId).foundation?.finalApprover||'the client approver')+' for approval.',route:'Production set up. The producer can start when the brief is accepted.',strategy:'Strategy version saved. Send it to the client for a decision.',foundation:'Foundation saved.','qc-failure':'Returned to the producer with your note.',tasks:'Checklist progress saved.',campaign:'Campaign saved.',slot:'Slot reserved.',watchlist:'Watchlist saved.',source:'Evidence saved.'})[kind]||'Saved.');
+    },sourceIdea?'Draft created.':({calendar:'Calendar sent to '+(account(context.state,brandId).foundation?.finalApprover||'the client approver')+' for approval.',route:'Production set up. The producer can start when the brief is accepted.',strategy:'Strategy version saved. Send it to the client for a decision.',foundation:'Foundation saved and sent to '+(String(f.newApprover||'').trim()||f.finalApprover||'the client approver')+' to confirm.','qc-failure':'Returned to the producer with your note.',tasks:'Checklist progress saved.',campaign:'Campaign saved.',slot:'Slot reserved.',watchlist:'Watchlist saved.',source:'Evidence saved.'})[kind]||'Saved.');
     if(opened)context.navigate(urlFor({id:opened},'brief'));
   }
   function mount(ctx) {
