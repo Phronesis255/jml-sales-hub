@@ -53,8 +53,8 @@
     const U=root.JMLWorkflowUI;
     return events.length?'<ol class="rl-timeline">'+events.slice().sort((a,b)=>String(a.at).localeCompare(String(b.at))).reverse().map(r=>'<li><strong>'+esc(U.sentence(U.clean(r.type||r.outcome||r.decision||'')))+'</strong><small>'+esc(utcDisplay(r.at)+' · '+r.actor)+'</small>'+(r.note?'<p>'+esc(r.note)+'</p>':'')+(r.receipt?'<p class="rl-receipt" title="'+esc(r.receipt)+'">Receipt reference saved</p>':'')+'</li>').join('')+'</ol>':meta('No activity yet.');
   }
-  function emit(s,msg){
-    const b=brand(),who=actor();return ctx.commit(n=>{s(n,b,who);D.validate(n);},msg);
+  function emit(s,msg,feedback=false){
+    const b=brand(),who=actor();return ctx.commit(n=>{s(n,b,who);D.validate(n);},msg,{feedback});
   }
   function publishView(){
     const posts=ctx.scoped(),approved=posts.filter(ctx.C.isApproved),placements=items('placements').filter(p=>can('coordinate',p)||publisher(p)||communityOwner(p)).slice().reverse();
@@ -397,8 +397,8 @@
     if(cmd==='mark-published'){const p=record('placements',key);allow('publish',p);if(!publisher(p))throw Error('Only the assigned publisher can publish this placement.');
       const local=new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
       return form('Mark as published','mark-published',input('Link to the live post','url','','url')+input('Published at (your local time)','actualAt',local,'datetime-local')+area('How you checked it (optional)','note','Checked the live post against the approved files and caption.',false),'Mark as published',key,'Post it on '+p.platform+' first, then paste the link here. This records the hand-off and the verification in one step.');}
-    if(cmd==='publish-now'){const p=record('placements',key);allow('publish',p);if(!publisher(p))throw Error('Only the assigned publisher can publish this placement.');const needsReceipt=!!p.handoff&&!p.receipt;await emit((s,b,a)=>{if(needsReceipt)D.receiveHandoff(s,b,key,a,ctx.ui.personId);D.advance(s,b,key,'schedule',{scenario:'accept',checked:true},a);D.advance(s,b,key,'verify',{checked:true},a);},'Published (simulated) to '+p.platform+'.'+(p.communityOwner?' '+p.communityOwner+' will watch the first comments.':''));placementDetail(key);return;}
-    if(cmd==='release-step'){const [pid,op]=key.split('|'),pl=record('placements',pid);if(pl.mode==='simulation'&&op==='verify'){allow('publish',pl);if(!publisher(pl))throw Error('Only the assigned publisher can operate this placement.');await emit((s,b,a)=>D.advance(s,b,pid,'verify',{checked:true},a),'Publication verified.');placementDetail(pid);return;}return stepForm(key);}
+    if(cmd==='publish-now'){const p=record('placements',key);allow('publish',p);if(!publisher(p))throw Error('Only the assigned publisher can publish this placement.');const needsReceipt=!!p.handoff&&!p.receipt;await emit((s,b,a)=>{if(needsReceipt)D.receiveHandoff(s,b,key,a,ctx.ui.personId);D.advance(s,b,key,'schedule',{scenario:'accept',checked:true},a);D.advance(s,b,key,'verify',{checked:true},a);},'Published (simulated) to '+p.platform+'.'+(p.communityOwner?' '+p.communityOwner+' will watch the first comments.':''),true);placementDetail(key);return;}
+    if(cmd==='release-step'){const [pid,op]=key.split('|'),pl=record('placements',pid);if(pl.mode==='simulation'&&op==='verify'){allow('publish',pl);if(!publisher(pl))throw Error('Only the assigned publisher can operate this placement.');await emit((s,b,a)=>D.advance(s,b,pid,'verify',{checked:true},a),'Publication verified.',true);placementDetail(pid);return;}return stepForm(key);}
     if(cmd==='pause')return pauses();
     if(cmd==='toggle-pause'||cmd==='placement-pause'){
       const [scope,target]=cmd==='placement-pause'?['placement',key]:JSON.parse(key);
@@ -431,8 +431,8 @@
         const blob=root.JMLReleaseFiles.bundle(D.manifest(ctx.state,record('placements',key)),prepared),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=p.contentId+'-v'+p.handoff.versionNumber+'-approved.zip';link.click();setTimeout(()=>URL.revokeObjectURL(url),10000);placementDetail(key);
       }finally{el.disabled=false;el.textContent='Download approved files (ZIP)';}return;
     }
-    if(cmd==='receive-package'){const p=record('placements',key);allow('publish',p);await emit((s,b,a)=>D.receiveHandoff(s,b,key,a,ctx.ui.personId),'Package accepted. Next: '+(p.mode==='manual'?'record the handoff.':'schedule it.'));placementDetail(key);return;}
-    if(cmd==='receive-community'){const p=record('placements',key);if(!communityOwner(p))throw Error('Only the assigned community owner can accept this handoff.');return emit((s,b,a)=>D.receiveCommunity(s,b,key,a,ctx.ui.personId),'Community handoff accepted.');}
+    if(cmd==='receive-package'){const p=record('placements',key);allow('publish',p);await emit((s,b,a)=>D.receiveHandoff(s,b,key,a,ctx.ui.personId),'Package accepted. Next: '+(p.mode==='manual'?'record the handoff.':'schedule it.'),true);placementDetail(key);return;}
+    if(cmd==='receive-community'){const p=record('placements',key);if(!communityOwner(p))throw Error('Only the assigned community owner can accept this handoff.');return emit((s,b,a)=>D.receiveCommunity(s,b,key,a,ctx.ui.personId),'Community handoff accepted.',true);}
     if(cmd==='calculate-kpi'||cmd==='rate')return kpiForm();
     if(cmd==='calculation')return calculationDetail(key);
     if(cmd==='calculation-export'){download(record('calculations',key),key+'.json');return;}
@@ -509,13 +509,13 @@
       if(f.communityOwnerPersonId)f.communityOwner=root.JMLGovernance.person(ctx.state,f.communityOwnerPersonId)?.name;
       f.approver=ctx.C.latest(post).decisions.slice().reverse().find(d=>d.action==='approved')?.actor;
       f.scopeApproved=true; // Saving the placement is the release approval for this exact, client-approved version.
-      let created;await emit((s,b,a)=>{created=D.createPlacement(s,b,f,a);},'Placement prepared for '+(f.owner||'the publisher')+'.');if(created?.id)placementDetail(created.id);return;
+      let created;await emit((s,b,a)=>{created=D.createPlacement(s,b,f,a);},'Placement prepared for '+(f.owner||'the publisher')+'.',true);if(created?.id)placementDetail(created.id);return;
     }
     if(cmd==='mark-published'){f.checked=true;const p=record('placements',key);allow('publish',p);if(!publisher(p))throw Error('Only the assigned publisher can publish this placement.');
       f.actualAt=new Date(f.actualAt).toISOString();if(!String(f.note||'').trim())f.note='Checked the live post against the approved files and caption.';
       const needsReceipt=!!p.handoff&&!p.receipt;
-      await emit((s,b,a)=>{if(needsReceipt)D.receiveHandoff(s,b,key,a,ctx.ui.personId);D.advance(s,b,key,'schedule',{checked:true},a);D.advance(s,b,key,'verify',f,a);},'Marked as published on '+p.platform+'.'+(p.communityOwner?' '+p.communityOwner+' will watch the first comments.':''));placementDetail(key);return;}
-    if(cmd==='release-step'){f.checked=true;const [id,step]=key.split('|'),p=record('placements',id);allow('publish',p);if(!publisher(p))throw Error('Only the assigned publisher can operate this placement.');if(f.actualAt)f.actualAt=utc(f.actualAt);await emit((s,b,a)=>D.advance(s,b,id,step,f,a),{schedule:p.mode==='manual'?'Handoff recorded.':f.scenario==='reject'?'The platform rejected the schedule (simulated). Check the details and try again.':f.scenario==='timeout'?'No response (simulated). Reconcile the attempt before retrying.':'Scheduled (simulated) for '+utcDisplay(p.scheduledAt)+'.',verify:'Publication verified.',cancel:'Cancellation recorded.','confirm-cancel':'Cancellation confirmed.',reconcile:'Delivery reconciled.'}[step]||'Release history updated.');placementDetail(id);return;}
+      await emit((s,b,a)=>{if(needsReceipt)D.receiveHandoff(s,b,key,a,ctx.ui.personId);D.advance(s,b,key,'schedule',{checked:true},a);D.advance(s,b,key,'verify',f,a);},'Marked as published on '+p.platform+'.'+(p.communityOwner?' '+p.communityOwner+' will watch the first comments.':''),true);placementDetail(key);return;}
+    if(cmd==='release-step'){f.checked=true;const [id,step]=key.split('|'),p=record('placements',id);allow('publish',p);if(!publisher(p))throw Error('Only the assigned publisher can operate this placement.');if(f.actualAt)f.actualAt=utc(f.actualAt);await emit((s,b,a)=>D.advance(s,b,id,step,f,a),{schedule:p.mode==='manual'?'Handoff recorded.':f.scenario==='reject'?'The platform rejected the schedule (simulated). Check the details and try again.':f.scenario==='timeout'?'No response (simulated). Reconcile the attempt before retrying.':'Scheduled (simulated) for '+utcDisplay(p.scheduledAt)+'.',verify:'Publication verified.',cancel:'Cancellation recorded.','confirm-cancel':'Cancellation confirmed.',reconcile:'Delivery reconciled.'}[step]||'Release history updated.',true);placementDetail(id);return;}
     if(cmd==='calculate-kpi')return emit((s,b,a)=>D.calculate(s,b,f,a),'Measured outcome saved.');
     if(cmd==='propose-next'){if(!can('strategy'))allow('coordinate');if(f.ownerPersonId)f.owner=root.JMLGovernance.person(ctx.state,f.ownerPersonId)?.name;return emit((s,b,a)=>D.proposeNext(s,b,key,f,a),'Next-plan proposal saved.');}
     if(cmd==='proposal-decision'){if(!can('strategy'))allow('coordinate');f.personId=ctx.ui.personId;return emit((s,b,a)=>D.decideProposal(s,b,key,f,a),'Planning decision saved.');}

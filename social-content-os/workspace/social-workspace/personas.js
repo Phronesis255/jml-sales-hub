@@ -247,7 +247,7 @@
         const sender=(planKey&&O?.account?.(ctx.state,command.brand)?.[planKey]?.find(v=>v.id===command.id)?.actor)||'The team';
         const next={foundation:sender+' can now set the strategy with you.',strategy:sender+' will plan the calendar against them next.',calendar:sender+' will hand these posts to production. You’ll still approve each finished post.',creative:'The team will schedule it for publishing.'}[command.kind]||'';
         const message=command.kind==='input'?'Response sent to the team.':command.kind==='report'?(String(command.outcome).startsWith('decision')?'Thanks. Your answer is with the team.':'Feedback sent to the team.'):command.outcome==='approved'?what+' approved. '+next:sender+' has your note and will send a new version.';
-        await ctx.commit(next=>perform(next,ctx.ui,command),message);
+        await ctx.commit(next=>perform(next,ctx.ui,command),message,{feedback:true});
       }
       catch(err){const el=f.querySelector('[role="alert"]');el.textContent=err.message;el.tabIndex=-1;el.focus();}
       finally {buttons.forEach(b=>b.disabled=false);}

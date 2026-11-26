@@ -582,7 +582,7 @@
       return context.commit(next=>startProduction(scopedPost(next,id,ui.brand),ui.actor,next),'Production started.');
     }else if(action==='brief-ready'){
       if(context.hasPendingBrief?.())throw Error('Save your brief version before accepting it for production.');
-      return context.commit(next=>acceptBriefReadiness(next,scopedPost(next,id,ui.brand),ui.actor),(C.latest(post)?.briefRevision===post?.briefRevision&&C.latest(post)?.state==='draft'?'Brief confirmed. You can send V'+C.latest(post).number+' to '+(post.brief.approver||'the client')+' now.':'Brief confirmed. '+(post?.production?.producer||'The producer')+' can start.'));
+      return context.commit(next=>acceptBriefReadiness(next,scopedPost(next,id,ui.brand),ui.actor),(C.latest(post)?.briefRevision===post?.briefRevision&&C.latest(post)?.state==='draft'?'Brief confirmed. You can send V'+C.latest(post).number+' to '+(post.brief.approver||'the client')+' now.':'Brief confirmed. '+(post?.production?.producer||'The producer')+' can start.'),{feedback:true});
     }else if(action==='qc-failure'){
       openForm('Request internal correction',action,id,field('reviewer','Internal reviewer',post.production?.qcReviewer||ui.actor,'text',true)+fullText('note','What must change before client review?','',true),'Return for correction');
     }else if(action==='annotate'){
@@ -730,7 +730,7 @@
         if(!ex){ex={key,taskId:task.id,events:[]};ops.exceptions.push(ex);}
         Object.assign(ex,f);ex.events.push({...f,at:C.now(),actor});record(ops,actor,'Delivery exception '+f.status,task.title+' · '+f.note);
       }
-    },sourceIdea?'Draft created.':({calendar:'Calendar sent to '+(account(context.state,brandId).foundation?.finalApprover||'the client approver')+' for approval.',route:'Handed to '+(f.producer||'the producer')+' (producer) and '+(f.qcReviewer||'the reviewer')+' (reviewer). They’ll see it on their Today.',strategy:'Strategy version saved. Send it to the client for a decision.',foundation:'Foundation saved. Next: set the strategy and KPIs for '+(String(f.newApprover||'').trim()||f.finalApprover||'the client approver')+' to approve.','qc-failure':'Returned to the producer with your note.',tasks:'Checklist progress saved.',campaign:'Campaign saved.',slot:'Slot reserved.',watchlist:'Watchlist saved.',source:'Evidence saved.'})[kind]||'Saved.');
+    },sourceIdea?'Draft created.':({calendar:'Calendar sent to '+(account(context.state,brandId).foundation?.finalApprover||'the client approver')+' for approval.',route:'Handed to '+(f.producer||'the producer')+' (producer) and '+(f.qcReviewer||'the reviewer')+' (reviewer). They’ll see it on their Today.',strategy:'Strategy version saved. Send it to the client for a decision.',foundation:'Foundation saved. Next: set the strategy and KPIs for '+(String(f.newApprover||'').trim()||f.finalApprover||'the client approver')+' to approve.','qc-failure':'Returned to the producer with your note.',tasks:'Checklist progress saved.',campaign:'Campaign saved.',slot:'Slot reserved.',watchlist:'Watchlist saved.',source:'Evidence saved.'})[kind]||'Saved.',{feedback:true});
     if(opened)context.navigate(urlFor({id:opened},'brief'));
   }
   function mount(ctx) {

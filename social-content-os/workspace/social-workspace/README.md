@@ -55,6 +55,10 @@ Repeated source uploads show duplicate or already-attached rows instead of overw
 
 Optional-step policy can permit ordinary production steps to be skipped with a reason. Internal QA, client approval and publishing verification remain protected gates. A post's history connects versions, people, handoffs and release events.
 
+## Success feedback
+
+Verified publication triggers a brief confetti burst in the active account colors, including simulated publication. Successful assignments, production and review handoffs, approvals, and publishing/community receipts use a smaller checkmark relay. Effects appear only after the workspace save succeeds; imports, demo loading and reloads do not replay them. Reduced-motion preferences show a static check instead. Effects are decorative, never capture focus or clicks, and leave the existing status message available to screen readers.
+
 ## Memory and exports
 
 The canonical workspace document is stored in IndexedDB as JSON-compatible records. Uploaded creative binaries are stored locally alongside it. Brief snapshots, creative versions, approvals, import batches, assignments, evidence and learning history survive reload.
