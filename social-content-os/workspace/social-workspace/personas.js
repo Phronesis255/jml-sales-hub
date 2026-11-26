@@ -29,14 +29,14 @@
         }
       }
       const v=C.latest(p);
-      if(!v || (!sharedReading&&!sameName(p.brief.approver,ui.actor)) || v.briefRevision!==p.briefRevision || !['in-review','approved','changes-requested'].includes(v.state) || !C.qcKeys.every(k=>v.qc?.[k]===true))continue;
+      if(C.supervisionLevel(brand)<2||!v || (!sharedReading&&!sameName(p.brief.approver,ui.actor)) || v.briefRevision!==p.briefRevision || !['in-review','approved','changes-requested'].includes(v.state) || !C.qcKeys.every(k=>v.qc?.[k]===true))continue;
       creatives.push({kind:'creative',canAct:state.governance?G.can(state,ui,'approve',p):sameName(p.brief.approver,ui.actor),id:v.id,parent:p.id,title:p.title,version:v.number,state:v.state,caption:v.caption,platform:p.platform,format:p.format,date:p.date,
         assets:v.assets.filter(a=>C.safeMedia(a.url)).map(a=>({type:a.type,url:a.url,alt:a.alt})),
         decisions:v.decisions.map(d=>({state:d.action,actor:d.actor,at:d.at,note:d.comment}))});
     }
     if(sharedReading||sameName(ops.foundation.finalApprover,ui.actor)) {
-      // The foundation is internal to the team; the client signs off the strategy and KPIs, then the calendar.
-      for(const [kind,key] of [['strategy','strategies'],['calendar','calendars']]) {
+      // Foundation and strategy stay internal; calendar approval follows the account policy.
+      for(const [kind,key] of (C.supervisionLevel(brand)>0?[['calendar','calendars']]:[])) {
         const v=ops[key]?.at(-1);
         if(!v)continue;
         const d=ops.decisions.find(d=>d.kind===kind && d.targetId===v.id);

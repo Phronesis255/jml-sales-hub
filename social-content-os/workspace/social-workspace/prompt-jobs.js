@@ -4,9 +4,9 @@
   const templateVersions=(s,brand)=> (s.resources||[]).filter(r=>r.brandId===brand)
     .flatMap(r=>r.versions.map((v,i)=>({resource:r,version:v,number:i+1})).reverse())
     .filter(t=>t.version.type==='Prompt template' && t.version.notes.trim());
-  function assemble(template,post,notes='') {
+  function assemble(template,post,notes='',brandVoice='') {
     const brief=post.brief, lines=[
-      ['Content',post.title],['Platform',post.platform],['Format',post.format],
+      ['Brand voice',brandVoice],['Content',post.title],['Platform',post.platform],['Format',post.format],
       ['Objective',brief.objective],['Audience',brief.audience],['Call to action',brief.cta],
       ['Creative direction',brief.direction],['Slide copy',brief.slideCopy],['Caption',brief.caption]
     ];
@@ -14,6 +14,7 @@
     if(spec)for(const [label,key] of [['Rights and permissions','rights'],['Rights expiry','rightsExpiry']])lines.push([label,spec[key]]);
     return [template.notes.trim(),lines.filter(([,v])=>v?.trim()).map(([k,v])=>k+' — '+v.trim()).join('\n'),notes.trim()].filter(Boolean).join('\n\n');
   }
+  const brandVoice=(s,id)=>s.brands.find(b=>b.id===id)?.operations?.foundation?.brandVoice ?? s.brands.find(b=>b.id===id)?.brandBook?.brandVoice?.description ?? '';
   function prepare(s,C,brand,actor,input) {
     const template=templateVersions(s,brand).find(t=>t.resource.id===input.resourceId && t.number===input.version);
     const p=s.posts.find(p=>p.brandId===brand && p.id===input.postId);
@@ -21,7 +22,7 @@
     if(p.briefRevision!==input.revision)throw Error('The brief changed. Reopen this job form to use the current revision.');
     const job={id:C.id('prompt-job'),brandId:brand,resourceId:template.resource.id,templateVersion:template.number,
       templateName:template.version.name,postId:p.id,briefRevision:p.briefRevision,title:p.title,
-      prompt:assemble(template.version,p,input.notes),actor,at:C.now(),outputs:[]};
+      prompt:assemble(template.version,p,input.notes,brandVoice(s,brand)),actor,at:C.now(),outputs:[]};
     (s.promptJobs??=[]).push(job);
     C.event(p,'Prompt job prepared',job.templateName+' V'+job.templateVersion+' · brief revision '+job.briefRevision+' · '+job.id,actor);
     return job.id;
@@ -105,7 +106,7 @@
       const post=s.posts.find(p=>p.id===input.postId&&p.brandId===ctx.ui.brand);
       if(!template||!post)return;
       newForm.dataset.revision=post.briefRevision;
-      find(newForm,'prompt').value=assemble(template.version,post,input.notes);
+      find(newForm,'prompt').value=assemble(template.version,post,input.notes,brandVoice(s,ctx.ui.brand));
     }
     if(newForm){newForm.addEventListener('input',preview);newForm.addEventListener('change',preview);preview();}
     panel.addEventListener('click',async ev=>{

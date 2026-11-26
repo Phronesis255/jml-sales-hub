@@ -38,7 +38,7 @@ window.JMLAgency = (() => {
       const [primary,accent]=palette(brand);
       const posts=state.posts.filter(p=>p.brandId===brand.id);
       const review=posts.filter(p=>C.status(p)==='in-review').length;
-      return '<article class="client-card" style="--client-primary:'+primary+';--client-accent:'+accent+'"><div class="client-strip"></div><div class="panel-body"><p class="client-meta">'+e(brand.initials)+' · '+e(String(brand.timezone||'').split('/').pop().replace(/_/g,' '))+' time</p><h2>'+e(brand.name)+'</h2><p>'+e(brand.description||'Client workspace')+'</p><dl><div><dt>Content items</dt><dd>'+posts.length+'</dd></div><div><dt>Awaiting review</dt><dd>'+review+'</dd></div></dl>'+btn(ui.brand===brand.id?'Open active account':'Open account','client-open','small','data-brand="'+e(brand.id)+'"')+'</div></article>';
+      return '<article class="client-card" style="--client-primary:'+primary+';--client-accent:'+accent+'"><div class="client-strip"></div><div class="panel-body"><p class="client-meta">'+e(brand.initials)+' · '+e(String(brand.timezone||'').split('/').pop().replace(/_/g,' '))+' time</p><h2>'+e(brand.name)+'</h2><p>Client supervision: Level '+C.supervisionLevel(brand)+' · '+['No client approvals','Calendar only','Calendar and finished posts'][C.supervisionLevel(brand)]+'</p><p>'+e(brand.description||'Client workspace')+'</p><dl><div><dt>Content items</dt><dd>'+posts.length+'</dd></div><div><dt>Awaiting review</dt><dd>'+review+'</dd></div></dl>'+btn(ui.brand===brand.id?'Open active account':'Open account','client-open','small','data-brand="'+e(brand.id)+'"')+'</div></article>';
     });
     return heading('Agency','Client accounts','Choose an account to open its work queue.',btn('Add client','client-new','primary'))+'<div class="client-grid">'+cards.join('')+'</div>';
   }
@@ -54,14 +54,16 @@ window.JMLAgency = (() => {
       '<section class="panel"><div class="panel-head"><h2>Account resources</h2><span>'+entries.length+'</span></div>'+(rows||'<p class="panel-body">Add the brand book or an approved reference to get started.</p>')+'</section>'+
       '<section class="panel section-gap"><div class="panel-head"><h2>JML tools and guides</h2></div>'+tools.map(([name,url])=>'<a class="list-row" href="'+url+'" target="_blank" rel="noopener">'+name+' ↗</a>').join('')+'</section>';
   }
-  const handles=a=>['client-new','client-open','resource-new','resource-edit'].includes(a);
-  const isForm=id=>['account-form','resource-form'].includes(id);
+  const brandBookField=()=>'<label class="full">Brand book JSON<input type="file" name="brandBookFile" accept=".json,application/json" required data-no-presets><small class="muted">Up to 1 MB. Primary and secondary colors theme this account. Brand voice is saved in Client foundation; logo paths and fonts are kept for reference.</small></label><p class="full"><a class="link-btn" href="social-workspace/examples/brand-book.example.json" download>Download sample JSON</a> · <a class="link-btn" href="social-workspace/examples/brand-book.schema.json" download>Download JSON schema</a> · <a class="link-btn" href="social-workspace/brand-book-format.html" target="_blank" rel="noopener">Format guide</a></p>';
+  const handles=a=>['client-new','client-open','brand-book-import','resource-new','resource-edit'].includes(a);
+  const isForm=id=>['account-form','brand-book-form','resource-form'].includes(id);
   function action(ctx,a,button){
     const {formModal,input,textArea,selectField,e,state,ui}=ctx;
     if(a==='client-open'){ctx.setBrand(button.dataset.brand);ctx.navigate('#today');return;}
+    if(a==='brand-book-import'){formModal('Import brand book','brand-book-form','<div class="form-grid">'+brandBookField()+'</div>','Save brand book');return;}
     if(a==='client-new'){
       const zones=[['America/Los_Angeles','Pacific (Los Angeles)'],['America/Denver','Mountain (Denver)'],['America/Chicago','Central (Chicago)'],['America/New_York','Eastern (New York)'],['America/Toronto','Toronto'],['Europe/London','London'],['Europe/Paris','Paris'],['Europe/Berlin','Berlin'],['Asia/Dubai','Dubai'],['Asia/Tehran','Tehran'],['Asia/Kolkata','India (Kolkata)'],['Asia/Singapore','Singapore'],['Australia/Sydney','Sydney'],['UTC','UTC']];
-      formModal('Add a client account','account-form','<div class="form-grid">'+input('Client name','name','','text',true)+input('What they do, in a few words','description','','text',true)+'<label class="full">Time zone <small class="muted">Dates and publishing times for this client use it.</small><select name="timezone" data-no-presets>'+zones.map(([v,l])=>'<option value="'+v+'">'+l+'</option>').join('')+'</select></label>'+input('Main brand color','primary','#21405d','color')+input('Highlight color','accent','#f0b442','color')+'<p class="task-note full">The workspace takes on these colors whenever this client is selected. Contrast is adjusted for readability.</p></div>','Create account');
+      formModal('Add a client account','account-form','<div class="form-grid">'+input('Client name','name','','text',true)+input('What they do, in a few words','description','','text',true)+'<label class="full">Time zone <small class="muted">Dates and publishing times for this client use it.</small><select name="timezone" data-no-presets>'+zones.map(([v,l])=>'<option value="'+v+'">'+l+'</option>').join('')+'</select></label>'+'<label class="full">Client Supervision Level<select name="clientSupervisionLevel" data-no-presets><option value="0">0 — No client approvals</option><option value="1" selected>1 — Content calendar only</option><option value="2">2 — Content calendar and finished posts</option></select><small class="muted">Internal quality checks apply at every level. No separate publishing approval is required.</small></label>'+brandBookField()+'</div>','Create account');
       ['name','description'].forEach(n=>{const el=document.querySelector('#account-form [name='+n+']');if(el)el.required=true;});return;
     }
     const record=(state.resources||[]).find(x=>x.id===button.dataset.id&&x.brandId===ui.brand);
@@ -72,11 +74,18 @@ window.JMLAgency = (() => {
   }
   async function submit(ctx,form,data){
     const {C,ui,commit}=ctx;
+    if(form.id==='brand-book-form'){
+      const file=form.elements.brandBookFile.files[0],book=await JMLBrandBook.read(file);
+      await commit(next=>{const brand=next.brands.find(b=>b.id===ui.brand);JMLBrandBook.apply(brand,book,file.name,JMLOps.account(next,ui.brand,true).foundation);},'Brand book saved in Client foundation.');return;
+    }
     if(!data.name.trim())throw Error('Enter a name.');
     if(form.id==='account-form'){
       try{Intl.DateTimeFormat('en',{timeZone:data.timezone});}catch{throw Error('Enter a valid time zone, such as America/Los_Angeles.');}
-      const brand={...data,guidedSetup:true,id:C.id('client'),name:data.name.trim(),initials:data.name.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase()};
-      await commit(next=>{if(next.brands.some(b=>b.name.toLowerCase()===brand.name.toLowerCase()))throw Error('An account with this name already exists.');next.brands.push(brand);},'Client account created. Next: fill in the foundation and name the client approver.');
+      if(!['0','1','2'].includes(data.clientSupervisionLevel))throw Error('Choose a Client Supervision Level.');
+      const file=form.elements.brandBookFile.files[0],book=await JMLBrandBook.read(file);
+      const {brandBookFile,...fields}=data;
+      const brand={...fields,clientSupervisionLevel:Number(data.clientSupervisionLevel),guidedSetup:true,id:C.id('client'),name:data.name.trim(),initials:data.name.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase()};
+      await commit(next=>{if(next.brands.some(b=>b.name.toLowerCase()===brand.name.toLowerCase()))throw Error('An account with this name already exists.');next.brands.push(brand);JMLBrandBook.apply(brand,book,file.name,JMLOps.account(next,brand.id,true).foundation);},'Client account created. Next: fill in the foundation.');
       ctx.setBrand(brand.id);ctx.navigate('#plan/foundation');return;
     }
     if(data.url&&!safeLink(data.url))throw Error('Use an HTTP or HTTPS reference URL.');
@@ -88,6 +97,7 @@ window.JMLAgency = (() => {
   }
   function validate(data){
     const brands=new Set(data.brands.map(b=>b.id));
+    for(const brand of data.brands)if(brand.brandBook!==undefined)JMLBrandBook.validate(brand.brandBook);
     const demo=data.brands.find(b=>b.id==='demo')?.demoScenarios;
     if(demo!==undefined&&(!Array.isArray(demo?.cases)||demo.cases.some(c=>!c||typeof c.title!=='string'||!['studio','review','publish','learn'].includes(c.view))))throw Error('Invalid demo scenarios in this backup.');
     if(data.resources!==undefined && (!Array.isArray(data.resources)||data.resources.some(r=>!r||!brands.has(r.brandId)||typeof r.id!=='string'||!Array.isArray(r.versions)||!r.versions.length||r.versions.some(v=>!v||!['name','type','notes','url','actor','at'].every(k=>typeof v[k]==='string')||v.url&&!safeLink(v.url)))))throw Error('Invalid account resource in this backup.');

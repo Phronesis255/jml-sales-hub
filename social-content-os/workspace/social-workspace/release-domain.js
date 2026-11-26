@@ -73,25 +73,38 @@
     rule.active=!rule.active;
     audit(state,brandId,rule.active?'Releases paused':'Releases resumed',rule.id,actor,scope+' '+target);return rule;
   }
+  function policyPost(state,post) {
+    const O=typeof module==='object'&&module.exports?require('./operations.js'):root.JMLOps;
+    return {...post,clientSupervisionLevel:C.supervisionLevel(state.brands.find(b=>b.id===post.brandId)),calendarCovered:!!O.calendarCoverage(state,post)};
+  }
   function currentPackage(state,p) {
-    const post=sourcePost(state,p.brandId,p.contentId);
+    const post=policyPost(state,sourcePost(state,p.brandId,p.contentId));
     const v=C.latest(post);
-    return C.isApproved(post) && v.id===p.versionId && post.briefRevision===p.briefRevision && !C.readiness(post).length && (!p.handoff || (v.caption===p.handoff.caption && JSON.stringify(v.assets)===JSON.stringify(p.handoff.assets) && v.decisions.some(d=>d.id===p.handoff.decisionId&&d.action==='approved')));
+    return C.isApproved(post) && v.id===p.versionId && post.briefRevision===p.briefRevision && !C.readiness(post).length && (!p.handoff || (v.caption===p.handoff.caption && JSON.stringify(v.assets)===JSON.stringify(p.handoff.assets) && (v.decisions.some(d=>d.id===p.handoff.decisionId&&d.action==='approved')||C.supervisionLevel(post)<2&&v.qaDecision?.id===p.handoff.decisionId&&v.qaDecision.action==='passed')));
+  }
+  // Verify what was already sent, even when planning or a newer draft has changed.
+  // The historical package must still match its saved version and original review evidence.
+  function sentPackageValid(state,p) {
+    const post=sourcePost(state,p.brandId,p.contentId),v=post.versions.find(v=>v.id===p.versionId),h=p.handoff;
+    if(!v||v.briefRevision!==p.briefRevision)return false;
+    if(!h)return v.state==='approved'&&v.decisions.some(d=>d.action==='approved'&&d.actor===p.approval.actor);
+    const decision=v.decisions.find(d=>d.id===h.decisionId&&d.action==='approved')||(h.approvalKind==='internal-qa'&&[0,1].includes(h.supervisionLevel)&&v.qaDecision?.id===h.decisionId&&v.qaDecision.action==='passed'?v.qaDecision:null);
+    return !!(decision&&h.brandId===p.brandId&&h.contentId===p.contentId&&h.versionId===p.versionId&&h.briefRevision===p.briefRevision&&h.caption===v.caption&&JSON.stringify(h.assets)===JSON.stringify(v.assets)&&p.receipt?.handoffId===h.id&&p.receipt.versionId===p.versionId&&p.receipt.decisionId===h.decisionId);
   }
   function handoffSnapshot(post,version,placement,actor) {
-    const decision=version.decisions.slice().reverse().find(d=>d.action==='approved');
-    requireValue(decision,'The exact creative approval decision is missing.');
+    const decision=C.releaseDecision(post,version);
+    requireValue(decision,'The required quality check or client approval is missing.');
     return {id:C.id('handoff'),contentId:post.id,brandId:post.brandId,versionId:version.id,versionNumber:version.number,briefRevision:version.briefRevision,
-      decisionId:decision.id,decision:C.clone(decision),qaDecisionId:version.qaDecision?.id||'',qaDecision:C.clone(version.qaDecision||null),planDecision:C.clone(post.planApproval),
+      decisionId:decision.id,decision:C.clone(decision),supervisionLevel:C.supervisionLevel(post),approvalKind:decision.action==='passed'?'internal-qa':'client-approval',qaDecisionId:version.qaDecision?.id||'',qaDecision:C.clone(version.qaDecision||null),planDecision:C.clone(post.planApproval),
       caption:version.caption,assets:C.clone(version.assets),title:post.title,format:placement.format,platform:placement.platform,account:placement.account,
       scheduledAt:placement.scheduledAt,timezone:placement.timezone,nativeNotes:placement.nativeNotes,rightsUntil:placement.rightsUntil,
       sender:decision.actor,preparedBy:actor,recipient:placement.owner,ownerPersonId:placement.ownerPersonId||'',communityOwner:placement.communityOwner,communityOwnerPersonId:placement.communityOwnerPersonId||'',at:C.now()};
   }
   function createPlacement(state,brandId,fields,actor) {
-    const post=sourcePost(state,brandId,fields.contentId), version=C.latest(post);
+    const post=policyPost(state,sourcePost(state,brandId,fields.contentId)), version=C.latest(post);
     if(fields.scheduledLocal!==undefined){
       const schedule=placementSchedule(post,fields);
-      requireValue(!schedule.changed||fields.timingChangeApproved===true,'Confirm approval for the timing change from the creative brief.');
+      // Placement timing is a publisher responsibility; no additional release sign-off.
       fields={...fields,scheduledAt:schedule.instant};
     }
     requireValue(C.isApproved(post) && !C.readiness(post).length,'Finish the brief, inputs and creative approval in Studio and Review.');
@@ -99,14 +112,13 @@
     requireValue(fields.mode==='simulation' || (!post.example && post.brandId!=='demo'),'Example content uses simulation.');
     requireValue(moment(fields.scheduledAt) && tz(fields.timezone),'Enter the planned instant and a valid time zone.');
     const account=clean(fields.account,'the destination account',true), platform=clean(fields.platform,'the destination platform',true);
-    requireValue(fields.scopeApproved===true,'Confirm release approval for this account and exact version.');
-    const approval=version.decisions.slice().reverse().find(d=>d.action==='approved');
-    requireValue(approval?.actor===fields.approver,'Use the named approver from this exact creative decision.');
+    const approval=C.releaseDecision(post,version);
+    requireValue(approval,'Complete internal QA and any required client approval first.');
     requireValue(!data(state).placements.some(p=>p.brandId===brandId && p.contentId===post.id && p.versionId===version.id && p.account===account && p.platform===platform && p.scheduledAt===fields.scheduledAt && p.mode===fields.mode && p.state!=='cancelled'),'This version already has a placement for that account and time.');
     const placement={id:C.id('placement'),brandId,contentId:post.id,versionId:version.id,briefRevision:post.briefRevision,mode:fields.mode,platform,account,
       owner:clean(fields.owner,'the publisher',true),communityOwner:clean(fields.communityOwner,'the community owner',true),format:clean(fields.format || post.format,'the format',true),
       scheduledAt:new Date(fields.scheduledAt).toISOString(),timezone:fields.timezone,nativeNotes:clean(fields.nativeNotes,'the finishing instructions'),
-      rightsUntil:clean(fields.rightsUntil,'the permission expiry'),approval:{actor:clean(fields.approver,'the release approver',true),recordedBy:actor,at:C.now()},
+      rightsUntil:clean(fields.rightsUntil,'the permission expiry'),approval:{actor:approval.actor,recordedBy:actor,at:C.now()},
       ownerPersonId:clean(fields.ownerPersonId,'publisher identity'),communityOwnerPersonId:clean(fields.communityOwnerPersonId,'community identity'),
       state:'ready',attempts:[],verification:null,createdAt:C.now()};
     if(placement.rightsUntil)requireValue(date(placement.rightsUntil),'Choose a valid permission expiry date.');
@@ -201,7 +213,7 @@
       result={state:'cancelled',outcome:'Publisher confirmed external cancellation'};
     }else if(operation==='verify'){
       requireValue(['scheduled','handed-off'].includes(prior),'Record scheduling or handoff first.');
-      requireValue(currentPackage(state,p),'The approved package changed. Reconcile the existing release with the publisher.');
+      requireValue(sentPackageValid(state,p),'The saved release package or publisher receipt is incomplete. Restore its release records before verifying publication.');
       requireValue(fields.checked===true,'Confirm the files, copy and destination match.');
       const checked=adapters[p.mode].verify(p,fields);
       p.verification={...checked,at:C.now(),actor,versionId:p.versionId};
@@ -563,7 +575,7 @@
       for(const a of p.attempts)requireValue(obj(a)&&strings(a,['id','key','operation','actor','at','prior','state','outcome','receipt'])&&states.includes(a.state),'Invalid release attempt.');
       if(p.state==='verified')requireValue(obj(p.verification)&&moment(p.verification.actualAt)&&p.verification.versionId===p.versionId&&strings(p.verification,['actor','note','url','at'])&&(p.mode==='simulation'?!p.verification.url:https(p.verification.url)),'Invalid verification receipt.');
       if(p.handoff){
-        const h=p.handoff,v=post.versions.find(v=>v.id===p.versionId),d=v.decisions.find(d=>d.id===h.decisionId&&d.action==='approved');
+        const h=p.handoff,v=post.versions.find(v=>v.id===p.versionId),d=v.decisions.find(d=>d.id===h.decisionId&&d.action==='approved')||(h.approvalKind==='internal-qa'&&h.supervisionLevel<2&&v.qaDecision?.id===h.decisionId&&v.qaDecision.action==='passed'?v.qaDecision:null);
         requireValue(obj(h)&&h.brandId===p.brandId&&h.contentId===p.contentId&&h.versionId===p.versionId&&h.briefRevision===p.briefRevision&&d&&h.caption===v.caption&&JSON.stringify(h.assets)===JSON.stringify(v.assets),'Invalid approved handoff snapshot.');
         if(h.files)requireValue(Array.isArray(h.files)&&h.files.length===h.assets.length&&h.files.every((f,i)=>f.index===i&&nonblank(f.name)&&Number.isInteger(f.bytes)&&f.bytes>=0&&/^[a-f0-9]{64}$/.test(f.sha256)),'Invalid release file manifest.');
         if(p.receipt)requireValue(p.receipt.handoffId===h.id&&p.receipt.versionId===p.versionId&&p.receipt.decisionId===h.decisionId&&moment(p.receipt.at),'Invalid publisher receipt.');
@@ -596,6 +608,6 @@
     }
     for(const p of (db.proposals||[]))requireValue(['content','strategy','calendar'].includes(p.kind)&&['Proposed','Accepted','Returned'].includes(p.status)&&strings(p,['title','detail','owner','due','createdAt','actor'])&&date(p.due)&&(db.calculations||[]).some(c=>c.brandId===p.brandId&&c.id===p.calculationId)&&Array.isArray(p.decisions),'Invalid next-plan proposal.');
   }
-  const api={recordMeasurements,rawMeasures,observationDefaults,compatibleObservations,localToInstant,briefSchedule,placementSchedule,calculate,proposeNext,decideProposal,receiveHandoff,receiveCommunity,sealHandoff,legacyCandidates,liftPlacement,liftMetrics,groups,states,modes,workTypes,read,entry,sourcePost,isPaused,pause,currentPackage,preflight,createPlacement,advance,manifest,adapters,csvRows,normalise,preview,ingest,addWork,decideWork,watchRun,snapshot,reportDecision,validate};
+  const api={recordMeasurements,rawMeasures,observationDefaults,compatibleObservations,localToInstant,briefSchedule,placementSchedule,calculate,proposeNext,decideProposal,receiveHandoff,receiveCommunity,sealHandoff,legacyCandidates,liftPlacement,liftMetrics,groups,states,modes,workTypes,read,entry,sourcePost,isPaused,pause,currentPackage,sentPackageValid,preflight,createPlacement,advance,manifest,adapters,csvRows,normalise,preview,ingest,addWork,decideWork,watchRun,snapshot,reportDecision,validate};
   if(typeof module==='object'&&module.exports)module.exports=api;else root.JMLReleaseDomain=api;
 })(typeof window==='undefined'?globalThis:window);

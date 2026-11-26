@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "name": "Northstar Coffee",
+  "colors": {
+    "primary": "#21405d",
+    "secondary": "#f0b442"
+  },
+  "logo": {
+    "path": "assets/northstar-logo.svg",
+    "alt": "Northstar Coffee"
+  },
+  "typography": {
+    "heading": "DM Serif Display",
+    "body": "Inter"
+  },
+  "brandVoice": {
+    "description": "Warm, curious and practical. Speak like a knowledgeable barista who makes everyone feel welcome. Use short, clear sentences and specific brewing advice. Avoid jargon, exaggerated claims and pressure to buy."
+  }
+}

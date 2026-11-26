@@ -71,6 +71,8 @@
     const newPosts=[...stage.posts,motion,footage];
     stage.posts=[...examples,...newPosts];
 
+    const ops=O.account(stage,brand.id,true),strategy=ops.strategies.at(-1)||O.snapshot(ops,'strategy',{objective:'Fictional scenario planning prerequisite'},'Fictional scenario setup'),calendar=O.snapshot(ops,'calendar',{strategyVersionId:strategy.id,start:approved.date,end:approved.date,entries:[O.calendarScope(approved)],slots:[],weeks:{}},'Fictional scenario setup');
+    ops.decisions.push({id:C.id('decision'),kind:'calendar',targetId:calendar.id,decision:'approved',actor:team.client,note:'Supplied fictional calendar prerequisite; not a real client decision.',at:C.now()});
     const destination='Fieldwork Studio · demo';
     const placement=D.createPlacement(stage,brand.id,{contentId:approved.id,account:destination,platform:approved.platform,mode:'simulation',
       scopeApproved:true,approver:C.latest(approved).decisions.slice().reverse().find(d=>d.action==='approved').actor,scheduledAt:day+'T12:00:00Z',timezone:'UTC',owner:team.lead,communityOwner:team.producer,

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Brand book JSON · Social OS</title>
+  <link rel="stylesheet" href="fonts.css">
+  <style>
+    body{margin:0;background:#fcf9f4;color:#262126;font:16px/1.65 Inter,Arial,sans-serif}
+    main{max-width:760px;margin:auto;padding:48px 24px}h1,h2{font-family:'DM Serif Display',Georgia,serif;line-height:1.2}h1{font-size:2.5rem}h2{margin-top:2rem}
+    a{color:#56358b;text-underline-offset:4px}a:focus-visible{outline:2px solid #56358b;outline-offset:4px}
+    pre{overflow:auto;padding:20px;background:#f0eaf5;border:1px solid #d8cede;border-radius:8px;font-size:14px;line-height:1.6}code{font-family:Consolas,monospace}li{margin:10px 0}
+  </style>
+</head>
+<body><main>
+  <a href="../social-workspace.html#plan/foundation">← Client foundation</a>
+  <h1>A brand book your workspace can read</h1>
+  <p>Give this format to your brandbook skill. Upload its JSON when creating a client, or choose <strong>Import brand book</strong> in an existing client’s foundation.</p>
+  <p><a href="examples/brand-book.example.json" download>Download sample JSON</a> · <a href="examples/brand-book.schema.json" download>Download JSON schema</a></p>
+  <h2>Instructions for the brandbook skill</h2>
+  <p>Generate one valid UTF-8 JSON file using the structure below, with <code>schemaVersion: 1</code>. Replace the example values with the client’s brand. Use six-digit hex colors. Write the brand’s voice as a plain-text description, including tone, preferred language and things to avoid. Reference the logo by URL or file path; do not embed the image. Return a downloadable <code>.json</code> file under 1 MB.</p>
+  <pre><code>{
+  "schemaVersion": 1,
+  "name": "Northstar Coffee",
+  "colors": {
+    "primary": "#21405d",
+    "secondary": "#f0b442"
+  },
+  "logo": {
+    "path": "assets/northstar-logo.svg",
+    "alt": "Northstar Coffee"
+  },
+  "typography": {
+    "heading": "DM Serif Display",
+    "body": "Inter"
+  },
+  "brandVoice": {
+    "description": "Warm, curious and practical. Use clear language and specific brewing advice. Avoid jargon and exaggerated claims."
+  }
+}</code></pre>
+  <h2>What Social OS uses</h2>
+  <ul>
+    <li><strong>Required:</strong> <code>schemaVersion</code>, <code>colors.primary</code>, <code>colors.secondary</code> and <code>brandVoice.description</code>.</li>
+    <li><strong>Colors:</strong> primary and secondary theme the account, with contrast adjusted for readability.</li>
+    <li><strong>Brand voice:</strong> saved in Client foundation, shown beside creative briefs and included when preparing new prompts. Edit the foundation to refine it; previously saved prompts stay unchanged.</li>
+    <li><strong>Logo and fonts:</strong> optional references, saved and displayed in the foundation. They are not loaded or applied yet. A local path does not upload the referenced file.</li>
+    <li><strong>Additional fields:</strong> preserved in the imported brand book for future use. They do not alter the workflow.</li>
+  </ul>
+  <p>Workspace backups include the full imported JSON and the foundation’s current voice. Replacing a brand book updates the colors and voice. Existing foundation versions and saved post content remain unchanged.</p>
+</main></body>
+</html>

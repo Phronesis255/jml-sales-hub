@@ -49,3 +49,13 @@ body { background:var(--mist); }
   .sidebar .identity {padding-bottom:16px}
 }
 .recovery-copy { white-space:pre-wrap; overflow-wrap:anywhere; padding:.75rem; background:var(--soft); font:inherit; }
+
+/* Long supervision options must not widen the account form on phones. */
+#account-form .form-grid > *,
+#account-form label,
+#account-form input,
+#account-form select { min-width:0; }
+#account-form select { width:100%; }
+@media (max-width:760px) {
+  #account-form .form-grid { grid-template-columns:minmax(0,1fr); }
+}

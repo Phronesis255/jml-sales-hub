@@ -16,7 +16,23 @@ The six primary views are **Today, Content Planner, Studio, Review, Publish and 
 
 The switcher shows the destination account and responsibilities before switching. Choosing a person who does not belong to the current account opens an account they can access. The selected person survives reload.
 
-To explore immediately, open **Switch person → Try a sample handoff** as the administrator or Asha. This explicit action creates one fictional prepared draft and opens it as Luca. Review the draft, switch to Asha to complete internal QA, then switch to Sam and choose **Review → Creative approvals**. Planning and production prerequisites are clearly marked as supplied example context; internal QA and client creative decisions remain pending until performed. The sample does not publish anything or modify real clients' content.
+To explore immediately, open **Switch person → Try a sample handoff** as the administrator or Asha. This explicit action creates one fictional prepared draft and opens it as Luca. Review the draft, then switch to Asha to complete internal QA. At the default Level 1, Luca can continue to publishing once the calendar and production prerequisites are complete. At Level 2, Sam first approves the finished post in **Review → Creative approvals**. Supplied planning and production prerequisites are labelled as example context. The sample does not publish anything or modify real clients' content.
+
+## Client supervision
+
+Choose **Client accounts → Add client → Client Supervision Level** when creating an account:
+
+| Level | Required client decisions |
+| --- | --- |
+| 0 | None |
+| 1 (default) | Content calendar only |
+| 2 | Content calendar and finished posts |
+
+Existing accounts receive Level 1 on their next load. The selected level persists in workspace and account backups. Foundation and strategy are internal planning context. Internal QA remains required at every level; after the required reviews, the publisher can prepare, receive, schedule and verify the release without a separate approval from Asha. Existing approval history is retained. Changing a post's approved calendar scope requires a calendar update at Levels 1 and 2.
+
+Completing the last required review automatically creates the publisher's assignment and notification. Luca can choose **Prepare and publish** from his inbox, prepare the destination and schedule, and publish without returning to Asha. An explicit current publishing assignment takes precedence; otherwise the account's publishing stage owner receives the handoff. Older placement assignments do not block a new creative version. Existing ready posts are available from **Ready to publish** after reload.
+
+**Reconcile attempt** recovers a scheduling receipt; it does not complete publication. A scheduled or handed-off placement stays on the publisher's Today with **Verify publication** as the next action. Verification checks the exact sent package and publisher receipt, so an older release can be completed even if the current calendar or a newer draft has changed. New submissions still require the current approval checks. The community owner's task appears only after verification. Manual releases require a live post link and verification evidence; simulations remain local.
 
 ## Explore with demo data
 
@@ -47,13 +63,13 @@ Repeated source uploads show duplicate or already-attached rows instead of overw
 
 ## Complete the workflow
 
-- **Plan:** confirm the foundation with the named client; capture audience evidence and references; group themes; select an angle; define a versioned KPI and baseline; submit strategy and calendar snapshots for client decisions. Research promotions keep their evidence and KPI links.
+- **Plan:** save the foundation, strategy and KPIs for the team; capture audience evidence and references; group themes; select an angle; submit the content calendar for a client decision at Levels 1 and 2. Research promotions keep their evidence and KPI links.
 - **Studio:** fill the production brief, assign producer and QA reviewer, resolve required inputs, accept production readiness against the approved calendar, and complete the route's tasks. File/caption changes create new creative versions.
-- **Review:** the internal QA reviewer checks the current version. The named client makes a separate creative decision. Client reviewers and client viewers see the shared projection of their account. Administrator access does not authorize a client decision.
+- **Review:** the internal QA reviewer checks the current version. At Level 2, the named client then makes a finished-post decision. Client reviewers and client viewers see the shared projection of their account. Administrator access does not authorize a client decision.
 - **Publish:** create an approved placement, inspect the exact files/caption and decision references, then have the assigned publisher acknowledge the handoff. Download actual release assets, caption and manifest as a ZIP. Use manual or simulated scheduling/verification; retain failed or uncertain attempts and their reconciliation.
 - **Learn:** enter or import evidence, save KPI calculations with their observation revisions and baseline, write findings, review reports and propose the next research question, strategy revision, calendar item or brief. Accepted proposals retain their source result.
 
-Optional-step policy can permit ordinary production steps to be skipped with a reason. Internal QA, client approval and publishing verification remain protected gates. A post's history connects versions, people, handoffs and release events.
+Optional-step policy can permit ordinary production steps to be skipped with a reason. Internal QA, the client approvals required by the account level, and publishing verification remain protected gates. A post's history connects versions, people, handoffs and release events.
 
 ## Success feedback
 
@@ -73,23 +89,18 @@ This is a single-device role simulation. Social publishing, platform analytics, 
 
 ## Verification
 
-Domain checks:
+Workflow regression checks (from the repository root):
 
 ```powershell
-node --test social-workspace\tests\*.test.cjs
+node --test social-content-os/workspace/social-workspace/tests/*.test.cjs
 ```
 
-Browser checks use Playwright and an installed Chrome, serve this checkout on an ephemeral loopback port, and use isolated browser storage:
+These checks exercise all three levels, role-authorized handoffs, simulated publishing, calendar scope changes, migration, JSON round trips and demo fixtures. Browser verification is manual: inspect the account form at desktop and mobile widths, keyboard selection, the client review queues and the publishing handoff. Keep disposable verification data and screenshots under `.agent-work/verification`.
 
-```powershell
-node social-workspace\tests\browser-expansion.cjs
-node social-workspace\tests\browser-research.cjs
-node social-workspace\tests\browser-release.cjs
-node social-workspace\tests\browser-review.cjs
-node social-workspace\tests\browser-account-memory.cjs
-node social-workspace\tests\browser-person-switching.cjs
-node social-workspace\tests\browser-navigation.cjs
-node social-workspace\tests\browser-planner-shell.cjs
-```
+## Brand book JSON
 
-Set `NODE_PATH` to an available Playwright installation and `JML_CHROME` if Chrome is installed at a different path. Verification does not change the user's normal browser memory. Temporary screenshots are written to `.agent-work/verification` and are not shipped as application data.
+New client accounts require a brand book JSON file (up to 1 MB). Existing clients can import or replace one in Content Planner → Foundation → Brand book & voice. See [the format guide](brand-book-format.html), [sample JSON](examples/brand-book.example.json), and [JSON Schema](examples/brand-book.schema.json). The required fields are schemaVersion (1), colors.primary, colors.secondary, and brandVoice.description. Optional logo.path, logo.alt, typography.heading and typography.body remain references; the workspace applies only the colors. Extra JSON fields are retained.
+
+The original JSON lives on the account as brandBook; the editable current voice lives in operations.foundation.brandVoice. The voice appears beside creative briefs and is included in subsequent prepared prompts. Existing saved prompts and foundation versions are not rewritten. Workspace backups include both records.
+
+If embedded planner views say localhost refused to connect while the workspace shell still appears, restart the local server: `python social-content-os/workspace/social-workspace/serve.py --port 8766 --no-browser`, then reload. The shell can remain in memory after the server stops; embedded reports, settings and workflow views still need it running.

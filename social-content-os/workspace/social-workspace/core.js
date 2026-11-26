@@ -24,21 +24,30 @@
     p.history.push({id:id('event'),at:now(),actor,action,detail});
   }
   function latest(p) { return p.versions.at(-1) || null; }
+  const supervisionLevel = record => [0,1,2].includes(record?.clientSupervisionLevel) ? record.clientSupervisionLevel : 1;
+  function releaseDecision(p, version=latest(p)) {
+    if (!version) return null;
+    const client = version.decisions.findLast(d=>d.action==='approved');
+    if (client) return client;
+    const qa=version.qaDecision;
+    return supervisionLevel(p)<2 && qa?.action==='passed' && qa.versionId===version.id && qa.briefRevision===p.briefRevision && qcKeys.every(k=>version.qc[k]) ? qa : null;
+  }
   function isApproved(p) {
     const v=latest(p);
-    return !!(v && v.state==='approved' && v.briefRevision===p.briefRevision && p.planApproval?.revision===p.briefRevision);
+    return !!(v && (v.state==='approved'||supervisionLevel(p)<2&&v.state==='in-review'&&releaseDecision(p)) && v.briefRevision===p.briefRevision && p.planApproval?.revision===p.briefRevision && p.calendarCovered!==false);
   }
   function status(p) {
     const v=latest(p);
     if(isApproved(p)) return 'approved';
     if(v && v.briefRevision!==p.briefRevision) return 'revision-needed';
-    if(v?.state==='in-review') return 'in-review';
+    if(v?.state==='in-review') return supervisionLevel(p)===2?'in-review':'draft';
     if(v?.state==='changes-requested') return 'changes-requested';
     return 'draft';
   }
   function readiness(p) {
     const b=p.brief, gaps=[];
-    for(const [key,label] of Object.entries({objective:'Objective',audience:'Audience',cta:'Call to action',owner:'Content owner',approver:'Final approver',direction:'Creative direction'})) if(!b[key]?.trim()) gaps.push(label+' is missing');
+    for(const [key,label] of Object.entries({objective:'Objective',audience:'Audience',cta:'Call to action',owner:'Content owner',approver:'Final approver',direction:'Creative direction'})) if((key!=='approver'||supervisionLevel(p)===2)&&!b[key]?.trim()) gaps.push(label+' is missing');
+    if(p.calendarCovered===false)gaps.push('Current calendar scope needs client approval');
     if(!p.date) gaps.push('Planned date is missing');
     if(!p.planApproval || p.planApproval.revision!==p.briefRevision) gaps.push('Current brief needs plan approval');
     if(p.requests.some(r=>r.state!=='accepted'&&r.state!=='cancelled')) gaps.push('A media request is still open');
@@ -180,7 +189,7 @@
     if(v.internalFailure)gaps.push('Submit a revised creative version after the internal QA failure');
     if(['approved','in-review','changes-requested'].includes(v.state))gaps.push('Create a new version before resubmitting');
     if(gaps.length)throw Error(gaps.length===1?gaps[0]+'.':'Not sent yet:\n• '+gaps.join('\n• '));
-    v.qc=clone(checks);v.qaDecision={id:id('qa-decision'),versionId:v.id,briefRevision:p.briefRevision,actor,at:now(),checks:clone(checks),action:'passed'};v.state='in-review';event(p,'Sent for review','Version '+v.number+' passed the internal checklist.',actor);
+    v.qc=clone(checks);v.qaDecision={id:id('qa-decision'),versionId:v.id,briefRevision:p.briefRevision,actor,at:now(),checks:clone(checks),action:'passed'};v.state='in-review';event(p,supervisionLevel(p)===2?'Sent for review':'Ready for publishing','Version '+v.number+' passed internal QA. '+(supervisionLevel(p)===2?'Client approval is required.':'Finished-post approval is not required by the account policy.'),actor);
   }
   function decide(p, action, comment, actor) {
     const v=latest(p);
@@ -214,7 +223,7 @@
     if(!data||data.schemaVersion!==1||data.kind!=='jml-social-workspace')throw Error('This is not a JML workspace backup (schema version 1).');
     if(!Array.isArray(data.brands)||!data.brands.length||!Array.isArray(data.posts)||data.posts.length>5000||!Array.isArray(data.analytics)||!Array.isArray(data.findings))throw Error('The backup is missing required collections.');
     const brandIds=new Set(), ids=new Set();
-    for(const b of data.brands){if(!b.id||brandIds.has(b.id)||typeof b.name!=='string'||typeof b.initials!=='string')throw Error('Invalid or duplicate brand.');brandIds.add(b.id);}
+    for(const b of data.brands){if(b.clientSupervisionLevel!==undefined&&![0,1,2].includes(b.clientSupervisionLevel))throw Error('Invalid Client Supervision Level.');if(!b.id||brandIds.has(b.id)||typeof b.name!=='string'||typeof b.initials!=='string')throw Error('Invalid or duplicate brand.');brandIds.add(b.id);}
     const str=(o,keys)=>keys.every(k=>typeof o[k]==='string');
     for(const p of data.posts){
       if(!p.id||ids.has(p.id)||!brandIds.has(p.brandId))throw Error('Invalid brand or duplicate content ID.');ids.add(p.id);
@@ -247,6 +256,6 @@
     }
     return rows;
   }
-  const api={clone,id,now,localDate,brands,qcKeys,qcLabels,event,latest,isApproved,status,readiness,permissionGaps,briefSnapshots,restoreBrief,makePost,seed,addDays,saveBrief,approvePlan,addVersion,submit,decide,publish,packageFor,safeMedia,validate,validateMetrics};
+  const api={supervisionLevel,releaseDecision,clone,id,now,localDate,brands,qcKeys,qcLabels,event,latest,isApproved,status,readiness,permissionGaps,briefSnapshots,restoreBrief,makePost,seed,addDays,saveBrief,approvePlan,addVersion,submit,decide,publish,packageFor,safeMedia,validate,validateMetrics};
   if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.JMLCore=api;
 })(typeof window!=='undefined'?window:globalThis);

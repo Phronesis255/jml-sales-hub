@@ -12,7 +12,9 @@ import webbrowser
 
 PORT = argparse.ArgumentParser(description=__doc__)
 PORT.add_argument("--port", type=int, default=8766)
-ADDRESS = ("127.0.0.1", PORT.parse_args().port)
+PORT.add_argument("--no-browser", action="store_true", help="Serve without opening another browser tab")
+OPTIONS = PORT.parse_args()
+ADDRESS = ("127.0.0.1", OPTIONS.port)
 URL = f"http://127.0.0.1:{ADDRESS[1]}/social-workspace.html"
 HUB = Path(__file__).resolve().parents[1]
 CHECKOUT = hashlib.sha256(str(HUB).encode()).hexdigest()[:20]
@@ -48,7 +50,8 @@ def workspace_running():
 
 def main():
     if workspace_running():
-        webbrowser.open(URL)
+        if not OPTIONS.no_browser:
+            webbrowser.open(URL)
         return 0
     try:
         server = HubServer(ADDRESS, partial(HubFiles, directory=str(HUB)))
@@ -58,7 +61,8 @@ def main():
     with server:
         print(f"JML Social Workspace is open at {URL}")
         print("Keep this window open while working. Press Ctrl+C to stop the server.")
-        webbrowser.open(URL)
+        if not OPTIONS.no_browser:
+            webbrowser.open(URL)
         try:
             server.serve_forever()
         except KeyboardInterrupt:

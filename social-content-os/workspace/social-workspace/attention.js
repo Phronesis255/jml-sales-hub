@@ -14,10 +14,12 @@ window.JMLAttention=(()=>{
       const due=p.scheduledAt<=new Date().toISOString();
       const issues=D.preflight(state,p);
       const urgent=['failed','uncertain','cancel-pending'].includes(p.state);
-      if(!due&&!urgent&&!issues.length&&(!p.handoff||p.receipt))continue;
+      const needsVerification=['scheduled','handed-off'].includes(p.state);
+      if(!due&&!urgent&&!needsVerification&&!issues.length&&(!p.handoff||p.receipt))continue;
       let cause=issues.join(' · ')||(due?'Release time reached':'');
       if(p.handoff&&!p.receipt)cause='Approved package awaiting publisher acceptance';
       if(urgent)cause=({failed:'Release attempt failed',uncertain:'Delivery needs reconciliation','cancel-pending':'Cancellation needs confirmation'})[p.state];
+      if(needsVerification)cause=D.sentPackageValid(state,p)?(p.state==='scheduled'?'Schedule confirmed':'Handoff recorded')+' — verify publication':'Saved release package needs recovery before verification';
       const title=state.posts.find(v=>v.id===p.contentId)?.title||p.contentId;
       rows.push({id:p.id,title,detail:p.platform+' · '+p.account,status:cause,tone:urgent||issues.length?'wait':'active',owner:p.owner,date:p.scheduledAt.slice(0,10),cmd:'placement',type:'Release'});
     }

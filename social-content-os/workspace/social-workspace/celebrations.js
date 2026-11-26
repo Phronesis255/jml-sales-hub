@@ -2,7 +2,7 @@
 (function (root) {
   'use strict';
   const index = rows => new Map((rows || []).map(row => [row.id, row]));
-  const handoffActions = new Set(['Plan approved', 'Production assigned', 'Production readiness accepted', 'Brief confirmed at hand-off', 'Sent for review', 'Creative approved', 'Input accepted', 'Client input received']);
+  const handoffActions = new Set(['Plan approved', 'Production assigned', 'Production readiness accepted', 'Brief confirmed at hand-off', 'Sent for review', 'Ready for publishing', 'Creative approved', 'Input accepted', 'Client input received']);
 
   function outcome(before, after) {
     const placements = index(before.releaseLearning?.placements);

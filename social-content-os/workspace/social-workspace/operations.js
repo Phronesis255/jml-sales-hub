@@ -47,6 +47,7 @@
       objective:p.brief.objective,angleId:p.planningAngleId||'',measurementDefinitionId:p.measurementDefinitionId||'',strategyVersionId:p.strategyVersionId||''};
   }
   function calendarCoverage(state,p) {
+    if(C.supervisionLevel(state.brands.find(b=>b.id===p.brandId))===0)return {calendarId:'',number:0,policy:true,decision:{id:'supervision-level-0',kind:'supervision-policy',actor:'Account policy (Level 0)'}};
     const ops=account(state,p.brandId), scope=calendarScope(p);
     const version=ops.calendars.slice().reverse().find(v=>approved(ops,v)&&v.body.entries.some(e=>e.contentId===p.id&&JSON.stringify(e)===JSON.stringify(scope)));
     return version?{calendarId:version.id,number:version.number,decision:ops.decisions.find(d=>d.targetId===version.id)}:null;
@@ -55,7 +56,7 @@
   function calendarStatus(state,brandId){
     const ops=account(state,brandId),version=ops.calendars?.at(-1)||null,decision=version?ops.decisions.find(d=>d.targetId===version.id)||null:null;
     const uncovered=state.posts.filter(p=>p.brandId===brandId&&p.date&&p.date>=todayDate()&&!C.isApproved(p)&&!calendarCoverage(state,p));
-    return {version,decision,approver:ops.foundation?.finalApprover||'the client approver',strategyApproved:approved(ops,ops.strategies?.at(-1)),
+    return {version,decision,approver:ops.foundation?.finalApprover||'the client approver',strategyApproved:!!ops.strategies?.length,level:C.supervisionLevel(state.brands.find(b=>b.id===brandId)),
       pending:!!version&&!decision,rejected:decision?.decision==='changes-requested',approved:decision?.decision==='approved',uncovered};
   }
   /* What changed between two calendar snapshots, by post. */
@@ -79,6 +80,7 @@
     const canCoordinate=!G||G.can(state,ctx.ui,'coordinate',{brandId}),today=todayDate();
     const decisionOf=v=>v&&ops.decisions.find(d=>d.targetId===v.id);
     const stage=(v,name,href,start,startText,revise)=>{
+      if(name==='Strategy & KPIs'&&v)return {tone:'done',title:name+' V'+v.number,text:'Saved for the team. No separate client approval.'};
       if(!v)return {tone:'todo',title:name,text:startText,action:go(start,href)};
       const d=decisionOf(v);
       if(!d)return {tone:'wait',client:true,title:name+' V'+v.number,text:'With '+who+' since '+U.day(v.at)+'. Nothing to do until they decide.'};
@@ -86,12 +88,12 @@
       return {tone:'done',title:name+' V'+v.number,text:'Approved by '+d.actor+' · '+U.day(d.at)};
     };
     const fv=ops.foundationVersions?.at(-1);
-    const rows=[fv?{tone:'done',title:'Client foundation',text:'Saved by '+fv.actor+' · '+U.day(fv.at)+'. Internal: the client doesn’t review it.'}:{tone:'todo',title:'Client foundation',text:'Answer four questions about the business and name the client approver. Only your team sees it.',action:go('Set up foundation','#plan/foundation')}];
+    const rows=[fv?{tone:'done',title:'Client foundation',text:'Saved by '+fv.actor+' · '+U.day(fv.at)+'. Internal: the client doesn’t review it.'}:{tone:'todo',title:'Client foundation',text:'Answer four questions about the business'+(s.level>0?' and name the client approver':'')+'. Only your team sees it.',action:go('Set up foundation','#plan/foundation')}];
     const sources=(ops.sources||[]).filter(x=>!x.mergedInto).length;
     rows.push(sources?{tone:'done',title:'Research',text:sources+' source'+(sources===1?'':'s')+' captured'}:{tone:'optional',title:'Research (optional)',text:'Capture what you already know about the audience. The strategy can cite it.',action:go('Capture evidence','#plan/research')});
-    rows.push(fv?stage(ops.strategies?.at(-1),'Strategy & KPIs','#plan/strategy','Set the KPIs','Choose how success is measured and set the direction, then send it to '+first+'. This is the client’s one sign-off before the calendar.','Revise strategy'):{tone:'todo',title:'Strategy & KPIs',text:'Comes after the foundation.',later:true});
+    rows.push(fv?stage(ops.strategies?.at(-1),'Strategy & KPIs','#plan/strategy','Set the KPIs','Choose how success is measured and set the direction, use it to plan the content calendar. No separate strategy approval is required.','Revise strategy'):{tone:'todo',title:'Strategy & KPIs',text:'Comes after the foundation.',later:true});
     const n=s.uncovered.length,items=k=>k+' post'+(k===1?'':'s');
-    rows.push(!s.strategyApproved&&!s.version?{tone:'todo',title:'Calendar',text:'Opens once '+first+' approves the KPIs.',later:true}
+    rows.push(s.level===0?{tone:'done',title:'Calendar',text:'Level 0: no client approval required.'}:!s.strategyApproved&&!s.version?{tone:'todo',title:'Calendar',text:'Opens once the team saves the strategy and KPIs.',later:true}
       :s.rejected?{tone:'urgent',title:'Calendar V'+s.version.number+': '+s.decision.actor+' asked for changes',text:'“'+(s.decision.note||'No note')+'”',action:canCoordinate?go('Revise the calendar','#plan/calendar'):null}
       :s.pending?{tone:'wait',client:true,title:'Calendar V'+s.version.number,text:'With '+who+' since '+U.day(s.version.at)+' · '+items(s.version.body.entries.length)+'.'}
       :s.approved&&!n?{tone:'done',title:'Calendar V'+s.version.number,text:'Approved by '+s.decision.actor+' · '+U.day(s.decision.at)}
@@ -100,10 +102,10 @@
     // Approved on the calendar, but nobody is producing it yet: no production set-up, no creative uploaded, not already approved or published.
     const covered=state.posts.filter(p=>p.brandId===brandId&&calendarCoverage(state,p));
     const waiting=covered.filter(p=>!(p.production&&p.brief.productionSpec)&&!C.latest(p)&&!['approved','published'].includes(C.status(p))).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
-    rows.push(!covered.length?{tone:'todo',title:'Production',text:'Starts when '+first+' approves the calendar.',later:true}
-      :waiting.length&&!canCoordinate?{tone:'wait',title:'Hand off to production',text:items(waiting.length)+' approved and waiting for an account coordinator to name a producer and reviewer.'}
-      :waiting.length?{tone:'todo',title:'Hand off to production',text:items(waiting.length)+' approved and waiting for a producer and reviewer. Each producer sees the post on their Today once it’s set up.',list:waiting.slice(0,6),more:waiting.length-6}
-      :{tone:'done',title:'Production',text:'Every approved post has a producer and a reviewer.'});
+    rows.push(!covered.length?{tone:'todo',title:'Production',text:s.level===0?'Plan dated posts to start production.':'Starts when '+first+' approves the calendar.',later:true}
+      :waiting.length&&!canCoordinate?{tone:'wait',title:'Hand off to production',text:items(waiting.length)+' ready and waiting for an account coordinator to name a producer and reviewer.'}
+      :waiting.length?{tone:'todo',title:'Hand off to production',text:items(waiting.length)+' ready and waiting for a producer and reviewer. Each producer sees the post on their Today once it’s set up.',list:waiting.slice(0,6),more:waiting.length-6}
+      :{tone:'done',title:'Production',text:'Every ready post has a producer and a reviewer.'});
     // Ideas linked to the strategy but without a date (for example, proposed from results) need a date to reach the calendar.
     const undated=state.posts.filter(p=>p.brandId===brandId&&p.strategyVersionId&&!p.date&&!C.latest(p)&&!C.isApproved(p));
     if(undated.length&&s.strategyApproved)rows.splice(rows.length-1,0,{tone:'todo',title:'Ideas to schedule',text:items(undated.length)+' without a date. Give each one a date to put it on the calendar.',list:undated.slice(0,6),linkTab:'brief',linkLabel:'Set a date →'});
@@ -118,20 +120,21 @@
     const U=root.JMLWorkflowUI,G=root.JMLGovernance,s=calendarStatus(ctx.state,ctx.ui.brand),v=s.version,n=s.uncovered.length;
     const canPlan=!G||G.can(ctx.state,ctx.ui,'coordinate',{brandId:ctx.ui.brand}),items=k=>k+' planned item'+(k===1?'':'s');
     let tone='',title='',text='',action='';
-    if(!s.strategyApproved){title='Agree the strategy first';text='The calendar is approved against an agreed strategy. Once '+s.approver+' approves the strategy and KPIs, you can send the calendar.';action='<a class="btn small" href="#plan/strategy">Go to Strategy &amp; KPIs</a>';}
+    if(s.level===0){tone='ok';title='No client approval required';text='Level 0: plan the calendar and move straight to production. Internal quality checks still apply.';}
+    else if(!s.strategyApproved){title='Save the strategy first';text='Set the strategy and KPIs, then send the calendar for the client’s approval.';action='<a class="btn small" href="#plan/strategy">Go to Strategy &amp; KPIs</a>';}
     else if(s.rejected){tone='urgent';title=s.decision.actor+' asked for changes to Calendar V'+v.number;text='“'+(s.decision.note||'No note')+'”';action=canPlan?button('Send revised calendar','calendar','','primary'):'';}
     else if(s.pending){tone='wait';title='Calendar V'+v.number+' is with '+s.approver;text='Sent '+U.day(v.at)+' · '+items(v.body.entries.length)+' from '+U.day(v.body.start)+' to '+U.day(v.body.end)+'. Waiting for a decision.';action=small('See what was sent','inspect-calendar',v.id);}
     else if(s.approved){tone=n?'wait':'ok';title='Calendar V'+v.number+' approved by '+s.decision.actor;text=n?items(n)+' added or changed since then still '+(n===1?'needs':'need')+' approval.':'Everything planned from '+U.day(v.body.start)+' to '+U.day(v.body.end)+' is approved.';action=n&&canPlan?button('Send update for approval','calendar','','primary'):small('See what was approved','inspect-calendar',v.id);}
     else{title='Not sent for approval yet';text=n?items(n)+' waiting. Sending asks '+s.approver+' to approve the plan for a period.':'Add posts with a proposed date, then send them to '+s.approver+' for approval.';action=canPlan&&n?button('Send calendar for approval','calendar','','primary'):'';}
     const add=canPlan&&account(ctx.state,ctx.ui.brand).strategies?.length?'<button type="button" class="btn small" data-research-action="plan-post">+ Add a post</button>':'';
     action+=add;
-    const how=U.optional('How posts get onto the calendar · and what approval means','<div class="full"><ol class="cal-how"><li><b>From research:</b> <a href="#plan/research">Research</a> → <i>Create draft from evidence</i>.</li><li><b>One post:</b> <i>+ Add a post</i> here, or <i>+ New idea</i> in the calendar below. Both use the agreed strategy.</li><li><b>A whole month:</b> <a href="#plan/import">Bulk import</a> a calendar CSV.</li></ol><p class="task-note">Every post with a proposed date appears on the calendar. <b>Sending the calendar</b> asks '+esc(s.approver)+' to approve what is planned in a period: topic, channel, format, date and goal. Production can start once it is approved. '+esc(account(ctx.state,ctx.ui.brand).foundation?.finalApprover?s.approver.split(' ')[0]:'The client')+' still approves each finished post later.</p></div>');
+    const how=U.optional('How posts get onto the calendar · and what approval means','<div class="full"><ol class="cal-how"><li><b>From research:</b> <a href="#plan/research">Research</a> → <i>Create draft from evidence</i>.</li><li><b>One post:</b> <i>+ Add a post</i> here, or <i>+ New idea</i> in the calendar below. Both use the agreed strategy.</li><li><b>A whole month:</b> <a href="#plan/import">Bulk import</a> a calendar CSV.</li></ol><p class="task-note">Every post with a proposed date appears on the calendar. '+(s.level>0?'<b>Sending the calendar</b> asks '+esc(s.approver)+' to approve what is planned in a period: topic, channel, format, date and goal. Production can start once it is approved. ':'')+(s.level===2?'The client also approves each finished post.':s.level===1?'This is the only client approval. Finished posts go from internal QA to publishing.':'No client approval is required for this account.')+'</p></div>');
     return '<section class="cal-bar '+tone+'"><div class="cal-bar-main"><span class="eyebrow">Calendar approval</span><h2>'+esc(title)+'</h2><p>'+esc(text)+'</p></div><div class="actions">'+action+'</div></section>'+how;
   }
   function calendarPackage(state,brandId,range) {
     if(!range.start || !range.end || range.end<range.start)throw Error('Choose a valid calendar period.');
     const ops=account(state,brandId),strategy=ops.strategies.at(-1);
-    if(!approved(ops,strategy))throw Error('Approve the current strategy before submitting a calendar.');
+    if(!strategy)throw Error('Save the strategy before preparing a calendar.');
 
     const entries=state.posts.filter(p=>p.brandId===brandId && p.date>=range.start && p.date<=range.end)
       .map(calendarScope)
@@ -176,12 +179,12 @@
       return;
     }
     post.production={route:data.route,qcReviewer:data.qcReviewer,producer:data.producer,backupOwner:data.backupOwner||'',draftDue:data.draftDue,reviewDue:data.reviewDue,
-      startedRevision:null,checkpoints:{},tasks:route.steps.map((label,index)=>({id:C.id('task'),label,owner:label.startsWith('Approve')?post.brief.approver||data.qcReviewer:data.producer,due:data.draftDue,gate:label.startsWith('Approve'),done:false,position:index}))};
+      startedRevision:null,checkpoints:{},tasks:route.steps.map((label,index)=>({id:C.id('task'),label,owner:label.startsWith('Approve')?data.qcReviewer:data.producer,due:data.draftDue,gate:label.startsWith('Approve'),done:false,position:index}))};
     C.event(post,'Production assigned',route.name+' · '+data.producer+' · QA: '+data.qcReviewer,actor);
   }
   function startProduction(p,actor,state) {
     const gaps=readiness(p);
-    if(state && p.strategyVersionId && !calendarCoverage(state,p))gaps.push('Approve the current calendar scope before production');
+    if(state && !calendarCoverage(state,p))gaps.push('Approve the current calendar scope before production');
     if(gaps.length)throw Error(gaps.join('. ')+'.');
     if(!p.production || p.production.startedRevision===p.briefRevision)throw Error('This route is already started or has no tasks.');
     p.production.startedRevision=p.briefRevision;C.event(p,'Production started','Brief revision '+p.briefRevision,actor);
@@ -195,7 +198,7 @@
     if(!p.planDecisions)p.planDecisions=p.planApproval?[C.clone(p.planApproval)]:[];
     p.planApproval={id:C.id('brief-readiness'),kind:'production-readiness',revision:p.briefRevision,actor,at:C.now(),sourceCalendarId:coverage.calendarId,sourceDecisionId:coverage.decision.id};
     p.planDecisions.push(C.clone(p.planApproval));
-    C.event(p,'Production readiness accepted','Brief revision '+p.briefRevision+' · Calendar V'+coverage.number+' approved by '+coverage.decision.actor+'. Client creative approval remains separate.',actor);return p.planApproval;
+    C.event(p,'Production readiness accepted','Brief revision '+p.briefRevision+' · '+(coverage.policy?'No client calendar approval required at Level 0.':'Calendar V'+coverage.number+' approved by '+coverage.decision.actor+'.')+(C.supervisionLevel(p)===2?' Finished posts require client approval after internal QA.':''),actor);return p.planApproval;
   }
   function recordQcFailure(p, reviewer, note) {
     const v=C.latest(p);
@@ -223,10 +226,10 @@
   }
   function saveFoundation(state,brandId,data,actor){
     const ops=account(state,brandId,true);
-    if(!data.business?.trim()||!data.audience?.trim()||!data.scope?.trim()||!data.priorities?.trim()||!data.finalApprover?.trim())throw Error('Add the offer, audience, goal, scope and client approver.');
+    if(!data.business?.trim()||!data.audience?.trim()||!data.scope?.trim()||!data.priorities?.trim()||C.supervisionLevel(state.brands.find(b=>b.id===brandId))>0&&!data.finalApprover?.trim())throw Error('Add the offer, audience, goal, scope and client approver.');
     const before=C.clone(ops.foundation),team=root.JMLGovernance?.eligiblePeople(state,brandId).filter(p=>!p.agencyAdmin).map(p=>p.name).join(', ');
-    ops.foundation={...before,...data,team:team||before.team||'',status:'Ready for client confirmation',actor,updatedAt:C.now()};
-    snapshot(ops,'foundation',ops.foundation,actor);record(ops,actor,'Client foundation saved','Ready for client confirmation');Object.assign(ops.events.at(-1),{before,after:C.clone(ops.foundation)});return ops.foundation;
+    ops.foundation={...before,finalApprover:'',...data,team:team||before.team||'',status:'Ready for planning',actor,updatedAt:C.now()};
+    snapshot(ops,'foundation',ops.foundation,actor);record(ops,actor,'Client foundation saved','Ready for planning');Object.assign(ops.events.at(-1),{before,after:C.clone(ops.foundation)});return ops.foundation;
   }
   function dateToday(){return new Date().toLocaleDateString('sv-SE');}
   function boardLane(p,state) {
@@ -259,8 +262,8 @@
     return lines(versions.slice().reverse(),'No versions saved.',v=>{
       if(kind==='foundation')return row('Client foundation V'+v.number+' · Saved by '+v.actor+' · '+(root.JMLWorkflowUI?.day?.(v.at)||v.at),v.body.business,'<div class="actions">'+small('Inspect','inspect-foundation',v.id)+'</div>');
       const review=ops.decisions.find(d=>d.targetId===v.id);
-      return row(({foundation:'Client foundation',strategy:'Strategy',calendar:'Calendar'})[kind]+' V'+v.number+' · '+labelFor(review),kind==='foundation'?v.body.business:kind==='strategy'?v.body.objective:v.body.start+' – '+v.body.end+' · '+v.body.entries.length+' items',
-        '<div class="actions">'+small('Inspect','inspect-'+kind,v.id)+(!review && v===versions.at(-1)?(!root.JMLGovernance||root.JMLGovernance.can(context.state,context.ui,'approve',{brandId:context.ui.brand})?small('Review','decision-'+kind,v.id):'<span class="ux-chip wait">With '+esc(ops.foundation?.finalApprover||'the client')+'</span>'):'')+'</div>');
+      return row(({foundation:'Client foundation',strategy:'Strategy',calendar:'Calendar'})[kind]+' V'+v.number+' · '+(kind==='calendar'&&C.supervisionLevel(context.state.brands.find(b=>b.id===context.ui.brand))>0?labelFor(review):'Saved for the team'),kind==='foundation'?v.body.business:kind==='strategy'?v.body.objective:v.body.start+' – '+v.body.end+' · '+v.body.entries.length+' items',
+        '<div class="actions">'+small('Inspect','inspect-'+kind,v.id)+(kind==='calendar'&&C.supervisionLevel(context.state.brands.find(b=>b.id===context.ui.brand))>0&&!review && v===versions.at(-1)?(!root.JMLGovernance||root.JMLGovernance.can(context.state,context.ui,'approve',{brandId:context.ui.brand})?small('Review','decision-'+kind,v.id):'<span class="ux-chip wait">With '+esc(ops.foundation?.finalApprover||'the client')+'</span>'):'')+'</div>');
     });
   }
   let activePlanSection='foundation',boardFilter='all',mineOnly=false;
@@ -271,9 +274,8 @@
     let body;
     if(activePlanSection==='foundation'){
       const f=ops.foundation,core=[['Offer',f.business],['Audience',f.audience],['Scope',f.scope],['Client approver',f.finalApprover]];
-      const facts=rows=>'<dl class="ops-facts full">'+rows.filter(([,v])=>v).map(([label,v])=>'<div><dt>'+esc(label)+'</dt><dd>'+esc(v)+'</dd></div>').join('')+'</dl>';
-      body=U.lead(f.business?'The account brief':'Start with the essentials',f.priorities||'Write down the offer, audience, goal, scope and client approver. This stays with your team: the client approves the strategy and KPIs, not this brief.',button(f.business?'Edit foundation':'Set up foundation','foundation','','primary'))+
-        facts(core)+U.optional('Brand materials and delivery details',facts([['Brand references',f.brandBook],['Available media',f.media],['Access and missing inputs',f.access],['Team',f.team],['Community owner',f.communityOwner],['Weekly capacity',f.weeklyCapacity]]))+
+      body=U.lead(f.business?'The account brief':'Start with the essentials',f.priorities||'Write down the offer, audience, goal, scope and client approver. This stays with your team. The account’s supervision level determines client approvals.',button(f.business?'Edit foundation':'Set up foundation','foundation','','primary'))+
+        facts(core)+brandBookView(ctx)+U.optional('Brand materials and delivery details',facts([['Brand references',f.brandBook],['Available media',f.media],['Access and missing inputs',f.access],['Team',f.team],['Community owner',f.communityOwner],['Weekly capacity',f.weeklyCapacity]]))+
         (ops.foundationVersions?.length?U.optional('Saved versions · internal, not sent to the client',versionList(ops,'foundation')):'')+
         U.optional('Campaigns (optional)',lines(ops.campaigns,'Add a campaign when you need a separate objective and delivery window.',v=>row(v.title,v.objective+' · '+v.start+' – '+v.end))+small('Add campaign','campaign'));
     }else if(activePlanSection==='research'){
@@ -281,9 +283,10 @@
       body+=card('Listening watchlists','Record coverage each time you review a source.',lines(ops.watchlists,'Create a watchlist for a competitor, brand or recurring audience question.',w=>row(w.title,w.reference+' · '+w.cadence,small('Record collection','collect',w.id))),small('Add watchlist','watchlist'));
       if(ops.runs.length)body+=card('Collection history','',ops.runs.slice().reverse().map(r=>row(r.watchTitle,r.at.slice(0,10)+' · '+r.coverage+' · '+r.gaps)).join(''));
     }else if(activePlanSection==='strategy'){
-      body=card('Strategy and measurement agreement','Record a strategy version, then send its exact contents to the named client approver.',versionList(ops,'strategy'),button('Save strategy version','strategy','','primary'));
+      body=card('Strategy and measurement agreement','Save the strategy and measurement context for the team. Client approval happens on the content calendar when required.',versionList(ops,'strategy'),button('Save strategy version','strategy','','primary'));
     }else if(activePlanSection==='calendar'){
-      body=card('Calendar approvals','Approve purpose, angle, channel, format, date and KPI for this period. Production brief and final creative decisions are separate.',versionList(ops,'calendar'),button('Capture calendar version','calendar','','primary'));
+      const level=C.supervisionLevel(ctx.state.brands.find(b=>b.id===ctx.ui.brand));
+      body=card(level===0?'Calendar versions':'Calendar approvals',level===0?'Level 0: no client approval is required. Save a calendar version for the team.':level===1?'The client approves the purpose, angle, channel, format, date and KPI once for this period. Finished posts go through internal QA.':'The client approves this calendar, then reviews each finished post after internal QA.',versionList(ops,'calendar'),button(level===0?'Save calendar version':'Send calendar for approval','calendar','','primary'));
       body+=card('Reserved trend slots','',lines(ops.slots,'Reserve capacity and choose an evergreen fallback for each opening.',s=>row(s.title,s.date+' · '+s.owner+' · Fallback: '+s.fallback,s.contentId?'<a class="link-btn" href="'+esc(urlFor({id:s.contentId},'brief'))+'">Open selected idea</a>':small('Select topic','convert-slot',s.id))),small('Reserve slot','slot'));
     }else{
       body=card('Planning decisions and history','',lines(ops.events.slice().reverse(),'Account planning actions will appear here.',v=>row(v.action,v.detail+' · '+v.actor+' · '+v.at.slice(0,10))));
@@ -306,8 +309,18 @@
     const coverage=calendarCoverage(ctx.state,p),check=C.clone(p);check.planApproval={revision:p.briefRevision};
     const gaps=readiness(check).filter(g=>configured||!['Choose a production route','Add route-specific instructions','Add a source asset or approved reference'].includes(g));
     if(!configured)gaps.unshift('Configure the production route and assign a producer and reviewer');
-    if(p.strategyVersionId&&!coverage)gaps.unshift('Approve the current calendar scope before production');
+    if(C.supervisionLevel(p)>0&&!coverage)gaps.unshift('Approve the current calendar scope before production');
     return {configured,accepted,coverage,gaps:[...new Set(gaps)],canConfigure:allowed('coordinate'),canAccept:allowed('readiness'),coordinator:names(owners('coordinate'))||'An account coordinator',acceptor:names(owners('readiness'))||'The assigned operations owner'};
+  }
+  const facts=rows=>'<dl class="ops-facts full">'+rows.filter(([,v])=>v).map(([label,v])=>'<div><dt>'+esc(label)+'</dt><dd>'+esc(v)+'</dd></div>').join('')+'</dl>';
+  function brandBookView(ctx){
+    const brand=ctx.state.brands.find(b=>b.id===ctx.ui.brand),book=brand.brandBook,voice=root.JMLBrandBook?.voice(brand)||'';
+    const canEdit=!root.JMLGovernance||root.JMLGovernance.can(ctx.state,ctx.ui,'admin',{brandId:brand.id});
+    return card('Brand book & voice',book?brand.brandBookFile||'Imported JSON':'Account guidance',
+      (voice?'<p style="white-space:pre-wrap">'+esc(voice)+'</p>':'<p>Import a brand book to save the colors, logo, fonts and writing voice for this account.</p>')+
+      (book?facts([['Primary color',book.colors.primary],['Secondary color',book.colors.secondary],['Logo reference',book.logo?.path],['Heading font',book.typography?.heading],['Body font',book.typography?.body]])+'<p class="muted">Colors theme the workspace. Logo and fonts are saved as references. Brand voice guides creative briefs and prepared prompts.</p>':'')+
+      (canEdit?ctx.btn(book?'Replace brand book':'Import brand book','brand-book-import','small'):'')+
+      '<a class="link-btn" href="social-workspace/brand-book-format.html" target="_blank" rel="noopener">Brand book format & sample</a>');
   }
   function briefGuidance(ctx,p,options={}){
     const U=root.JMLWorkflowUI,G=root.JMLGovernance,s=productionStatus(ctx,p),pending=ctx.hasPendingBrief?.(),ops=account(ctx.state,p.brandId);
@@ -316,7 +329,7 @@
     const calDecision=calVersion&&ops.decisions.find(d=>d.targetId===calVersion.id),calRejected=calDecision?.decision==='changes-requested';
     const canPlan=!G||G.can(ctx.state,ctx.ui,'coordinate',{brandId:p.brandId});
     const rows=[];
-    if(p.strategyVersionId)rows.push(s.coverage?{done:true,text:'Calendar approved (V'+s.coverage.number+')',owner:s.coverage.decision?.actor}:calPending?{text:'In Calendar V'+calVersion.number+', waiting for '+approver+'’s decision',owner:approver}:calRejected?{text:calDecision.actor+' asked for changes to Calendar V'+calVersion.number+': “'+(calDecision.note||'')+'”',owner:canPlan?ctx.ui.actor:'the account planner',action:canPlan?button('Send revised calendar','calendar','','primary small'):''}:{text:'Get this post approved on the calendar',owner:canPlan?'you, then '+approver:approver,action:canPlan?button('Send calendar for approval','calendar','','primary small'):''});
+    if(C.supervisionLevel(p)>0)rows.push(s.coverage?{done:true,text:'Calendar approved (V'+s.coverage.number+')',owner:s.coverage.decision?.actor}:calPending?{text:'In Calendar V'+calVersion.number+', waiting for '+approver+'’s decision',owner:approver}:calRejected?{text:calDecision.actor+' asked for changes to Calendar V'+calVersion.number+': “'+(calDecision.note||'')+'”',owner:canPlan?ctx.ui.actor:'the account planner',action:canPlan?button('Send revised calendar','calendar','','primary small'):''}:{text:'Get this post approved on the calendar',owner:canPlan?'you, then '+approver:approver,action:canPlan?button('Send calendar for approval','calendar','','primary small'):''});
     rows.push(s.configured?{done:true,text:'Handed off: '+(p.production?.producer||'producer')+' makes it, '+(p.production?.qcReviewer||'reviewer')+' checks it'}:{text:'Hand off to production: who makes it, who checks it, and what to make',owner:s.coordinator,action:s.canConfigure?button('Hand off to production','route',p.id,'primary small'):''});
     const briefGaps=[...(pending?['Save the current brief version']:[]),...s.gaps.filter(g=>!/calendar scope|Configure the production route/.test(g))];
     for(const g of briefGaps)rows.push({text:U.sentence(g),owner:p.brief.owner||s.coordinator,action:/media request|input/i.test(g)?link(p,'requests','Open media requests'):ctx.ui.tab!=='brief'?link(p,'brief','Edit brief'):''});
@@ -327,7 +340,7 @@
     if(options.onlyOpen&&!open)return '';
     const producer=p.production?.producer||'the producer',reviewer=p.production?.qcReviewer||'the reviewer',latest=C.latest(p);
     const text=!open?(s.configured?'Handed off. '+producer.split(' ')[0]+' can make it now.':'Ready.'):open+' thing'+(open===1?'':'s')+' to sort out.';
-    const after=latest&&latest.briefRevision===p.briefRevision?'':'<p class="muted ux-footnote">Next: '+esc(producer)+' uploads the draft in Creative versions, '+esc(reviewer)+' checks it, then '+esc(approver)+' approves it.</p>';
+    const after=latest&&latest.briefRevision===p.briefRevision?'':'<p class="muted ux-footnote">Next: '+esc(producer)+' uploads the draft in Creative versions, '+esc(reviewer)+' checks it, '+(C.supervisionLevel(p)===2?'then '+esc(approver)+' approves it.':'then the publisher takes over. No separate publishing approval is required.')+'</p>';
     return card('Production readiness',text,U.gaps(rows)+after+'<div class="actions">'+(ctx.ui.tab!=='workflow'?link(p,'workflow','Open production workflow'):'')+(canPlan&&p.strategyVersionId&&!s.coverage?'<a class="link-btn" href="#plan/strategy">See calendar approvals</a>':'')+'</div>');
   }
   function planWorkflowView(ctx,p){
@@ -362,7 +375,7 @@
     const started=pr?.startedRevision===p.briefRevision;
     const tasks=pr?.tasks || [], next=tasks.find(t=>!t.done);
     let body=card('Production route',configured?ROUTES[pr.route].name:'Assign a producer, a reviewer and the package this item needs.',(configured?'<div class="ops-facts"><div><small>Producer</small><p>'+esc(pr.producer)+'</p></div><div><small>Internal reviewer</small><p>'+esc(pr.qcReviewer)+'</p></div><div><small>Draft due</small><p>'+esc(pr.draftDue)+'</p></div><div><small>Client review due</small><p>'+esc(pr.reviewDue)+'</p></div></div><p class="ops-notes">'+esc(spec.instructions)+'</p>':'')+(!status.canConfigure?'<p>'+esc(status.coordinator)+(configured?' manages this production route.':' needs to prepare the production brief.')+'</p>':''),status.canConfigure?button(configured?'Edit production set-up':'Set up production','route',p.id,'primary'):button('Production setup responsibilities','route-help',p.id));
-    if(p.strategyVersionId){const coverage=calendarCoverage(ctx.state,p);body+=card('Planning scope',coverage?'Calendar V'+coverage.number+' approved by '+coverage.decision.actor:'Calendar decision required','<p>'+ (coverage?'This item matches the approved calendar purpose, format, channel, date and KPI.':'Capture and approve a calendar version covering this item before starting production.')+'</p><p>Detailed copy, assets and production instructions are reviewed separately as brief revision '+p.briefRevision+'.</p>','<a class="link-btn" href="#plan/strategy">Open planning decisions</a>');if(!coverage)gaps.push('Approve the current calendar scope before production');}
+    if(p.strategyVersionId){const coverage=calendarCoverage(ctx.state,p);body+=card('Planning scope',coverage?.policy?'Level 0 · No client approval required':coverage?'Calendar V'+coverage.number+' approved by '+coverage.decision.actor:'Calendar decision required','<p>'+ (coverage?.policy?'The team can prepare this post without a client calendar decision.':coverage?'This item matches the approved calendar purpose, format, channel, date and KPI.':'Capture and approve a calendar version covering this item before starting production.')+'</p><p>Detailed copy, assets and production instructions are reviewed separately as brief revision '+p.briefRevision+'.</p>','<a class="link-btn" href="#plan/strategy">Open planning decisions</a>');if(!coverage)gaps.push('Approve the current calendar scope before production');}
     if(configured)body+=card('Production handoff','The exact brief revision stays with its tasks.', '<div class="ops-facts">'+[['Placement',spec.placement],['Hook',spec.hook],['Output specifications',spec.output],['Delivery package',spec.deliveryPackage],['Acceptance & review',spec.acceptance],['Delivery deadline',spec.deliveryDue],['Production timezone',spec.productionTimezone],['Source references',spec.references]].map(([k,v])=>'<div><small>'+esc(k)+'</small><p>'+human(v)+'</p></div>').join('')+'</div>');
     if(configured){
       const coverage=calendarCoverage(ctx.state,p),needsBrief=p.planApproval?.revision!==p.briefRevision;
@@ -424,8 +437,8 @@
   }
   function reviewView(ctx,ops) {
     const U=root.JMLWorkflowUI,G=root.JMLGovernance,canDecide=!G||G.can(ctx.state,ctx.ui,'approve',{brandId:ctx.ui.brand}),approver=ops.foundation?.finalApprover||'the client approver';
-    const pending=Object.keys(PLAN_TYPES).flatMap(kind=>{const version=ops[PLAN_TYPES[kind]]?.at(-1);return version&&!ops.decisions.some(d=>d.targetId===version.id)?[{kind,version}]:[];});
-    return '<header class="page-heading"><div><div class="eyebrow">Review / Planning decisions</div><h1>Planning decisions</h1><p>Foundation, strategy and calendar versions waiting for '+esc(approver)+'’s decision.</p></div></header>'+card('Waiting for a decision',pending.length?pending.length+' version'+(pending.length===1?'':'s'):'',lines(pending,'Nothing is waiting. Send a calendar for approval from Strategy & KPIs.',({kind,version})=>row(({foundation:'Client foundation',strategy:'Strategy',calendar:'Calendar'})[kind]+' V'+version.number,'Sent by '+version.actor+' · '+U.day(version.at)+(version.body?.entries?' · '+version.body.entries.length+' items':''),'<div class="actions">'+small('Inspect','inspect-'+kind,version.id)+(canDecide?button('Record decision','decision-'+kind,version.id,'small primary'):'<span class="ux-chip wait">Waiting for '+esc(approver)+'</span>')+'</div>')));
+    const pending=(C.supervisionLevel(ctx.state.brands.find(b=>b.id===ctx.ui.brand))===0?[]:['calendar']).flatMap(kind=>{const version=ops[PLAN_TYPES[kind]]?.at(-1);return version&&!ops.decisions.some(d=>d.targetId===version.id)?[{kind,version}]:[];});
+    return '<header class="page-heading"><div><div class="eyebrow">Review / Planning decisions</div><h1>Planning decisions</h1><p>Content calendar versions waiting for '+esc(approver)+'’s decision.</p></div></header>'+card('Waiting for a decision',pending.length?pending.length+' version'+(pending.length===1?'':'s'):'',lines(pending,'Nothing is waiting. Send a calendar for approval from Strategy & KPIs.',({kind,version})=>row(({foundation:'Client foundation',strategy:'Strategy',calendar:'Calendar'})[kind]+' V'+version.number,'Sent by '+version.actor+' · '+U.day(version.at)+(version.body?.entries?' · '+version.body.entries.length+' items':''),'<div class="actions">'+small('Inspect','inspect-'+kind,version.id)+(canDecide?button('Record decision','decision-'+kind,version.id,'small primary'):'<span class="ux-chip wait">Waiting for '+esc(approver)+'</span>')+'</div>')));
   }
   function view(ctx,section,options) {
     const ops=account(ctx.state,ctx.ui.brand);
@@ -466,6 +479,7 @@
     }
     let caps=['coordinate'];
     if(action==='brief-ready')caps=['readiness','coordinate'];
+    if(action.startsWith('decision-')&&action!=='decision-calendar')throw Error('Strategy and foundation are internal planning records. Only the calendar needs client approval.');
     if(action.startsWith('decision-'))caps=['approve'];
     else if(['source','watchlist','collect'].includes(action))caps=['strategy','analyze'];
     else if(action==='strategy')caps=['strategy'];
@@ -479,6 +493,7 @@
   }
   /* The client approver: pick an existing client contact, or (for an admin on a new account) name one here. */
   function approverField(value){
+    if(C.supervisionLevel(context.state.brands.find(b=>b.id===context.ui.brand))===0)return field('finalApprover','Client contact (optional)',value||'','text',false);
     const G=root.JMLGovernance;if(!G)return field('finalApprover','Client approver',value,'text',true);
     const people=G.eligiblePeople(context.state,context.ui.brand,'client');
     if(people.length)return select('finalApprover','Client approver',[['','Choose the client approver'],...people.map(p=>[p.name,p.name])],value||'')+'<p class="task-note full">Someone else? Add them in <a href="#accounts/people">People &amp; access</a>.</p>';
@@ -504,20 +519,20 @@
       const f=ops.foundation;
       openForm('Client foundation',action,id,
         U.section('The essentials','These answers carry into strategy and production.',fullText('business','What does the business offer?',f.business,true)+fullText('audience','Who are we trying to reach?',f.audience,true)+fullText('priorities','What should social content achieve?',f.priorities,true)+fullText('scope','What is included, and what is out of scope?',f.scope,true)+approverField(f.finalApprover))+
-        U.optional('Brand materials and delivery details (optional)',fullText('brandBook','Brand guide or reference links',f.brandBook)+fullText('media','Available media and permissions',f.media)+fullText('access','Account access or missing inputs',f.access)+personField('communityOwner','Community owner',f.communityOwner,['account','operations','strategy'],true)+field('weeklyCapacity','Content items per week, if agreed',f.weeklyCapacity??'','number')+field('responseDue','Next input review, if needed',f.responseDue||'','date'))+
+        U.optional('Brand materials and delivery details (optional)',fullText('brandVoice','Brand voice — guidance for every post',f.brandVoice)+fullText('brandBook','Brand guide or reference links',f.brandBook)+fullText('media','Available media and permissions',f.media)+fullText('access','Account access or missing inputs',f.access)+personField('communityOwner','Community owner',f.communityOwner,['account','operations','strategy'],true)+field('weeklyCapacity','Content items per week, if agreed',f.weeklyCapacity??'','number')+field('responseDue','Next input review, if needed',f.responseDue||'','date'))+
         U.summary('Team comes from People & access','Account memberships supply the team. You can add backup owners or escalation details when a handoff needs them.'),'Save foundation');
     }else if(action==='strategy'){
       const last=ops.strategies.at(-1)?.body||{};
-      if(!ops.foundation.business || !ops.foundation.finalApprover)throw Error('Complete the client foundation and name the final approver first.');
+      if(!ops.foundation.business || C.supervisionLevel(state.brands.find(b=>b.id===ui.brand))>0&&!ops.foundation.finalApprover)throw Error('Complete the client foundation and name the final approver first.');
       openForm('Save strategy version',action,id,strategyFields.map(([k,l])=>field(k,l,last[k]||'', ['objective','channelRoles','pillars','growth','definition'].includes(k)?'textarea':'text',!['target','baseline','growth'].includes(k))).join(''),'Save reviewable version');
     }else if(action==='calendar'){
       const prevCal=account(state,ui.brand).calendars.at(-1),prevDecision=prevCal&&account(state,ui.brand).decisions.find(d=>d.targetId===prevCal.id),reuse=prevCal&&prevCal.body.end>=todayDate();
       const start=reuse?prevCal.body.start:(ui.anchor||todayDate());
       const ops=account(state,ui.brand),approver=ops.foundation?.finalApprover||'the client approver',end=reuse?prevCal.body.end:C.addDays(start,29),inRange=(a,b)=>context.scoped().filter(p=>p.date&&p.date>=a&&p.date<=b);
-      const revising=prevDecision?.decision==='changes-requested';
+      const level=C.supervisionLevel(state.brands.find(b=>b.id===ui.brand)),revising=level>0&&prevDecision?.decision==='changes-requested';
       let changed=[];if(prevCal){try{changed=calendarChanges(prevCal.body.entries,calendarPackage(state,ui.brand,{start,end}).entries);}catch{}}
       const changeList=prevCal?'<div class="task-summary full"><strong>'+(changed.length?'Changed since V'+prevCal.number:'No changes since V'+prevCal.number)+'</strong>'+(changed.length?'<ul class="change-list">'+changed.map(c=>'<li class="'+c.type+'">'+esc(changeText(c))+'</li>').join('')+'</ul>':'<p>'+(revising?'Make the requested changes in the calendar first.':'The same posts and dates as last time.')+'</p>')+'</div>':'';
-      openForm(revising?'Send revised calendar':prevCal?'Send calendar update':'Send calendar for approval',action,id,(revising?'<div class="notice warning full"><div><strong>'+esc(prevDecision.actor)+' asked for changes to V'+prevCal.number+':</strong><p>“'+esc(prevDecision.note||'')+'”</p></div></div>':'')+changeList+'<p class="task-note full">'+esc(approver)+' will see every item planned in this period and approve or request changes. Production briefs and final creative are approved separately.</p>'+field('start','Period starts',start,'date',true)+field('end','Period ends',end,'date',true)+'<div class="task-summary full" id="calendar-scope-preview"><strong>'+inRange(start,end).length+' planned items in this period</strong><p>'+esc(inRange(start,end).slice(0,6).map(p=>p.title).join(' · '))+(inRange(start,end).length>6?' …':'')+'</p></div>','Send to '+approver);
+      openForm(level===0?'Save calendar version':revising?'Send revised calendar':prevCal?'Send calendar update':'Send calendar for approval',action,id,(revising?'<div class="notice warning full"><div><strong>'+esc(prevDecision.actor)+' asked for changes to V'+prevCal.number+':</strong><p>“'+esc(prevDecision.note||'')+'”</p></div></div>':'')+changeList+'<p class="task-note full">'+(level===0?'Save the planned items for the team. No client approval is required.':esc(approver)+' will see every item planned in this period and approve or request changes. '+(level===2?'Finished posts will also need client approval after internal QA.':'This is the only client approval. Finished posts go through internal QA.'))+'</p>'+field('start','Period starts',start,'date',true)+field('end','Period ends',end,'date',true)+'<div class="task-summary full" id="calendar-scope-preview"><strong>'+inRange(start,end).length+' planned items in this period</strong><p>'+esc(inRange(start,end).slice(0,6).map(p=>p.title).join(' · '))+(inRange(start,end).length>6?' …':'')+'</p></div>',level===0?'Save calendar version':'Send to '+approver);
     }else if(action.startsWith('decision-')){
       const kind=action.slice(9),v=ops[PLAN_TYPES[kind]].find(v=>v.id===id);
       if(!v)throw Error('Version is unavailable.');
@@ -526,7 +541,7 @@
       const kind=action.slice(8),v=ops[PLAN_TYPES[kind]].find(v=>v.id===id);
       if(!v)throw Error('Version is unavailable.');
       const review=ops.decisions.find(d=>d.targetId===v.id);
-      context.showModal(({foundation:'Client foundation',strategy:'Strategy',calendar:'Calendar'})[kind]+' V'+v.number,'<div class="modal-body"><h3>'+labelFor(review)+'</h3>'+(review?'<p>'+esc(review.actor)+' · '+esc(review.at)+' · '+esc(review.note)+'</p>':'')+definitionList(v.body)+'</div>');
+      context.showModal(({foundation:'Client foundation',strategy:'Strategy',calendar:'Calendar'})[kind]+' V'+v.number,'<div class="modal-body"><h3>'+(kind==='calendar'&&C.supervisionLevel(state.brands.find(b=>b.id===ui.brand))>0?labelFor(review):'Saved for the team')+'</h3>'+(review?'<p>'+esc(review.actor)+' · '+esc(review.at)+' · '+esc(review.note)+'</p>':'')+definitionList(v.body)+'</div>');
     }else if(action==='source-details'){
       const source=ops.sources.find(s=>s.id===id);
       if(!source)throw Error('This evidence is unavailable.');
@@ -648,7 +663,7 @@
       if(kind==='foundation'){
         const {newApprover,...answers}=f,newName=String(newApprover||'').trim();
         if(newName&&root.JMLGovernance)answers.finalApprover=root.JMLGovernance.addClientContact(next,ui,brandId,newName).name;
-        if(root.JMLGovernance&&!root.JMLGovernance.eligiblePeople(next,brandId,'client').some(p=>p.name===answers.finalApprover))throw Error('Choose the client approver for this account.');
+        if(C.supervisionLevel(next.brands.find(b=>b.id===brandId))>0&&root.JMLGovernance&&!root.JMLGovernance.eligiblePeople(next,brandId,'client').some(p=>p.name===answers.finalApprover))throw Error('Choose the client approver for this account.');
         saveFoundation(next,brandId,answers,actor);
       }else if(kind==='strategy'){
         const version=snapshot(ops,kind,f,actor,{foundation:C.clone(ops.foundation),sourceIds:ops.sources.map(s=>s.id)});
@@ -730,7 +745,7 @@
         if(!ex){ex={key,taskId:task.id,events:[]};ops.exceptions.push(ex);}
         Object.assign(ex,f);ex.events.push({...f,at:C.now(),actor});record(ops,actor,'Delivery exception '+f.status,task.title+' · '+f.note);
       }
-    },sourceIdea?'Draft created.':({calendar:'Calendar sent to '+(account(context.state,brandId).foundation?.finalApprover||'the client approver')+' for approval.',route:'Handed to '+(f.producer||'the producer')+' (producer) and '+(f.qcReviewer||'the reviewer')+' (reviewer). They’ll see it on their Today.',strategy:'Strategy version saved. Send it to the client for a decision.',foundation:'Foundation saved. Next: set the strategy and KPIs for '+(String(f.newApprover||'').trim()||f.finalApprover||'the client approver')+' to approve.','qc-failure':'Returned to the producer with your note.',tasks:'Checklist progress saved.',campaign:'Campaign saved.',slot:'Slot reserved.',watchlist:'Watchlist saved.',source:'Evidence saved.'})[kind]||'Saved.',{feedback:true});
+    },sourceIdea?'Draft created.':({calendar:C.supervisionLevel(context.state.brands.find(b=>b.id===brandId))===0?'Calendar version saved for the team.':'Calendar sent to '+(account(context.state,brandId).foundation?.finalApprover||'the client approver')+' for approval.',route:'Handed to '+(f.producer||'the producer')+' (producer) and '+(f.qcReviewer||'the reviewer')+' (reviewer). They’ll see it on their Today.',strategy:'Strategy saved. Next: prepare the content calendar.',foundation:'Foundation saved. Next: set the strategy and KPIs for the team.','qc-failure':'Returned to the producer with your note.',tasks:'Checklist progress saved.',campaign:'Campaign saved.',slot:'Slot reserved.',watchlist:'Watchlist saved.',source:'Evidence saved.'})[kind]||'Saved.',{feedback:true});
     if(opened)context.navigate(urlFor({id:opened},'brief'));
   }
   function mount(ctx) {
@@ -788,6 +803,7 @@
     for(const b of state.brands){
       const ops=b.operations;if(ops===undefined)continue;
       if(!ops || !ops.foundation || typeof ops.foundation!=='object'||Array.isArray(ops.foundation))fail(b.id+' foundation');
+      if(ops.foundation.brandVoice!==undefined&&typeof ops.foundation.brandVoice!=='string')fail(b.id+' brand voice');
       for(const [key,required] of Object.entries(fields))rows(ops[key],required,key);
       if(ops.foundationVersions!==undefined){rows(ops.foundationVersions,['id','at','actor'],'foundation versions');for(const v of ops.foundationVersions)if(!Number.isInteger(v.number)||!v.body||typeof v.body.business!=='string'||typeof v.body.finalApprover!=='string')fail('foundation version');}
       for(const v of ops.strategies)if(!v.body || typeof v.body.objective!=='string'||!Number.isInteger(v.number))fail('strategy version');
